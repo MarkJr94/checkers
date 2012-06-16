@@ -59,13 +59,13 @@ void Player::display() const
 	}
 }
 
-void Player::movePieceBlack(unsigned piece, Direction d)
+bool Player::movePieceBlack(unsigned piece, Direction d)
 {
 	using namespace std;
 	
 	if (col != BLACK) {
 		cerr << "Wrong move, kid.\n";
-		return;
+		return false;
 	}
 	
 	cout << "Piece No. " << piece << " Direction " 
@@ -74,69 +74,57 @@ void Player::movePieceBlack(unsigned piece, Direction d)
 	
 	if ( piece > 11) {
 		cerr << "Invalid piece number input" << endl;
-		return;
+		return false;
 	}
 	if (!pieces[piece].getInPlay() ) {
 		cerr << "Selected piece not inplay\n";
-		return;
+		return false;
 	}
 	if (col != pieces[piece].getColor()) {
 		cerr << "Not your piece\n";
-		return;
+		return false;
 	}
 	
 	
-	
+	unsigned nextx;
 	unsigned nexty = 1 + pieces[piece].getY();
 	if (nexty > 7 ) {
 		cerr << "Piece obstructed at border.\n";
-		return;
+		return false;
 	}
 	
-	if (d == LEFT) {
-		unsigned leftx = pieces[piece].getX() - 1;
-		if (leftx > 7) {
-			cerr << "Piece obstructed at border.\n";
-			return;
-		}
-		if (Piece::board[leftx][nexty]) {
-			cerr << "Piece obstructed by piece\n";
-			return;
-		}
-		pieces[piece].removeFromBoard();
-		pieces[piece].setX(leftx);
-		pieces[piece].setY(nexty);
-		game[leftx][nexty].setColor(BLACK);
-		pieces[piece].addToBoard();
-		game[leftx][nexty].id = piece;
-		updateGame();
-	} else {
-		unsigned rightx = 1 + pieces[piece].getX();
-		if (rightx > 7) {
-			cerr << "Piece obstructed at border.\n";
-			return;
-		}
-		if (Piece::board[rightx][nexty]) {
-			cerr << "Piece obstructed by piece\n";
-			return;
-		}
-		pieces[piece].removeFromBoard();
-		pieces[piece].setX(rightx);
-		pieces[piece].setY(nexty);
-		game[rightx][nexty].setColor(BLACK);
-		pieces[piece].addToBoard();
-		game[rightx][nexty].id = piece;
-		updateGame();
+	if (d == LEFT)
+		nextx = pieces[piece].getX() - 1;
+	else
+		nextx = pieces[piece].getX() + 1;
+	
+	if (nextx > 7) {
+		cerr << "Piece obstructed at border.\n";
+		return false;
 	}
+	if (Piece::board[nextx][nexty]) {
+		cerr << "Piece obstructed by piece\n";
+		return false;
+	}
+	pieces[piece].removeFromBoard();
+	pieces[piece].setX(nextx);
+	pieces[piece].setY(nexty);
+	pieces[piece].addToBoard();
+	
+	game[nextx][nexty].setColor(BLACK);
+	game[nextx][nexty].id = piece;
+	updateGame();
+	
+	return true;
 }
 
-void Player::movePieceRed(unsigned piece, Direction d)
+bool Player::movePieceRed(unsigned piece, Direction d)
 {
 	using namespace std;
 	
 	if (col != RED) {
 		cerr << "Wrong move, kid.\n";
-		return;
+		return false;
 	}
 	
 	cout << "Piece No. " << piece << " Direction " 
@@ -145,61 +133,47 @@ void Player::movePieceRed(unsigned piece, Direction d)
 	
 	if ( piece > 11) {
 		cerr << "Invalid piece number input" << endl;
-		return;
+		return false;
 	}
 	if (!pieces[piece].getInPlay() ) {
 		cerr << "Selected piece not inplay\n";
-		return;
+		return false;
 	}
 	if (col != pieces[piece].getColor()) {
 		cerr << "Not your piece\n";
-		return;
+		return false;
 	}
 	
 	
-	
+	unsigned nextx;
 	unsigned nexty = pieces[piece].getY() - 1;
 	if (nexty > 7 ) {
 		cerr << "Piece obstructed at border.\n";
-		return;
+		return false;
 	}
 	
-	if (d == LEFT) {
-		unsigned leftx = pieces[piece].getX() - 1;
-		if (leftx > 7) {
-			cerr << "Piece obstructed at border.\n";
-			return;
-		}
-		if (Piece::board[leftx][nexty]) {
-			cerr << "Piece obstructed by piece\n";
-			return;
-		}
-		pieces[piece].removeFromBoard();
-		pieces[piece].setX(leftx);
-		pieces[piece].setY(nexty);
-		game[leftx][nexty].setColor(RED);
-		pieces[piece].addToBoard();
-		game[leftx][nexty].id = piece;
-		updateGame();
-		return;
-	} else {
-		unsigned rightx = 1 + pieces[piece].getX();
-		if (rightx > 7) {
-			cerr << "Piece obstructed at border.\n";
-			return;
-		}
-		if (Piece::board[rightx][nexty]) {
-			cerr << "Piece obstructed by piece\n";
-			return;
-		}
-		pieces[piece].removeFromBoard();
-		pieces[piece].setX(rightx);
-		pieces[piece].setY(nexty);
-		game[rightx][nexty].setColor(RED);
-		pieces[piece].addToBoard();
-		game[rightx][nexty].id = piece;
-		updateGame();
+	if (d == LEFT)
+		nextx = pieces[piece].getX() - 1;
+	else
+		nextx = pieces[piece].getX() + 1;
+	
+	if (nextx > 7) {
+		cerr << "Piece obstructed at border.\n";
+		return false;
 	}
+	if (Piece::board[nextx][nexty]) {
+		cerr << "Piece obstructed by piece\n";
+		return false;
+	}
+	pieces[piece].removeFromBoard();
+	pieces[piece].setX(nextx);
+	pieces[piece].setY(nexty);
+	pieces[piece].addToBoard();
+	
+	game[nextx][nexty].setColor(BLACK);
+	game[nextx][nexty].id = piece;
+	updateGame();
+	return true;
 }
 
 void Player::updateGame()
@@ -264,24 +238,3 @@ void Player::initGame()
 	}
 }
 
-int main()
-{
-	using namespace std;
-	
-	Player p1  (BLACK);
-	p1.display();
-	cout << endl <<endl;
-	Player p2 (RED);
-	p2.display();
-	Piece::printBoard();
-	p1.printgame();
-	p1.printgame();
-	p1.movePiece(9, LEFT);
-	p1.movePiece(8, LEFT);
-	p1.movePiece(8, RIGHT);
-	p2.movePiece(10,LEFT);
-	//~ Piece::printBoard();
-	p1.printgame();
-	//~ p1.display();
-	return 0;
-}

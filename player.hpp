@@ -15,15 +15,15 @@ public:
 	
 	Player(const Color);
 	void display() const;
-	void movePiece(unsigned piece, Direction d)
+	bool movePiece(unsigned piece, Direction d)
 	{
 		if (col == BLACK) 
-			movePieceBlack(piece,d);
+			return movePieceBlack(piece,d);
 		else 
-			movePieceRed(piece,d);
+			return movePieceRed(piece,d);
 	}
-	void movePieceRed(unsigned piece, Direction d);
-	void movePieceBlack(unsigned piece, Direction d);
+	bool movePieceRed(unsigned piece, Direction d);
+	bool movePieceBlack(unsigned piece, Direction d);
 	void printgame() const;
 
 private:
