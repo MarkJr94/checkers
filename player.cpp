@@ -106,6 +106,7 @@ void Player::movePieceBlack(unsigned piece, Direction d)
 		pieces[piece].removeFromBoard();
 		pieces[piece].setX(leftx);
 		pieces[piece].setY(nexty);
+		game[leftx][nexty].setColor(BLACK);
 		pieces[piece].addToBoard();
 		game[leftx][nexty].id = piece;
 		updateGame();
@@ -122,6 +123,7 @@ void Player::movePieceBlack(unsigned piece, Direction d)
 		pieces[piece].removeFromBoard();
 		pieces[piece].setX(rightx);
 		pieces[piece].setY(nexty);
+		game[rightx][nexty].setColor(BLACK);
 		pieces[piece].addToBoard();
 		game[rightx][nexty].id = piece;
 		updateGame();
@@ -175,6 +177,7 @@ void Player::movePieceRed(unsigned piece, Direction d)
 		pieces[piece].removeFromBoard();
 		pieces[piece].setX(leftx);
 		pieces[piece].setY(nexty);
+		game[leftx][nexty].setColor(RED);
 		pieces[piece].addToBoard();
 		game[leftx][nexty].id = piece;
 		updateGame();
@@ -192,6 +195,7 @@ void Player::movePieceRed(unsigned piece, Direction d)
 		pieces[piece].removeFromBoard();
 		pieces[piece].setX(rightx);
 		pieces[piece].setY(nexty);
+		game[rightx][nexty].setColor(RED);
 		pieces[piece].addToBoard();
 		game[rightx][nexty].id = piece;
 		updateGame();
@@ -220,9 +224,10 @@ void Player::printgame() const
 		for (int i = 0; i < 8; i++) {
 			if (game[i][j].getInPlay()) {
 				unsigned thisid = game[i][j].id;
-				std::cout << (thisid < 10 ? "0" : "")<< thisid;
+				std::cout << (thisid < 10 ? "0" : "")<< thisid
+					<< (game[i][j].getColor() == RED? "R" : "B");
 			} else {
-				std::cout << "--";
+				std::cout << "---";
 			}
 		}
 		std::cout << "\n";
@@ -235,18 +240,25 @@ void Player::initGame()
 	unsigned idno = 0;
 	for (int j = 0; j < 4; j++) {
 		for (int i = 0; i < 8; i++) {
+			Piece& alias = game[i][j];
 			if (Piece::board[i][j]) {
-				game[i][j].setColor(RED);
-				game[i][j].id = idno++;
+				alias.setColor(BLACK);
+				alias.id = idno++;
+			} else {
+				alias.setInPlay(false);
 			}
 		}
 	}
 		idno = 11;
 	for (int j = 4; j < 8; j++) {
 		for (int i = 7; i >= 0; i--) {
+			Piece& alias = game[i][j];
 			if (Piece::board[i][j]) {
-				game[i][j].setColor(BLACK);
-				game[i][j].id = idno--;
+				alias.setColor(RED);
+				alias.id = idno--;
+				alias.setInPlay(true);
+			} else {
+				alias.setInPlay(false);
 			}
 		}
 	}
@@ -262,12 +274,14 @@ int main()
 	Player p2 (RED);
 	p2.display();
 	Piece::printBoard();
+	p1.printgame();
+	p1.printgame();
 	p1.movePiece(9, LEFT);
 	p1.movePiece(8, LEFT);
 	p1.movePiece(8, RIGHT);
 	p2.movePiece(10,LEFT);
-	Piece::printBoard();
+	//~ Piece::printBoard();
 	p1.printgame();
-	p1.display();
+	//~ p1.display();
 	return 0;
 }
