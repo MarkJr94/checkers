@@ -2,10 +2,9 @@
 #define CHECKERS_HPP_
 #include <vector>
 
-enum Color { BLACK, RED};
-enum Direction {LEFT, RIGHT};
-
 class Piece {
+public:
+	enum Color { BLACK, RED};
 
 private:
 	bool inPlay;

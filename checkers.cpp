@@ -5,7 +5,7 @@
 std::vector<std::vector<bool> > Piece::board 
 									(8, std::vector<bool> (8,false));
 
-Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Color color)
+Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
 		: inPlay (true), isKing (false), x (xx), y (yy), col (color), id (idNo)
 {
 	if (idNo > 12) {
@@ -39,7 +39,7 @@ bool Piece::getIsKing() const {return isKing;}
 
 bool Piece::getInPlay() const {return inPlay;}
 
-Color Piece::getColor() const {return col;}
+Piece::Color Piece::getColor() const {return col;}
 
 Piece & Piece::operator=(const Piece& other)
 {
