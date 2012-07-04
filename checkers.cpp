@@ -81,14 +81,3 @@ void Piece::setIsKing(const bool newval) {isKing = newval;}
 void Piece::setInPlay(const bool newval) {inPlay = newval;}
 
 void Piece::setColor(const Color color) {col = color;}
-
-bool Piece::obstructedAt(unsigned xx, unsigned yy, const Piece other)
-{
-	if (xx > 7 || yy > 7) {
-		return true;
-	}
-	if (xx == other.x && yy == other.y) {
-		return true;
-	}
-	return false;
-}

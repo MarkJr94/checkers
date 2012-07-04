@@ -34,7 +34,6 @@ public:
 	void setIsKing(const bool newval = true);
 	void setInPlay(const bool newval = true);
 	void setColor(const Color);
-	bool obstructedAt(unsigned xx, unsigned yy, const Piece other);
 };
 
 #endif /* CHECKERS_HPP_ */
