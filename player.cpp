@@ -9,12 +9,20 @@ std::vector<std::vector<Piece> > Player::game
 typedef Piece::Color Color;
 
 Player::Player(const Color color)
-		: pieces (12), col (color), numPieces(12)
+		: pieces (12, NULL), col (color), numPieces(12)
 {
+	for (auto &row : game) {
+		for (auto &cell : row) {
+			cell.setInPlay(false);
+		}
+	}
+	
 	int i = 0, j = 0, count = 0, id = 0;
 	if (color == Piece::RED) {
 		i = 7; j = 1;
-		for (auto &p : pieces) {
+		for (auto &q : pieces) {
+			q = &game[j][i];
+			Piece& p = game[j][i];
 			p.setX(j); p.setY(i);
 			p.setInPlay(true);
 			p.setColor(color);
@@ -29,10 +37,12 @@ Player::Player(const Color color)
 				count = 0;
 			}
 		}
-		initGame();
 		return;
 	}
-	for (auto &p : pieces) {
+	
+	for (auto &q : pieces) {
+		q = &game[j][j];
+		Piece& p = game[j][i];
 		p.setX(j); p.setY(i);
 		p.setInPlay(true);
 		p.setColor(color);
@@ -47,7 +57,6 @@ Player::Player(const Color color)
 			count = 0;
 		}
 	}
-	initGame();
 }
 
 void Player::display() const
@@ -57,7 +66,7 @@ void Player::display() const
 	cout << "Player color "  << (col == Piece::BLACK ? "Black " : "Red ");
 	cout << "|| Pieces in play: " << numPieces << endl;
 	for (auto &p : pieces) {
-		if (p.getInPlay()) p.print();
+		if (p->getInPlay()) p->print();
 	}
 }
 
@@ -77,46 +86,46 @@ bool Player::movePieceBlack(unsigned piece, Direction d)
 		cerr << "Invalid piece number input" << endl;
 		return false;
 	}
-	pieces[piece].print();
+	pieces[piece]->print();
 	
-	if (!pieces[piece].getInPlay() ) {
+	if (!pieces[piece]->getInPlay() ) {
 		cerr << "Selected piece not inplay\n";
 		return false;
 	}
-	if (col != pieces[piece].getColor()) {
+	if (col != pieces[piece]->getColor()) {
 		cerr << "Not your piece\n";
 		return false;
 	}
 	
 	
 	unsigned nextx;
-	unsigned nexty = 1 + pieces[piece].getY();
+	unsigned nexty = 1 + pieces[piece]->getY();
 	if (nexty > 7 ) {
 		cerr << "Piece obstructed at border.\n";
 		return false;
 	}
 	
 	if (d == LEFT)
-		nextx = pieces[piece].getX() - 1;
+		nextx = pieces[piece]->getX() - 1;
 	else
-		nextx = pieces[piece].getX() + 1;
+		nextx = pieces[piece]->getX() + 1;
 	
 	if (nextx > 7) {
 		cerr << "Piece obstructed at border.\n";
 		return false;
 	}
-	if (Piece::board[nextx][nexty]) {
+	if (game[nextx][nexty].getInPlay()) {
 		cerr << "Piece obstructed by piece\n";
 		return false;
 	}
-	pieces[piece].removeFromBoard();
-	pieces[piece].setX(nextx);
-	pieces[piece].setY(nexty);
-	pieces[piece].addToBoard();
+	pieces[piece]->removeFromBoard();
+	pieces[piece]->setInPlay(false);
+	pieces[piece] = &game[nextx][nexty];
+	pieces[piece]->setInPlay(true);
+	pieces[piece]->setColor(Piece::BLACK);
+	pieces[piece]->addToBoard();
 	
-	game[nextx][nexty].setColor(Piece::BLACK);
-	game[nextx][nexty].id = piece;
-	updateGame();
+	pieces[piece]->id = piece;
 	
 	return true;
 }
@@ -137,46 +146,46 @@ bool Player::movePieceRed(unsigned piece, Direction d)
 		cerr << "Invalid piece number input" << endl;
 		return false;
 	}
-	pieces[piece].print();
+	pieces[piece]->print();
 	
-	if (!pieces[piece].getInPlay() ) {
+	if (!pieces[piece]->getInPlay() ) {
 		cerr << "Selected piece not inplay\n";
 		return false;
 	}
-	if (col != pieces[piece].getColor()) {
+	if (col != pieces[piece]->getColor()) {
 		cerr << "Not your piece\n";
 		return false;
 	}
 	
 	
 	unsigned nextx;
-	unsigned nexty = pieces[piece].getY() - 1;
+	unsigned nexty = pieces[piece]->getY() - 1;
 	if (nexty > 7 ) {
 		cerr << "Piece obstructed at border.\n";
 		return false;
 	}
 	
 	if (d == LEFT)
-		nextx = pieces[piece].getX() - 1;
+		nextx = pieces[piece]->getX() - 1;
 	else
-		nextx = pieces[piece].getX() + 1;
+		nextx = pieces[piece]->getX() + 1;
 	
 	if (nextx > 7) {
 		cerr << "Piece obstructed at border.\n";
 		return false;
 	}
-	if (Piece::board[nextx][nexty]) {
+	if (game[nextx][nexty].getInPlay()) {
 		cerr << "Piece obstructed by piece\n";
 		return false;
 	}
-	pieces[piece].removeFromBoard();
-	pieces[piece].setX(nextx);
-	pieces[piece].setY(nexty);
-	pieces[piece].addToBoard();
+	pieces[piece]->removeFromBoard();
+	pieces[piece]->setInPlay(false);
+	pieces[piece] = &game[nextx][nexty];
+	pieces[piece]->setInPlay(true);
+	pieces[piece]->setColor(Piece::RED);
+	pieces[piece]->addToBoard();
 	
-	game[nextx][nexty].setColor(Piece::RED);
-	game[nextx][nexty].id = piece;
-	updateGame();
+	pieces[piece]->id = piece;
 	return true;
 }
 
@@ -215,37 +224,14 @@ void Player::printgame() const
 
 void Player::initGame()
 {
-	unsigned idno = 0;
-	for (int j = 0; j < 4; j++) {
-		for (int i = 0; i < 8; i++) {
-			Piece& alias = game[i][j];
-			if (Piece::board[i][j]) {
-				alias.setColor(Piece::BLACK);
-				alias.id = idno++;
-			} else {
-				alias.setInPlay(false);
-			}
-		}
-	}
-		idno = 11;
-	for (int j = 4; j < 8; j++) {
-		for (int i = 7; i >= 0; i--) {
-			Piece& alias = game[i][j];
-			if (Piece::board[i][j]) {
-				alias.setColor(Piece::RED);
-				alias.id = idno--;
-				alias.setInPlay(true);
-			} else {
-				alias.setInPlay(false);
-			}
-		}
-	}
+	return;
 }
 
 bool Player::redJump(unsigned jumper, unsigned prey, Player& other)
 {
 	using namespace std;
 	
+	return false; /*
 	if (col != Piece::RED) {
 		cerr << "Wrong move, kid.\n";
 		return false;
@@ -301,13 +287,14 @@ bool Player::redJump(unsigned jumper, unsigned prey, Player& other)
 	movePieceRed(jumper,dir);
 	movePieceRed(jumper,dir);
 	
-	return true;
+	return true;*/
 }
 
 bool Player::blackJump(unsigned jumper, unsigned prey, Player& other)
 {
 	using namespace std;
 	
+	return false; /*
 	if (col != Piece::BLACK) {
 		cerr << "Wrong move, kid.\n";
 		return false;
@@ -363,6 +350,6 @@ bool Player::blackJump(unsigned jumper, unsigned prey, Player& other)
 	movePieceBlack(jumper,dir);
 	movePieceBlack(jumper,dir);
 	
-	return true;
+	return true;*/
 }
 

@@ -6,7 +6,7 @@
 
 
 class Player {
-	std::vector<Piece> pieces;
+	std::vector<Piece *> pieces;
 	Piece::Color col;
 
 public:
