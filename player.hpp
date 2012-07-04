@@ -3,46 +3,34 @@
 
 #include "checkers.hpp"
 
-
-
 class Player {
+	/* Array stores pointers to pieces on board inplay */
 	std::vector<Piece *> pieces;
+	/* Player color */
 	Piece::Color col;
+	/* Number of pieces in play */
+	unsigned numPieces;
+	/* Static game board */
+	static std::vector<std::vector<Piece> > game;
+	/* Debug */
+	bool debug;
 
 public:
-	static std::vector<std::vector<Piece> > game;
-	unsigned numPieces;
-	
 	/* Enumerations for movement and jump directions */
 	enum Direction {LEFT, RIGHT};
-	enum JumpDi {UPLEFT, UPRIGHT, DOWNLEFT, DOWNRIGHT};
-	
-private:
-	bool movePieceRed(unsigned piece, Direction d);
-	bool movePieceBlack(unsigned piece, Direction d);
-	bool redJump(unsigned jumper, unsigned prey, Player& other);
-	bool blackJump(unsigned jumper, unsigned prey, Player& other);
-
-public:
-	Player(const Piece::Color);
+	enum KingDi {UPLEFT, UPRIGHT, DOWNLEFT, DOWNRIGHT};
+	/* Constructor */
+	Player(const Piece::Color, bool db = true);
+	/* Get number of pieces */
+	unsigned getnPieces() const;
+	/* Display player */
 	void display() const;
-	
-	/*Wrapper for private move functions for different colors */
-	bool movePiece(unsigned piece, Direction d)
-	{
-		if (col == Piece::BLACK) 
-			return movePieceBlack(piece,d);
-		return movePieceRed(piece,d);
-	}
-	
-	/* Wrapper for private jump functions for different colors */
-	bool jumpPiece(unsigned jumper, unsigned prey, Player& other)
-	{
-		if (col == Piece::BLACK)
-			return blackJump(jumper, prey, other);
-		return redJump(jumper,prey,other);
-	}
+	/* Piece movement */
+	bool movePiece(unsigned piece, Direction d);
+	/* Jumping */
+	bool jumpPiece(unsigned jumper, unsigned prey, Player& other);
+	/* Print the game */
 	void printgame() const;
 };
 
-#endif /*LAYER_HPP_ */
+#endif /*PLAYER_HPP_ */

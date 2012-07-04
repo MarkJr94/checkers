@@ -4,108 +4,129 @@
 #include "checkers.hpp"
 #include "player.hpp"
 
-int  receiveInput(Player& player, Player& pb, unsigned piece, Player::Direction d)
-{
-	using namespace std;
-	string dirString;
-	player.printgame();
-	unsigned prey;
+class Game {
+	Player p1;
+	Player p2;
+	bool turn;
+	bool debug;
 	
-	cout << "Enter piece id: ";
-	cin  >> piece;
-	cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or 'j' = jump: ";
-	cin >> dirString;
-	if (dirString == "q") return -1;
-	/* Jumping */
-	if (dirString == "j") {
-		cout << "Enter prey ID: ";
-		cin >> prey;
-		if (!player.jumpPiece(piece,prey,pb)) {
-			cerr << "Jumping error; try again\n";
+public:
+	Game(bool db = true) 
+			: p1 (Piece::BLACK,db), p2 (Piece::RED,db), turn (true), debug (db)
+	{;}
+	
+	int receiveInput(unsigned piece, Player::Direction d)
+	{
+		using namespace std;
+		string dirString;
+		unsigned prey;
+		Player *a, *b;
+		if (turn) {
+			a = &p1;
+			b = &p2;
+		} else {
+			a = &p2;
+			b = &p1;
+		}
+		Player& player = *a;
+		Player& other = *b;
+		
+		if (debug) cout << "Enter piece id: ";
+		cin  >> piece;
+		if (debug) cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or 'j' = jump: ";
+		cin >> dirString;
+		if (dirString == "q") return -1;
+		/* Jumping */
+		if (dirString == "j") {
+			if (debug) cout << "Enter prey ID: ";
+			cin >> prey;
+			if (!player.jumpPiece(piece,prey,other)) {
+				cerr << "Jumping error; try again\n";
+				return 0;
+			}
+			turn = !turn;
+			return 1;
+		}
+		
+		/* Regular Movement */
+		if  (dirString == "l")
+			d = Player::LEFT;
+		else if (dirString == "r")
+			d = Player::RIGHT;
+		else {
+			cerr << "Input Error\n";
 			return 0;
 		}
+		
+		if (!player.movePiece(piece,d)) {
+			cerr << "Movement error; try again\n";
+			return 0;
+		}
+		turn = !turn;
 		return 1;
 	}
 	
-	/* Regular Movement */
-	if  (dirString == "l")
-		d = Player::LEFT;
-	else if (dirString == "r")
-		d = Player::RIGHT;
-	else {
-		cerr << "Input Error\n";
-		return 0;
-	}
-	
-	if (!player.movePiece(piece,d)) {
-		cerr << "Movement error; try again\n";
-		return 0;
-	}
-	return 1;
-}
-	
-void dostuff() {
-	using namespace std;
-	
-	Player player1 (Piece::BLACK);
-	Player player2 (Piece::RED);
-	player1.display(); player2.display();
-	player1.printgame();
-	
-	unsigned count1 = 0,count2 = 0;
-	unsigned piece;
-	Player::Direction d;
-	
-	while (1) {
-		cout << player1.numPieces << " Player 1\n" << player2.numPieces << " Player 2\n\n";
-		if (player1.numPieces < 1) return;
-		cout << "P1 pieces = " << player1.numPieces << endl;
+	void play()
+	{
+		using namespace std;
+		
+		if (debug) p1.display();
+		if (debug) p2.display();
+		if (debug) p1.printgame();
+		
+		unsigned count1 = 0,count2 = 0;
+		unsigned piece;
+		Player::Direction d;
+		
 		while (1) {
-			if (count1 == 3) {
+			if (debug) cout << p1.getnPieces() << " Player 1\n" << p2.getnPieces() << " Player 2\n\n";
+			if (p1.getnPieces() < 1) return;
+			if (debug) cout << "P1 pieces = " << p1.getnPieces() << endl;
+			while (1) {
+				if (count1 == 3) {
+					count1 = 0;
+					if (debug) cout << "Three failed moves P1; Lose a turn!\n\n";
+					break;
+				}
+				if (debug) cout << "================ Player 1 (Black) ==============\n\n";
+				int c = receiveInput(piece,d);
+				switch (c) {
+					case -1: return;
+					case 0: {
+						count1++;
+						continue;
+					}
+					default:;
+				}
 				count1 = 0;
-				cerr << "Three failed moves P1; Lose a turn!\n\n";
+				if (debug) p1.printgame();
 				break;
 			}
-			cout << "================ Player 1 (Black) ==============\n\n";
-			int c = receiveInput(player1,player2,piece,d);
-			switch (c) {
-				case -1: return;
-				case 0: {
-					count1++;
-					continue;
+			if (p2.getnPieces() <1) return;
+			if (debug) cout << "P2 pieces = " << p2.getnPieces() << endl;
+			while (1) {
+				if (count2 == 3) {
+					count2 = 0;
+					if (debug) cout << "Three failed moves P2; Lose a turn!\n\n";
+					break;
 				}
-				default:;
-			}
-			count1 = 0;
-			player1.display();
-			player1.printgame();
-			break;
-		}
-		if (player2.numPieces <1) return;
-		cout << "P2 pieces = " << player2.numPieces << endl;
-		while (1) {
-			if (count2 == 3) {
+				if (debug) cout << "================ Player 2  (Red) ==============\n\n";
+				int c = receiveInput(piece,d);
+				switch (c) {
+					case -1: return;
+					case 0: {
+						count2++;
+						continue;
+					}
+					default:;
+				}
 				count2 = 0;
-				cerr << "Three failed moves P2; Lose a turn!\n\n";
+				if (debug) p2.printgame();
 				break;
 			}
-			cout << "================ Player 2  (Red) ==============\n\n";
-			int c = receiveInput(player2,player1,piece,d);
-			switch (c) {
-				case -1: return;
-				case 0: {
-					count2++;
-					continue;
-				}
-				default:;
-			}
-			count2 = 0;
-			player2.display();
-			player2.printgame();
-			break;
 		}
 	}
-}
+};
 
 void testing()
 {
@@ -129,6 +150,7 @@ void testing()
 
 int main()
 {
-	dostuff();
+	Game checkers (true);
+	checkers.play();
 	return 0;
 }
