@@ -4,7 +4,7 @@
 #include "checkers.hpp"
 #include "player.hpp"
 
-int  receiveInput(Player& player, Player& pb, unsigned& piece, Player::Direction& d)
+int  receiveInput(Player& player, Player& pb, unsigned piece, Player::Direction d)
 {
 	using namespace std;
 	string dirString;
@@ -116,7 +116,6 @@ void testing()
 	cout << endl <<endl;
 	Player p2 (Piece::RED);
 	p2.display();
-	Piece::printBoard();
 	p1.printgame();
 	p1.printgame();
 	p1.movePiece(9, Player::LEFT);

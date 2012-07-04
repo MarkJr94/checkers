@@ -43,14 +43,6 @@ public:
 		return redJump(jumper,prey,other);
 	}
 	void printgame() const;
-
-private:
-	//~ bool movePieceRed(unsigned piece, Direction d);
-	//~ bool movePieceBlack(unsigned piece, Direction d);
-	//~ bool redJump(unsigned jumper, unsigned prey, Player& other);
-	//~ bool blackJump(unsigned jumper, unsigned prey, Player& other);
-	void updateGame();
-	void initGame();
 };
 
 #endif /*LAYER_HPP_ */

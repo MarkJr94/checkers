@@ -15,7 +15,6 @@ private:
 	
 public:
 	unsigned id;
-	static std::vector<std::vector<bool> > board;
 
 	Piece(unsigned idNo = 0, unsigned xx = 0, unsigned yy = 0, Color color = BLACK);
 	unsigned getX() const;
@@ -23,20 +22,17 @@ public:
 	bool getInPlay() const;
 	bool getIsKing() const;
 	Color getColor() const;
-	void addToBoard() const;
-	void removeFromBoard() const;
 	
 	Piece & operator=(const Piece& other);
 	
 	void print() const;
-	static void printBoard();
 	
 
 public:
 	void setX(const unsigned);
 	void setY(const unsigned);
-	void setIsKing(const bool);
-	void setInPlay(const bool);
+	void setIsKing(const bool newval = true);
+	void setInPlay(const bool newval = true);
 	void setColor(const Color);
 	bool obstructedAt(unsigned xx, unsigned yy, const Piece other);
 };

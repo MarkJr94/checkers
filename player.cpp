@@ -11,24 +11,24 @@ typedef Piece::Color Color;
 Player::Player(const Color color)
 		: pieces (12, NULL), col (color), numPieces(12)
 {
-	for (auto &row : game) {
-		for (auto &cell : row) {
-			cell.setInPlay(false);
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			game[i][j].setX(i);
+			game[i][j].setY(j);
 		}
 	}
-	
 	int i = 0, j = 0, count = 0, id = 0;
 	if (color == Piece::RED) {
 		i = 7; j = 1;
 		for (auto &q : pieces) {
 			q = &game[j][i];
 			Piece& p = game[j][i];
-			p.setX(j); p.setY(i);
-			p.setInPlay(true);
-			p.setColor(color);
-			p.setIsKing(false);
-			p.id = id++;
-			p.addToBoard();
+			q->setX(j); p.setY(i);
+			q->setInPlay(true);
+			q->setColor(color);
+			q->setIsKing(false);
+			q->id = id++;
+			std::cerr << "Building a piece " << id << " that is red at " << j << " " << i << "\n\n";
 			j += 2;
 			if (j == 8) j = 1;
 			if (j == 9) j = 0;
@@ -37,25 +37,29 @@ Player::Player(const Color color)
 				count = 0;
 			}
 		}
-		return;
-	}
-	
-	for (auto &q : pieces) {
-		q = &game[j][j];
-		Piece& p = game[j][i];
-		p.setX(j); p.setY(i);
-		p.setInPlay(true);
-		p.setColor(color);
-		p.setIsKing(false);
-		p.id = id++;
-		p.addToBoard();
-		j += 2;
-		if (j == 8) j = 1;
-		if (j == 9) j = 0;
-		if ((++count == 4))  {
-			++i;
-			count = 0;
+	} else if (col == Piece::BLACK) {
+		i = j = 0;
+		for (auto &q : pieces) {
+			q = &game[j][i];
+			Piece& p = game[j][i];
+			q->setX(j); p.setY(i);
+			q->setInPlay(true);
+			q->setColor(color);
+			q->setIsKing(false);
+			q->id = id++;
+			std::cerr << "Building a piece " << id << " that is black at " << j << " " << i << "\n\n";
+			j += 2;
+			if (j == 8) j = 1;
+			if (j == 9) j = 0;
+			if ((++count == 4))  {
+				++i;
+				count = 0;
+			}
+			
 		}
+	} else {
+		std::cerr << "Error in Player::Player: unknown color\n";
+		exit(1);
 	}
 }
 
@@ -118,12 +122,12 @@ bool Player::movePieceBlack(unsigned piece, Direction d)
 		cerr << "Piece obstructed by piece\n";
 		return false;
 	}
-	pieces[piece]->removeFromBoard();
 	pieces[piece]->setInPlay(false);
 	pieces[piece] = &game[nextx][nexty];
 	pieces[piece]->setInPlay(true);
 	pieces[piece]->setColor(Piece::BLACK);
-	pieces[piece]->addToBoard();
+	//~ pieces[piece]->setX(nextx);
+	//~ pieces[piece]->setY(nexty);
 	
 	pieces[piece]->id = piece;
 	
@@ -178,31 +182,15 @@ bool Player::movePieceRed(unsigned piece, Direction d)
 		cerr << "Piece obstructed by piece\n";
 		return false;
 	}
-	pieces[piece]->removeFromBoard();
 	pieces[piece]->setInPlay(false);
 	pieces[piece] = &game[nextx][nexty];
 	pieces[piece]->setInPlay(true);
 	pieces[piece]->setColor(Piece::RED);
-	pieces[piece]->addToBoard();
+	//~ pieces[piece]->setX(nextx);
+	//~ pieces[piece]->setY(nexty);
 	
 	pieces[piece]->id = piece;
 	return true;
-}
-
-void Player::updateGame()
-{
-	int count;
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8;j++) {
-			if (Piece::board[i][j]) {
-				game[i][j].setInPlay(true);
-				if (col == game[i][j].getColor()) ++count;
-			} else {
-				game[i][j].setInPlay(false);
-			}
-		}
-	}
-	numPieces = count;
 }
 
 void Player::printgame() const
@@ -222,16 +210,10 @@ void Player::printgame() const
 	std::cout << std::endl;
 }
 
-void Player::initGame()
-{
-	return;
-}
-
 bool Player::redJump(unsigned jumper, unsigned prey, Player& other)
 {
 	using namespace std;
 	
-	return false; /*
 	if (col != Piece::RED) {
 		cerr << "Wrong move, kid.\n";
 		return false;
@@ -241,8 +223,8 @@ bool Player::redJump(unsigned jumper, unsigned prey, Player& other)
 		cerr << "Invalid piece number input" << endl;
 		return false;
 	}
-	Piece& j = pieces[jumper];
-	Piece& p = other.pieces[prey];
+	Piece& j = *pieces[jumper];
+	Piece& p = *other.pieces[prey];
 	j.print(); cout << "Preying on: "; p.print();
 	
 	if (!j.getInPlay() || !p.getInPlay() ) {
@@ -266,9 +248,6 @@ bool Player::redJump(unsigned jumper, unsigned prey, Player& other)
 		return false;
 	}
 	
-	Direction dir;
-	if (diff > 0) dir = RIGHT;
-	else dir = LEFT;
 	unsigned newx = j.getX() + diff * 2;
 	unsigned newy = j.getY() - 2;
 	if (newx > 7 || newy > 7) {
@@ -276,25 +255,27 @@ bool Player::redJump(unsigned jumper, unsigned prey, Player& other)
 		return false;
 	}
 	
-	if (Piece::board[newx][newy]) {
+	if (game[newx][newy].getInPlay()) {
 		cerr << "Jump obstructed by piece\n";
 		return false;
 	}
 	
-	p.removeFromBoard();
+	j.setInPlay(false);
+	pieces[jumper] = &game[newx][newy];
+	pieces[jumper]->setInPlay();
+	pieces[jumper]->setColor(col);
+	pieces[jumper]->id = jumper;
+	
 	p.setInPlay(false);
 	other.numPieces -= 1;
-	movePieceRed(jumper,dir);
-	movePieceRed(jumper,dir);
 	
-	return true;*/
+	return true;
 }
 
 bool Player::blackJump(unsigned jumper, unsigned prey, Player& other)
 {
 	using namespace std;
 	
-	return false; /*
 	if (col != Piece::BLACK) {
 		cerr << "Wrong move, kid.\n";
 		return false;
@@ -304,8 +285,8 @@ bool Player::blackJump(unsigned jumper, unsigned prey, Player& other)
 		cerr << "Invalid piece number input" << endl;
 		return false;
 	}
-	Piece& j = pieces[jumper];
-	Piece& p = other.pieces[prey];
+	Piece& j = *pieces[jumper];
+	Piece& p = *other.pieces[prey];
 	j.print(); cout << "Preying on: "; p.print();
 	
 	if (!j.getInPlay() || !p.getInPlay() ) {
@@ -328,10 +309,7 @@ bool Player::blackJump(unsigned jumper, unsigned prey, Player& other)
 		cerr << "Invalid target X direction\n";
 		return false;
 	}
-	
-	Direction dir;
-	if (diff > 0) dir = RIGHT;
-	else dir = LEFT;
+
 	unsigned newx = j.getX() + diff * 2;
 	unsigned newy = j.getY() + 2;
 	if (newx > 7 || newy > 7) {
@@ -339,17 +317,20 @@ bool Player::blackJump(unsigned jumper, unsigned prey, Player& other)
 		return false;
 	}
 	
-	if (Piece::board[newx][newy]) {
+	if (game[newx][newy].getInPlay()) {
 		cerr << "Jump obstructed by piece\n";
 		return false;
 	}
 	
-	p.removeFromBoard();
+	j.setInPlay(false);
+	pieces[jumper] = &game[newx][newy];
+	pieces[jumper]->setInPlay();
+	pieces[jumper]->setColor(col);
+	pieces[jumper]->id = jumper;
+	
 	p.setInPlay(false);
 	other.numPieces -= 1;
-	movePieceBlack(jumper,dir);
-	movePieceBlack(jumper,dir);
 	
-	return true;*/
+	return true;
 }
 

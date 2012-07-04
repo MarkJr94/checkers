@@ -2,11 +2,9 @@
 
 #include "checkers.hpp"
 
-std::vector<std::vector<bool> > Piece::board 
-									(8, std::vector<bool> (8,false));
 
 Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
-		: inPlay (true), isKing (false), x (xx), y (yy), col (color), id (idNo)
+		: inPlay (false), isKing (false), x (xx), y (yy), col (color), id (idNo)
 {
 	if (idNo > 12) {
 		id = 0;
@@ -28,7 +26,6 @@ Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
 	} else {
 		y = yy;
 	}
-	addToBoard();
 }
 		
 unsigned Piece::getX() const {return x;}
@@ -53,39 +50,13 @@ Piece & Piece::operator=(const Piece& other)
 	}
 	
 	return *this;
-}
-
-void Piece::addToBoard() const
-{
-	board[x][y] = true;
-}
-
-void Piece::removeFromBoard() const
-{
-	board[x][y] = false;
-}
-	
+}	
 
 void Piece::print() const
 {
 	std::cout << "id = " << id << " x = " << x << " y = " << y << " isKing = "
 		<< isKing << " inplay = " << inPlay << " col = "
 		<< (col == BLACK ? "Black" : "Red") << std::endl;
-}
-
-void Piece::printBoard()
-{
-	for (int i = 7; i >= 0; i--) {
-		for (int j = 0; j < 8; j++) {
-			if (board[j][i]) {
-				std::cout << "O";
-			} else {
-				std::cout << "-";
-			}
-		}
-		std::cout << "\n";
-	}
-	std::cout << std::endl;
 }
 
 void Piece::setX(const unsigned xx) 
