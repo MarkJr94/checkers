@@ -64,6 +64,31 @@ Player::Player(const Color color, bool db)
 	}
 }
 
+/* Constructor from memory */
+Player::Player (Piece::Color color, const 
+				std::vector<std::vector<cellRecord> > record, bool db)
+		: pieces(12, NULL), col (color), debug (db)
+{
+	using namespace std;
+	
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			game[i][j].setX(i);
+			game[i][j].setY(j);
+		}
+	}
+	
+	for (unsigned i = 0; i < BOARD_SIZE; i++) {
+		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			if (record[i][j].color == col && record[i][j].alive) {
+				game[i][j].setInPlay(true);
+				game[i][j].setColor(col);
+				game[i][j].id = record[i][j].id;
+			}
+		}
+	}
+}
+
 /* Display player */
 void Player::display() const
 {
@@ -160,6 +185,11 @@ void Player::printgame() const
 		std::cout << "\n";
 	}
 	std::cout << std::endl;
+}
+
+std::vector<std::vector<Piece> > * Player::getGame()
+{
+	return &game;
 }
 
 /* Jumping */

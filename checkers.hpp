@@ -2,6 +2,8 @@
 #define CHECKERS_HPP_
 #include <vector>
 
+const unsigned BOARD_SIZE = 8;
+
 class Piece {
 public:
 	enum Color { BLACK, RED};

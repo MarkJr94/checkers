@@ -2,7 +2,6 @@
 
 #include "checkers.hpp"
 
-
 Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
 		: inPlay (false), isKing (false), x (xx), y (yy), col (color), id (idNo)
 {

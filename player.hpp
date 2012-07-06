@@ -3,6 +3,12 @@
 
 #include "checkers.hpp"
 
+struct cellRecord {
+	bool alive;
+	Piece::Color color;
+	unsigned id;
+};
+
 class Player {
 	/* Array stores pointers to pieces on board inplay */
 	std::vector<Piece *> pieces;
@@ -21,6 +27,9 @@ public:
 	enum KingDi {UPLEFT, UPRIGHT, DOWNLEFT, DOWNRIGHT};
 	/* Constructor */
 	Player(const Piece::Color, bool db = true);
+	/* constructor from memory */
+	Player (const Piece::Color, 
+		const std::vector<std::vector<cellRecord> > record, bool db);
 	/* Get number of pieces */
 	unsigned getnPieces() const;
 	/* Display player */
@@ -31,6 +40,9 @@ public:
 	bool jumpPiece(unsigned jumper, unsigned prey, Player& other);
 	/* Print the game */
 	void printgame() const;
+	/* get pointer to game */
+	std::vector<std::vector<Piece> > *getGame();
+	std::vector<Piece *> *getPieces() { return &pieces;}
 };
 
 #endif /*PLAYER_HPP_ */
