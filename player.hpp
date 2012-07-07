@@ -9,6 +9,36 @@ struct cellRecord {
 	unsigned id;
 };
 
+class SaveGame {
+	std::vector<std::vector<cellRecord>> data;
+	bool turn;
+	
+public:
+	SaveGame(bool turn)
+			: data (8, std::vector<cellRecord> (8)), turn(turn)
+	{;}
+	
+	SaveGame & operator=(const SaveGame other)
+	{
+		for (unsigned i = 0; i < BOARD_SIZE; i++) {
+			for (unsigned j = 0; j < BOARD_SIZE; j++) {
+				data[i][j] = other.data[i][j];
+			}
+		}
+		return *this;
+	}
+
+	cellRecord & operator()(int row, int col)
+	{
+		return data[row][col];
+	}
+	
+	std::vector<cellRecord> & operator()(int row)
+	{
+		return data[row];
+	}
+};
+
 class Player {
 	/* Array stores pointers to pieces on board inplay */
 	std::vector<Piece *> pieces;
@@ -29,7 +59,7 @@ public:
 	Player(const Piece::Color, bool db = true);
 	/* constructor from memory */
 	Player (const Piece::Color, 
-		const std::vector<std::vector<cellRecord> > record, bool db);
+		const SaveGame record, bool db);
 	/* Get number of pieces */
 	unsigned getnPieces() const;
 	/* Display player */

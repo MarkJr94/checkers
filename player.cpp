@@ -65,8 +65,7 @@ Player::Player(const Color color, bool db)
 }
 
 /* Constructor from memory */
-Player::Player (Piece::Color color, const 
-				std::vector<std::vector<cellRecord> > record, bool db)
+Player::Player (Piece::Color color, SaveGame record, bool db)
 		: pieces(12, NULL), col (color), debug (db)
 {
 	using namespace std;
@@ -80,10 +79,10 @@ Player::Player (Piece::Color color, const
 	
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			if (record[i][j].color == col && record[i][j].alive) {
+			if (record(i,j).color == col && record(i,j).alive) {
 				game[i][j].setInPlay(true);
 				game[i][j].setColor(col);
-				game[i][j].id = record[i][j].id;
+				game[i][j].id = record(i,j).id;
 			}
 		}
 	}
