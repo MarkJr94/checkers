@@ -3,3 +3,6 @@ all: checkers.cpp checkers.hpp player.cpp player.hpp main.cpp
 
 tree: checkers.cpp checkers.hpp player.cpp player.hpp bst.cpp bst.hpp
 	g++ -Wall -g -std=c++0x checkers.cpp player.cpp bst.cpp -o trees
+
+game: checkers.cpp checkers.hpp player.cpp player.hpp game.hpp game.cpp
+	 g++ -Wall -g -std=c++0x checkers.cpp player.cpp game.cpp -o draughts
