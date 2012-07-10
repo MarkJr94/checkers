@@ -3,9 +3,6 @@
 #include "checkers.hpp"
 #include "player.hpp"
 
-//~ std::vector<std::vector<Piece> > Player::game
-									//~ (8,std::vector<Piece> (8));
-
 typedef Piece::Color Color;
 
 /* Constructor */
@@ -20,11 +17,24 @@ void Player::display() const
 {
 	using namespace std;
 	
-	if (pieces[0] == NULL) return;
-	
 	cout << "Player color "  << (col == Piece::BLACK ? "Black " : "Red ");
 	cout << "|| Pieces in play: " << numPieces << endl;
 	for (auto &p : pieces) {
-		if (p->getInPlay()) p->print();
+		if (p == NULL) {
+			cerr << "NULL PIECESSSSSS!!!!\n";
+			continue;
+		}
+		if (p->getInPlay())
+			p->print();
+	}
+}
+
+Player::~Player()
+{
+	for (auto p : pieces) {
+		if (p->id == ~0u) {
+			std::cout << "deleted by force\n";
+			delete p;
+		}
 	}
 }

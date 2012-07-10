@@ -5,7 +5,7 @@
 Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
 		: inPlay (false), isKing (false), x (xx), y (yy), col (color), id (idNo)
 {
-	if (idNo > 12) {
+	if (idNo > 12 && idNo != ~0u) {
 		id = 0;
 		std::cerr << "id too large, set to 0\n";
 	} else {

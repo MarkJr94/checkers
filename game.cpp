@@ -1,19 +1,20 @@
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 #include "checkers.hpp"
-#include "game.hpp"
+#include "player.hpp"
 #include "game.hpp"
 
 
 
 Match::Match(bool db)
-		: p1 (Piece::BLACK, db), p2 (Piece::RED,db), 
+		: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
 			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE, Piece())), turn(true),
-			debug (db)
+			debug (db), save (true)
 {
 	using namespace std;
-	
+
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			board[i][j].setX(i);
@@ -21,10 +22,10 @@ Match::Match(bool db)
 			board[i][j].setInPlay(false);
 		}
 	}
-	
-	unsigned i = 0, j = 0, count = 0, id = 0;
+
+	unsigned i = 0, j = 0, count = 0, id = 1;
 	vector<Piece *> * pieces = (p1.getPieces());
-	
+
 	for (auto &p : *pieces) {
 		p = &board[j][i];
 		p->setX(j); p->setY(i);
@@ -40,10 +41,11 @@ Match::Match(bool db)
 			count = 0;
 		}
 	}
-	
-	id = count = 0;
+
+	id = 1;
+	count = 0;
 	i = 7, j = 1;
-	
+
 	pieces = (p2.getPieces());
 	for (auto &p : *pieces) {
 		p = &board[j][i];
@@ -63,42 +65,78 @@ Match::Match(bool db)
 }
 
 Match::Match(SaveGame record, bool db)
-		: p1 (Piece::BLACK, db), p2 (Piece::RED,db), 
-			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)), turn(true),
-			debug (db)
+		: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
+			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)),
+			turn(record.getTurn()), debug (db), save (record)
 {
 	using namespace std;
-	
+
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			board[i][j].setX(i);
 			board[i][j].setY(j);
+			board[i][j].setInPlay(false);
 		}
 	}
+
+	vector<Piece *> *p1pieces = p1.getPieces();
+	vector<Piece *> *p2pieces = p2.getPieces();
 	
-	vector<Piece *> p1pieces = *p1.getPieces();
-	vector<Piece *> p2pieces = *p2.getPieces();
+	unsigned p2numPieces = 0;
+	unsigned p1numPieces = 0;
+	
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			unsigned index = record(i,j).id;
 			if (record(i,j).alive) {
 				board[i][j].setInPlay(true);
-				board[i][j].id = record(i,j).id;
+				board[i][j].id = index;
 				if (record(i,j).color == Piece::BLACK) {
+					p1numPieces++;
 					board[i][j].setColor(Piece::BLACK);
-					p1pieces[board[i][j].id] = &board[i][j];
+					(*p1pieces)[index - 1] = &board[i][j];
 				} else {
+					p2numPieces++;
 					board[i][j].setColor(Piece::RED);
-					p1pieces[board[i][j].id] = &board[i][j];
+					(*p2pieces)[index -1] = &board[i][j];
 				}
 			}
 		}
 	}
+	
+	for (auto &p : *p1pieces) {
+		if (p == NULL)
+			p = new Piece(~0u, 0, 0, Piece::BLACK);
+	}
+	for (auto &p : *p2pieces) {
+		if (p == NULL)
+			p = new Piece(~0u, 0, 0, Piece::RED);
+	}
+	
+	p1.setnPieces(p1numPieces);
+	p2.setnPieces(p2numPieces);
+}
+
+inline void Match::updateSave() {
+	for (unsigned i =0; i < BOARD_SIZE; i++) {
+		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			auto & alias = board[i][j];
+			save(i,j).id = alias.id;
+			save(i,j).color = alias.getColor();
+			save(i,j).alive = alias.getInPlay();
+		}
+	}
+	save.setTurn(turn);
+}
+SaveGame Match::getSave() {
+	updateSave();
+	return save;
 }
 
 void Match::print() const
 {
 	using namespace std;
-	
+
 	for (int j = (int)(BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			if (board[i][j].getInPlay()) {
@@ -120,54 +158,54 @@ bool Match::movePiece(unsigned piece, Direction d)
 	using namespace std;
 	Piece * alias;
 	vector<Piece *> * pieces;
-	
+
 	/* Testing if piece selection is valid */
-	if ( piece > 11) {
+	if ( piece > 12 || piece < 1) {
 		cerr << "Invalid piece number input" << endl;
 		return false;
 	}
-	
+
 	/* Jumping */
 	bool jumpPiece(unsigned jumper, unsigned prey, Player& other);
 	if (turn) {
 		pieces = p1.getPieces();
-		alias = (*pieces)[piece];
+		alias = (*pieces)[piece - 1];
 	} else {
 		pieces = p2.getPieces();
-		alias = (*pieces)[piece];
+		alias = (*pieces)[piece - 1];
 	}
-	
+
 	alias->getIsKing();
-	
-	
+
+
 	if (!alias->getInPlay() ) {
 		cerr << "Selected piece not inplay\n";
 		return false;
 	}
-	
+
 	if (debug) alias->print();
-	if (debug) cout << "Piece No. " << piece << " Direction " 
+	if (debug) cout << "Piece No. " << piece << " Direction "
 		<< (d == LEFT ? "LEFT" : "RIGHT") << endl;
-	
+
 	/* Determine next coordinates for jump */
 	unsigned nextx, nexty;
-	
+
 	if (turn)
 		nexty = alias->getY() + 1;
 	else
 		nexty = alias->getY() - 1;
-		
+
 	if (d == LEFT)
 		nextx = alias->getX() - 1;
 	else
 		nextx = alias->getX() + 1;
-	
+
 	/* Testing move validity */
 	if (nexty > 7 ) {
 		cerr << "Piece obstructed at border.\n";
 		return false;
 	}
-	
+
 	if (nextx > 7) {
 		cerr << "Piece obstructed at border.\n";
 		return false;
@@ -176,17 +214,17 @@ bool Match::movePiece(unsigned piece, Direction d)
 		cerr << "Piece obstructed by piece\n";
 		return false;
 	}
-	
+
 	/* Complete the move */
 	alias->setInPlay(false);
-	(*pieces)[piece] = alias = &board[nextx][nexty];
+	(*pieces)[piece - 1] = alias = &board[nextx][nexty];
 	alias->setInPlay(true);
 	if (turn)
 		alias->setColor(Piece::BLACK);
 	else
 		alias->setColor(Piece::RED);
 	alias->id = piece;
-	
+
 	turn = !turn;
 	return true;
 }
@@ -199,16 +237,20 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 	vector<Piece *> * pieces;
 	if (turn) {
 		pieces = p1.getPieces();
-		j = (*pieces)[jumper];
-		p = ((*p2.getPieces())[prey]);
+		j = (*pieces)[jumper - 1];
+		p = ((*p2.getPieces())[prey - 1]);
 	} else {
 		pieces = p2.getPieces();
-		j = (*pieces)[jumper];
-		p = ((*p1.getPieces())[prey]);
+		j = (*pieces)[jumper - 1];
+		p = ((*p1.getPieces())[prey - 1]);
 	}
-	
+
 	/* Testing if piece selection is valid */
-	if ( jumper > 11 || prey > 11) {
+	if ( jumper > 12 || prey > 12) {
+		cerr << "Invalid piece number input" << endl;
+		return false;
+	}
+	if ( jumper < 1 || prey < 1) {
 		cerr << "Invalid piece number input" << endl;
 		return false;
 	}
@@ -217,7 +259,7 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 		return false;
 	}
 	if (debug) {j->print(); cout << "Preying on: "; p->print();}
-	
+
 	/* Testing if valid targets */
 	if (!turn) {
 		if (p->getY() > j->getY()) {
@@ -240,7 +282,7 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 		cerr << "Invalid target in X direction\n";
 		return false;
 	}
-	
+
 	/* Testing the validity of the jump */
 	unsigned newx = j->getX() + diff * 2;
 	unsigned newy;
@@ -257,20 +299,20 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 		cerr << "Jump obstructed by piece\n";
 		return false;
 	}
-	
+
 	/* Move the piece */
 	j->setInPlay(false);
-	(*pieces)[jumper] = &board[newx][newy];
-	(*pieces)[jumper]->setInPlay(true);
-	(*pieces)[jumper]->setColor(j->getColor());
-	(*pieces)[jumper]->id = jumper;
-	
+	(*pieces)[jumper - 1] = &board[newx][newy];
+	(*pieces)[jumper - 1]->setInPlay(true);
+	(*pieces)[jumper - 1]->setColor(j->getColor());
+	(*pieces)[jumper - 1]->id = jumper;
+
 	p->setInPlay(false);
 	if (turn)
 		p2.setnPieces(p2.getnPieces() -1 );
 	else
 		p1.setnPieces(p1.getnPieces() -1 );
-	
+
 	turn = !turn;
 	return true;
 }
@@ -278,62 +320,68 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 void Match::play()
 {
 	using namespace std;
-	
+
 	if (debug) {
 		p1.display();
 		p2.display();
 		print();
 	}
-	
+
 	unsigned count1 = 0,count2 = 0;
 	unsigned piece;
 	Direction d;
-	
+
 	while (1) {
 		if (debug) cout << p1.getnPieces() << " Player 1\n" << p2.getnPieces() << " Player 2\n\n";
-		if (p1.getnPieces() < 1) return;
-		if (debug) cout << "P1 pieces = " << p1.getnPieces() << endl;
-		while (1) {
-			if (count1 == 3) {
+		
+		if (turn) {
+			if (p1.getnPieces() < 1) return;
+			if (debug) cout << "P1 pieces = " << p1.getnPieces() << endl;
+			while (1) {
+				if (debug) print();
+				if (count1 == 3) {
+					count1 = 0;
+					if (debug) cout << "Three failed moves P1; Lose a turn!\n\n";
+					turn  =  !turn;
+					break;
+				}
+				if (debug) cout << "================ Player 1 (Black) ==============\n\n";
+				int c = receiveInput(piece,d);
+				switch (c) {
+					case -1: return;
+					case 0: {
+						count1++;
+						continue;
+					}
+					default:;
+				}
 				count1 = 0;
-				if (debug) cout << "Three failed moves P1; Lose a turn!\n\n";
 				break;
 			}
-			if (debug) cout << "================ Player 1 (Black) ==============\n\n";
-			int c = receiveInput(piece,d);
-			switch (c) {
-				case -1: return;
-				case 0: {
-					count1++;
-					continue;
+		} else {
+			if (p2.getnPieces() <1) return;
+			if (debug) cout << "P2 pieces = " << p2.getnPieces() << endl;
+			while (1) {
+				if (debug) print();
+				if (count2 == 3) {
+					count2 = 0;
+					if (debug) cout << "Three failed moves P2; Lose a turn!\n\n";
+					turn = !turn;
+					break;
 				}
-				default:;
-			}
-			count1 = 0;
-			if (debug) print();
-			break;
-		}
-		if (p2.getnPieces() <1) return;
-		if (debug) cout << "P2 pieces = " << p2.getnPieces() << endl;
-		while (1) {
-			if (count2 == 3) {
+				if (debug) cout << "================ Player 2  (Red) ==============\n\n";
+				int c = receiveInput(piece,d);
+				switch (c) {
+					case -1: return;
+					case 0: {
+						count2++;
+						continue;
+					}
+					default:;
+				}
 				count2 = 0;
-				if (debug) cout << "Three failed moves P2; Lose a turn!\n\n";
 				break;
 			}
-			if (debug) cout << "================ Player 2  (Red) ==============\n\n";
-			int c = receiveInput(piece,d);
-			switch (c) {
-				case -1: return;
-				case 0: {
-					count2++;
-					continue;
-				}
-				default:;
-			}
-			count2 = 0;
-			if (debug) print();
-			break;
 		}
 	}
 }
@@ -341,49 +389,47 @@ void Match::play()
 int Match::receiveInput(unsigned piece, Direction d)
 {
 	using namespace std;
-	string dirString;
+
 	unsigned prey;
-	Player *a, *b;
-	if (turn) {
-		a = &p1;
-		b = &p2;
-	} else {
-		a = &p2;
-		b = &p1;
-	}
-	Player& player = *a;
-	Player& other = *b;
-	
-	if (debug) cout << "Enter piece id: ";
-	if (!(cin  >> piece)) {
-		cin.clear();
-		cerr << "Input Error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+	string instring;
+
+	cout << "Enter piece id: ";
+	getline(cin,instring);
+	if (instring == "q") return -1;
+	if (!(stringstream(instring) >> piece)) {
+		cerr << endl << piece << endl;
+		cerr << "Input Error; try again\n";
 		return 0;
 	}
-	if (debug) cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or 'j' = jump: ";
-	cin >> dirString;
-	if (dirString == "q") return -1;
+	cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or 'j' = jump: ";
+	getline(cin,instring);
+	if (instring == "q") return -1;
 	/* Jumping */
-	if (dirString == "j") {
+	if (instring == "j") {
 		if (debug) cout << "Enter prey ID: ";
-		cin >> prey;
+		getline(cin,instring);
+		if (instring == "q") return -1;
+		if (!(stringstream(instring) >> prey)) {
+			cerr << "Input Error; try again\n";
+			return 0;
+		}
 		if (!jumpPiece(piece,prey)) {
 			cerr << "Jumping error; try again\n";
 			return 0;
 		}
 		return 1;
 	}
-	
+
 	/* Regular Movement */
-	if  (dirString == "l")
+	if  (instring == "l")
 		d = LEFT;
-	else if (dirString == "r")
+	else if (instring == "r")
 		d = RIGHT;
 	else {
-		cerr << "Input Error\n";
+		cerr << "Input Error; try again\n";
 		return 0;
 	}
-	
+
 	if (!movePiece(piece,d)) {
 		cerr << "Movement error; try again\n";
 		return 0;
@@ -391,11 +437,3 @@ int Match::receiveInput(unsigned piece, Direction d)
 	return 1;
 }
 
-int main()
-{
-	using namespace std;
-	
-	Match test;
-	test.play();
-	return 0;
-}
