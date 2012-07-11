@@ -4,83 +4,68 @@
 #include "player.hpp"
 #include "bst.hpp"
 
-GameTree::GameTree(bool turn)
-		: myScore (12), otherScore(12), p1 (Piece::BLACK,false), 
-			p2 (Piece::RED,false), turn(turn),
-			record (turn)
+GameTree::GameTree(const SaveGame& record)
+		: scenario (record, false), children ()
+{}
+
+void GameTree::printScene()
 {
 	using namespace std;
-	
-	auto alias = *( p1.getGame());
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			if (alias[i][j].getInPlay()) {
-				record(i,j).alive = true;
-				record(i,j).id = alias[i][j].id;
-				record(i,j).color = alias[i][j].getColor();
+	scenario.print();
+}
+
+void GameTree::test()
+{
+	for (unsigned i = 1; i <= 12; i++) {
+		if (scenario.movePiece(i,Match::LEFT) ||
+				scenario.movePiece(i,Match::RIGHT)) break;
+	}
+	GameTree child (scenario.getSave());
+	child.printScene();
+}
+
+void GameTree::generateChildren()
+{
+	SaveGame savestate = scenario.getSave();
+
+	for (unsigned i = 1; i <= 12; i++) {
+		if ( scenario.movePiece(i,Match::LEFT)) {
+			GameTree child (scenario.getSave());
+			children.push_back(child);
+			scenario.restoreToSave(savestate);
+			continue;
+		}
+		if (scenario.movePiece(i,Match::RIGHT)) {
+			GameTree child (scenario.getSave());
+			children.push_back(child);
+			scenario.restoreToSave(savestate);
+			continue;
+		}
+//		if (success) break;
+		for (unsigned j = 1; j <= 12; j++) {
+			if (scenario.jumpPiece(i,j)) {
+				GameTree child (scenario.getSave());
+				children.push_back(child);
+				scenario.restoreToSave(savestate);
+				break;
 			}
 		}
 	}
-}
 
-GameTree::GameTree(const SaveGame& recordd)
-		: p1 (Piece::BLACK, recordd, false), p2 (Piece::RED, recordd, false),
-			turn (false) , record(false)
-{
-	this->record = recordd;
-	myScore = p1.getnPieces();
-	otherScore = p2.getnPieces();
-	std::cout << "Board created from record\n\n";
-}
-	
-void GameTree::printRecord()
-{
-	using namespace std;
-	cout << endl;
-	for (int j = 7; j >= 0; j--) {
-		for (unsigned i = 0; i < BOARD_SIZE; i++) {
-			if (record(i,j).alive == true) cout << "O";
-			else cout << "-";
-		}
-		cout << endl;
+	for (auto& child : children) {
+		child.printScene();
 	}
-}
 
-void GameTree::test(unsigned piece)
-{
-	Player *player;
-	if (turn) player = &p1;
-	else player = &p2;
-	auto &pieces = *(player->getPieces());
-	for (unsigned i = 0; i < 12; i++) {
-		auto &alias = pieces[i];
-		unsigned oldx = alias->getX();
-		unsigned oldy = alias->getY();
-		if (player->movePiece(i, Player::LEFT) || player->movePiece(i,Player::RIGHT)) {
-			record(oldx,oldy).alive = false;
-			unsigned newx = alias->getX();
-			unsigned newy = alias->getY();
-			record(newx,newy).alive = true;
-			record(newx,newy).id = i;
-			record(newx,newy).color = alias->getColor();
-			break;
-		}
-	}
-	turn = !turn;
-	GameTree child (record);
-	child.printRecord();
 }
 			
 
 int main ()
 {
 	using namespace std;
-	GameTree tree;
-	tree.printRecord();
-	for (unsigned i = 0; i < 12; i++) {
-		tree.test(i);
-	}
-	tree.printRecord();
+	GameTree tree (Match(false).getSave());
+	tree.printScene();
+	tree.generateChildren();
+//	tree.printScene();
 	cout << "SUCCESS!" << endl;
 	return 0;
 }

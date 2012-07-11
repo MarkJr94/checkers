@@ -69,6 +69,11 @@ Match::Match(SaveGame record, bool db)
 			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)),
 			turn(record.getTurn()), debug (db), save (record)
 {
+	restoreToSave(record);
+}
+
+void Match::restoreToSave(SaveGame& record)
+{
 	using namespace std;
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -79,12 +84,14 @@ Match::Match(SaveGame record, bool db)
 		}
 	}
 
+	turn = record.getTurn();
+
 	vector<Piece *> *p1pieces = p1.getPieces();
 	vector<Piece *> *p2pieces = p2.getPieces();
-	
+
 	unsigned p2numPieces = 0;
 	unsigned p1numPieces = 0;
-	
+
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			unsigned index = record(i,j).id;
@@ -103,7 +110,7 @@ Match::Match(SaveGame record, bool db)
 			}
 		}
 	}
-	
+
 	for (auto &p : *p1pieces) {
 		if (p == NULL)
 			p = new Piece(~0u, 0, 0, Piece::BLACK);
@@ -112,7 +119,7 @@ Match::Match(SaveGame record, bool db)
 		if (p == NULL)
 			p = new Piece(~0u, 0, 0, Piece::RED);
 	}
-	
+
 	p1.setnPieces(p1numPieces);
 	p2.setnPieces(p2numPieces);
 }

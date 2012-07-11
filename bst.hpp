@@ -4,20 +4,17 @@
 #include <vector>
 #include "checkers.hpp"
 #include "player.hpp"
+#include "game.hpp"
 
 class GameTree {
-	unsigned myScore;
-	unsigned otherScore;
-	Player p1;
-	Player p2;
-	bool turn;
-	SaveGame record;
+	Match scenario;
+	std::vector<GameTree> children;
 	
 public:
-	GameTree(bool turn = true);
 	GameTree(const SaveGame&);
-	void printRecord();
-	void test(unsigned piece);
+	void printScene();
+	void test();
+	void generateChildren();
 };
 
 #endif /* GAME_TREE_ */

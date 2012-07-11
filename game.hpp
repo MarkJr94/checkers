@@ -118,8 +118,14 @@ public:
 	bool jumpPiece(unsigned jumper, unsigned prey);
 	/* Play */
 	void play();
+	/* restore game to save */
+	void restoreToSave(SaveGame& record);
 	/* Receive input for CLI */
 	int receiveInput(unsigned piece, Direction d);
+	/* Get p1 score */
+	inline unsigned getP1score() {	return p1.getnPieces();}
+	/* Get p2 score */
+	inline unsigned getP2Score() {	return p2.getnPieces();}
 };
 
 #endif /* GAME_HPP_ */
