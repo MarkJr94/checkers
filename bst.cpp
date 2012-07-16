@@ -121,11 +121,14 @@ void GameTree::recurse()
 int main ()
 {
 	using namespace std;
+
 	GameTree tree (1,Match(false).getSave());
 	tree.printScene();
 	tree.recurse();
-	auto future = tree.kidnap();
-//	future[1].recurse();
+	vector<GameTree> future = tree.kidnap();
+	GameTree tree2 (1,future[1].scenario.getSave());
+	tree2.printScene();
+	tree2.recurse();
 	cout << "SUCCESS!" << endl;
 	return 0;
 }

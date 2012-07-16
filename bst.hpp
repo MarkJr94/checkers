@@ -7,6 +7,7 @@
 #include "game.hpp"
 
 class GameTree {
+public:
 	unsigned level;
 	Match scenario;
 	std::vector<GameTree> children;
