@@ -23,7 +23,7 @@ int main()
 		try {
 			loadGame = new SaveGame (false);
 			loadGame->read(instr);
-		} catch (ios_base::failure) {
+		} catch (const ios_base::failure&) {
 			cerr << "Error loading savefile \"" << instr << "\"" << endl;
 			return 1;
 		}

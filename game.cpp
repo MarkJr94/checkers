@@ -168,7 +168,7 @@ bool Match::movePiece(unsigned piece, Direction d)
 
 	/* Testing if piece selection is valid */
 	if ( piece > 12 || piece < 1) {
-		cerr << "Invalid piece number input" << endl;
+		cerr << "movePiece: Invalid piece number input" << endl;
 		return false;
 	}
 
@@ -186,7 +186,7 @@ bool Match::movePiece(unsigned piece, Direction d)
 
 
 	if (!alias->getInPlay() ) {
-		cerr << "Selected piece not inplay\n";
+		cerr << "movePiece: Selected piece " << piece << " not inplay\n";
 		return false;
 	}
 
@@ -209,16 +209,16 @@ bool Match::movePiece(unsigned piece, Direction d)
 
 	/* Testing move validity */
 	if (nexty > 7 ) {
-		cerr << "Piece obstructed at border.\n";
+		cerr << "movePiece: Piece obstructed at border.\n";
 		return false;
 	}
 
 	if (nextx > 7) {
-		cerr << "Piece obstructed at border.\n";
+		cerr << "movePiece: Piece obstructed at border.\n";
 		return false;
 	}
 	if (board[nextx][nexty].getInPlay()) {
-		cerr << "Piece obstructed by piece\n";
+		cerr << "movePiece: Piece obstructed by piece\n";
 		return false;
 	}
 
@@ -254,15 +254,15 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 
 	/* Testing if piece selection is valid */
 	if ( jumper > 12 || prey > 12) {
-		cerr << "Invalid piece number input" << endl;
+		cerr << "pieceJump: Invalid piece number input" << endl;
 		return false;
 	}
 	if ( jumper < 1 || prey < 1) {
-		cerr << "Invalid piece number input" << endl;
+		cerr << "pieceJump: Invalid piece number input" << endl;
 		return false;
 	}
 	if (!j->getInPlay() || !p->getInPlay() ) {
-		cerr << "Selected piece not inplay\n";
+		cerr << "pieceJump: Selected piece not inplay\n";
 		return false;
 	}
 	if (debug) {j->print(); cout << "Preying on: "; p->print();}
@@ -270,23 +270,23 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 	/* Testing if valid targets */
 	if (!turn) {
 		if (p->getY() > j->getY()) {
-			cerr << "Invalid target in Y direction\n";
+			cerr << "pieceJump: Invalid target in Y direction\n";
 			return false;
 		}
 	} else {
 		if (p->getY() < j->getY()) {
-			cerr << "Invalid target in Y direction\n";
+			cerr << "pieceJump: Invalid target in Y direction\n";
 			return false;
 		}
 	}
 	int ydiff = (int)p->getY() - (int)j->getY();
 	if (ydiff != 1 && ydiff != -1) {
-		cerr << "Invalid target in Y direction\n";
+		cerr << "pieceJump: Invalid target in Y direction\n";
 		return false;
 	}
 	int diff = (int)p->getX() - (int)j->getX();
 	if (diff != 1 && diff != -1) {
-		cerr << "Invalid target in X direction\n";
+		cerr << "pieceJump: Invalid target in X direction\n";
 		return false;
 	}
 
@@ -299,11 +299,11 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 		newy = j->getY() + 2;
 	}
 	if (newx > 7 || newy > 7) {
-		cerr << "Jump obstructed at border\n";
+		cerr << "pieceJump: Jump obstructed at border\n";
 		return false;
 	}
 	if (board[newx][newy].getInPlay()) {
-		cerr << "Jump obstructed by piece\n";
+		cerr << "pieceJump: Jump obstructed by piece\n";
 		return false;
 	}
 

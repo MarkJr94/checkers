@@ -7,14 +7,18 @@
 #include "game.hpp"
 
 class GameTree {
+	unsigned level;
 	Match scenario;
 	std::vector<GameTree> children;
 	
 public:
-	GameTree(const SaveGame&);
+	GameTree(unsigned level, const SaveGame);
 	void printScene();
-	void test();
 	void generateChildren();
+	unsigned testMoves(SaveGame savestate);
+	bool testJumps(unsigned,SaveGame);
+	void recurse();
+	std::vector<GameTree> kidnap() { return children; }
 };
 
 #endif /* GAME_TREE_ */
