@@ -144,6 +144,7 @@ void Match::print() const
 {
 	using namespace std;
 
+	cout << "P1: " << p1.getnPieces() << "\tP2: " << p2.getnPieces() << endl;
 	for (int j = (int)(BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			if (board[i][j].getInPlay()) {

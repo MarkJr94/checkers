@@ -3,21 +3,24 @@
 #include <ctime>
 #include <iostream>
 #include <vector>
+#include <omp.h>
 
 #include "bst.hpp"
 #include "checkers.hpp"
 #include "player.hpp"
 
 GameTree::GameTree(unsigned level,const SaveGame record)
-		: level(level), scenario (record, false), children ()
-{}
+		: level(level), scenario (record, false), children (),
+		  p1Min (scenario.getP1score()), p2Min (scenario.getP2Score())
+{
+}
 
 void GameTree::printScene()
 {
 	using namespace std;
 
-	cout << "This is a level " << level << " Scenario\n";
-	cout << "With " << children.size() << " children.\n\n";
+	cout << "This is a level " << level << " Scenario with " <<
+			"P1 Min: " << p1Min << "\tP2 Min: " << p2Min << endl;
 	scenario.print();
 }
 
@@ -27,108 +30,100 @@ unsigned GameTree::testMoves(SaveGame savestate)
 	using namespace std;
 
 	bool retval;
-	int maybeRandom;
-	srand(time(NULL));
 	unsigned successCount = 0;
 
-	vector<unsigned> numvec;
-	for (unsigned i = 1; i <= 12; i++)
-		numvec.push_back(i);
-
-	random_shuffle(numvec.begin(),numvec.end());
-	for (unsigned piece : numvec) {
-		bool turnn = scenario.getSave().getTurn();
-//		cout << "Testing piece " << piece << " with turn = " << turnn << endl;
-		cout << " Turn = " << turnn << " of a level " << level << "scenario" << endl;
-		maybeRandom = rand() % 2;
-		if (maybeRandom) {
-			retval = scenario.movePiece(piece,Match::LEFT);
-			if (!retval) retval = scenario.movePiece(piece, Match::RIGHT);
-		} else {
-			retval = scenario.movePiece(piece,Match::RIGHT);
-			if (!retval) retval =  scenario.movePiece(piece,Match::LEFT);
-		}
-
+	for (unsigned piece = 1; piece <= 12; piece++) {
+		/* Test left move */
+		retval = scenario.movePiece(piece,Match::LEFT);
 		if (retval) {
 			++successCount;
-			GameTree child(level+1, scenario.getSave());
-			children.push_back(child);
+			children.push_back(new GameTree (level+1, scenario.getSave()));
 			scenario.restoreToSave(savestate);
-			continue;
 		}
 
-		retval = testJumps(piece,savestate);
+		/* Test right move */
+		retval = scenario.movePiece(piece, Match::RIGHT);
 		if (retval) {
 			++successCount;
-			GameTree child(level+1, scenario.getSave());
-			children.push_back(child);
+			children.push_back(new GameTree (level+1, scenario.getSave()));
 			scenario.restoreToSave(savestate);
-			continue;
+		}
+
+		/* Test jumping */
+		for (unsigned prey = 1; prey <= 12; prey++) {
+			retval = scenario.jumpPiece(piece,prey);
+			if (retval) {
+				++successCount;
+				children.push_back(new GameTree (level+1, scenario.getSave()));
+				scenario.restoreToSave(savestate);
+			}
 		}
 	}
 	return successCount;
-
-}
-
-bool GameTree::testJumps(unsigned i, SaveGame savestate)
-{
-	using namespace std;
-
-	vector<unsigned> numvec;
-	for (unsigned i = 1; i <= 12; i++)
-		numvec.push_back(i);
-
-	random_shuffle(numvec.begin(),numvec.end());
-	for (auto prey: numvec) {
-		if (scenario.jumpPiece(i, prey)) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void GameTree::generateChildren()
-{
-	if (level > 2) return;
-	SaveGame savestate = scenario.getSave();
-	unsigned numSucceeded = testMoves(savestate);
-	std::cout << "numSucceeded = " << numSucceeded << std::endl << std::endl;
-	if (numSucceeded < 1) {
-		std::cout << "No available moves man :(\n\n";
-		return;
-	}
-
-	for (auto& child : children) {
-		child.printScene();
-//		child.generateChildren();
-	}
 }
 
 void GameTree::recurse()
 {
 
-	if (level > 3) return;
+	if (level > 6) return;
 	SaveGame savestate = scenario.getSave();
 	unsigned num =  testMoves(savestate);
 	if (num < 1) return;
 
-	for (auto& child : children) {
-		child.printScene();
+	size_t numKids = children.size();
+	#pragma omp parallel for
+	for (size_t i = 0; i < numKids; i++) {
+		children[i]->recurse();
 	}
+}
+
+std::vector<GameTree *> GameTree::kidnap() { return children; }
+
+void GameTree::updateScores()
+{
+	if (children.empty()) return;
+
+	size_t numKids = children.size();
+	#pragma omp parallel for
+	for (size_t i = 0; i < numKids; i++) {
+		children[i]->updateScores();
+	}
+
+	double temp1 = 0, temp2 = 0;
+	for (auto& child : children) {
+		temp1 += child->p1Min;
+		temp2 += child->p2Min;
+	}
+
+	p1Min = temp1/children.size();
+	p2Min = temp1/children.size();
+}
+
+void GameTree::recursivePrint()
+{
+	printScene();
+	if (children.empty()) return;
+
+	for (auto& child : children) {
+		child->recursivePrint();
+	}
+}
+
+void gameDo()
+{
+	using namespace std;
+
+	GameTree tree (1,Match(false).getSave());
+//	tree.printScene();
+	tree.recurse();
+	tree.updateScores();
+//	tree.recursivePrint();
 }
 
 int main ()
 {
 	using namespace std;
 
-	GameTree tree (1,Match(false).getSave());
-	tree.printScene();
-	tree.recurse();
-	vector<GameTree> future = tree.kidnap();
-	GameTree tree2 (1,future[1].scenario.getSave());
-	tree2.printScene();
-	tree2.recurse();
-	cout << "SUCCESS!" << endl;
+	gameDo();
 	return 0;
 }

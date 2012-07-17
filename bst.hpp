@@ -10,16 +10,18 @@ class GameTree {
 public:
 	unsigned level;
 	Match scenario;
-	std::vector<GameTree> children;
+	std::vector<GameTree *> children;
+	double p1Min;
+	double p2Min;
 	
 public:
 	GameTree(unsigned level, const SaveGame);
 	void printScene();
-	void generateChildren();
 	unsigned testMoves(SaveGame savestate);
-	bool testJumps(unsigned,SaveGame);
 	void recurse();
-	std::vector<GameTree> kidnap() { return children; }
+	std::vector<GameTree *> kidnap();
+	void updateScores();
+	void recursivePrint();
 };
 
 #endif /* GAME_TREE_ */
