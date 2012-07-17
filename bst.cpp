@@ -65,7 +65,7 @@ unsigned GameTree::testMoves(SaveGame savestate)
 void GameTree::recurse()
 {
 
-	if (level > 6) return;
+	if (level > 5) return;
 	SaveGame savestate = scenario.getSave();
 	unsigned num =  testMoves(savestate);
 	if (num < 1) return;
@@ -96,7 +96,7 @@ void GameTree::updateScores()
 	}
 
 	p1Min = temp1/children.size();
-	p2Min = temp1/children.size();
+	p2Min = temp2/children.size();
 }
 
 void GameTree::recursivePrint()
@@ -117,7 +117,7 @@ void gameDo()
 //	tree.printScene();
 	tree.recurse();
 	tree.updateScores();
-//	tree.recursivePrint();
+	tree.recursivePrint();
 }
 
 int main ()
