@@ -125,7 +125,10 @@ public:
 	/* Get p1 score */
 	inline unsigned getP1score() {	return p1.getnPieces();}
 	/* Get p2 score */
-	inline unsigned getP2Score() {	return p2.getnPieces();}
+	inline unsigned getP2score() {	return p2.getnPieces();}
+	/* Setter and getter for turn */
+	void setTurn (bool newval) {turn = newval;}
+	bool getTurn () {return turn;}
 };
 
 #endif /* GAME_HPP_ */
