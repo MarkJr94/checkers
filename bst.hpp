@@ -31,7 +31,7 @@ public:
 	void updateScores();
 	void recursivePrint();
 	inline MoveRecord getCreator() { return creator;}
-	MoveRecord getBestMove(bool optimizeForP2 = true);
+	MoveRecord getBestMove(bool optimizeForP2 = true, bool aggro = false);
 };
 
 #endif /* GAME_TREE_ */

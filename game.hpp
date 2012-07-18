@@ -11,6 +11,7 @@ struct cellRecord {
 	bool alive;
 	Piece::Color color;
 	unsigned id;
+	bool isKing;
 };
 
 class SaveGame {
@@ -58,7 +59,7 @@ public:
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			for (unsigned j = 0; j < BOARD_SIZE; j++) {
 				savefile << data[i][j].id << " " << data[i][j].alive 
-					<< " " << data[i][j].color << " ";
+					<< " " << data[i][j].color << " " << data[i][j].isKing << " ";
 			}
 			savefile << endl;
 		}
@@ -71,7 +72,7 @@ public:
 		
 		fstream savefile;
 		savefile.open(fname.c_str(),fstream::in);
-		bool turn,alive;
+		bool turn,alive, isKing ;
 		unsigned col;
 		unsigned id;
 		
@@ -80,10 +81,11 @@ public:
 		this->turn = turn;
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			for (unsigned j = 0; j < BOARD_SIZE; j++) {
-				savefile >> id >> alive >> col; 
+				savefile >> id >> alive >> col >> isKing;
 				data[i][j].color = (Piece::Color)col;
 				data[i][j].alive = alive;
 				data[i][j].id = id;
+				data[i][j].isKing = isKing;
 			}
 		}
 		savefile.close();
@@ -98,14 +100,16 @@ class Match {
 	bool turn;
 	bool debug;
 	SaveGame save;
+	bool interact;
 	
 public:
 	/* Enumerations for movement and jump directions */
-	enum Direction {LEFT,RIGHT};
+	enum Direction {LEFT,RIGHT,BKLEFT,BKRIGHT};
+
 	/* Constructor */
-	Match(bool db = true);
+	Match(bool db,bool interact);
 	/* Constructor from memory */
-	Match(SaveGame record, bool db);
+	Match(SaveGame record, bool db, bool interact);
 	/* Update save game */
 	inline void updateSave();
 	/* return save game */

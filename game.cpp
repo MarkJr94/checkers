@@ -8,10 +8,10 @@
 
 
 
-Match::Match(bool db)
+Match::Match(bool db,bool interact)
 		: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
 			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE, Piece())), turn(true),
-			debug (db), save (true)
+			debug (db), save (true), interact(interact)
 {
 	using namespace std;
 
@@ -64,10 +64,10 @@ Match::Match(bool db)
 	}
 }
 
-Match::Match(SaveGame record, bool db)
+Match::Match(SaveGame record, bool db, bool interact)
 		: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
 			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)),
-			turn(record.getTurn()), debug (db), save (record)
+			turn(record.getTurn()), debug (db), save (record), interact(interact)
 {
 	restoreToSave(record);
 }
@@ -98,6 +98,10 @@ void Match::restoreToSave(SaveGame& record)
 			if (record(i,j).alive) {
 				board[i][j].setInPlay(true);
 				board[i][j].id = index;
+				if (record(i,j).isKing)
+					board[i][j].setIsKing(true);
+				if (record(i,j).isKing)
+					board[i][j].setIsKing(true);
 				if (record(i,j).color == Piece::BLACK) {
 					p1numPieces++;
 					board[i][j].setColor(Piece::BLACK);
@@ -131,6 +135,7 @@ inline void Match::updateSave() {
 			save(i,j).id = alias.id;
 			save(i,j).color = alias.getColor();
 			save(i,j).alive = alias.getInPlay();
+			save(i,j).isKing = alias.getIsKing();
 		}
 	}
 	save.setTurn(turn);
@@ -169,12 +174,11 @@ bool Match::movePiece(unsigned piece, Direction d)
 
 	/* Testing if piece selection is valid */
 	if ( piece > 12 || piece < 1) {
-		cerr << "movePiece: Invalid piece number input" << endl;
+		if (interact) cerr << "movePiece: Invalid piece number input" << endl;
 		return false;
 	}
 
 	/* Jumping */
-	bool jumpPiece(unsigned jumper, unsigned prey, Player& other);
 	if (turn) {
 		pieces = p1.getPieces();
 		alias = (*pieces)[piece - 1];
@@ -183,43 +187,54 @@ bool Match::movePiece(unsigned piece, Direction d)
 		alias = (*pieces)[piece - 1];
 	}
 
-	alias->getIsKing();
-
-
 	if (!alias->getInPlay() ) {
-		cerr << "movePiece: Selected piece " << piece << " not inplay\n";
+		if (interact) cerr << "movePiece: Selected piece " << piece << " not in play\n";
 		return false;
 	}
 
-	if (debug) alias->print();
-	if (debug) cout << "Piece No. " << piece << " Direction "
-		<< (d == LEFT ? "LEFT" : "RIGHT") << endl;
+	bool wasKing = alias->getIsKing();
+	if (!wasKing) {
+//		return moveKing(pieces,alias,d);
+		if (d == BKLEFT || d == BKRIGHT) {
+			if (interact) cerr << "movePiece: Invalid direction for non-King piece.\n";
+			return false;
+		}
+	}
 
+	if (debug) alias->print();
 	/* Determine next coordinates for jump */
 	unsigned nextx, nexty;
 
-	if (turn)
-		nexty = alias->getY() + 1;
-	else
-		nexty = alias->getY() - 1;
+	if (turn) {
+		if (d == BKLEFT || d == BKRIGHT)
+			nexty = alias->getY() - 1;
+		else
+			nexty = alias->getY() + 1;
+	}
+	else {
+		if (d == BKLEFT || d == BKRIGHT)
+			nexty = alias->getY() + 1;
+		else
+			nexty = alias->getY() - 1;
+	}
 
-	if (d == LEFT)
+	if (d == LEFT || d == BKLEFT)
 		nextx = alias->getX() - 1;
 	else
 		nextx = alias->getX() + 1;
 
 	/* Testing move validity */
 	if (nexty > 7 ) {
-		cerr << "movePiece: Piece obstructed at border.\n";
+		if (interact) cerr << "movePiece: Piece obstructed at border.\n";
 		return false;
 	}
 
 	if (nextx > 7) {
-		cerr << "movePiece: Piece obstructed at border.\n";
+		if (interact) cerr << "movePiece: Piece obstructed at border.\n";
 		return false;
 	}
 	if (board[nextx][nexty].getInPlay()) {
-		cerr << "movePiece: Piece obstructed by piece\n";
+		if (interact) cerr << "movePiece: Piece obstructed by piece\n";
 		return false;
 	}
 
@@ -232,6 +247,8 @@ bool Match::movePiece(unsigned piece, Direction d)
 	else
 		alias->setColor(Piece::RED);
 	alias->id = piece;
+	if (wasKing || nexty == 7 || nexty == 0)
+		alias->setIsKing(true);
 
 	turn = !turn;
 	return true;
@@ -255,56 +272,60 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 
 	/* Testing if piece selection is valid */
 	if ( jumper > 12 || prey > 12) {
-		cerr << "pieceJump: Invalid piece number input" << endl;
+		if (interact) cerr << "pieceJump: Invalid piece number input" << endl;
 		return false;
 	}
 	if ( jumper < 1 || prey < 1) {
-		cerr << "pieceJump: Invalid piece number input" << endl;
+		if (interact) cerr << "pieceJump: Invalid piece number input" << endl;
 		return false;
 	}
 	if (!j->getInPlay() || !p->getInPlay() ) {
-		cerr << "pieceJump: Selected piece not inplay\n";
+		if (interact) cerr << "pieceJump: Selected piece not inplay\n";
 		return false;
 	}
 	if (debug) {j->print(); cout << "Preying on: "; p->print();}
 
 	/* Testing if valid targets */
-	if (!turn) {
-		if (p->getY() > j->getY()) {
-			cerr << "pieceJump: Invalid target in Y direction\n";
-			return false;
-		}
-	} else {
-		if (p->getY() < j->getY()) {
-			cerr << "pieceJump: Invalid target in Y direction\n";
-			return false;
+	bool wasKing = j->getIsKing();
+	if (!wasKing ) {
+		if (!turn) {
+			if (p->getY() > j->getY()) {
+				if (interact) cerr << "pieceJump: Invalid target in Y direction\n";
+				return false;
+			}
+		} else {
+			if (p->getY() < j->getY()) {
+				if (interact) cerr << "pieceJump: Invalid target in Y direction\n";
+				return false;
+			}
 		}
 	}
+
 	int ydiff = (int)p->getY() - (int)j->getY();
 	if (ydiff != 1 && ydiff != -1) {
-		cerr << "pieceJump: Invalid target in Y direction\n";
+		if (interact) cerr << "pieceJump: Invalid target in Y direction\n";
 		return false;
 	}
 	int diff = (int)p->getX() - (int)j->getX();
 	if (diff != 1 && diff != -1) {
-		cerr << "pieceJump: Invalid target in X direction\n";
+		if (interact) cerr << "pieceJump: Invalid target in X direction\n";
 		return false;
 	}
 
 	/* Testing the validity of the jump */
 	unsigned newx = j->getX() + diff * 2;
-	unsigned newy;
-	if (!turn) {
-		newy = j->getY() - 2;
-	} else {
-		newy = j->getY() + 2;
-	}
+	unsigned newy = j->getX() + ydiff * 2;
+//	if (!turn) {
+//		newy = j->getY() - 2;
+//	} else {
+//		newy = j->getY() + 2;
+//	}
 	if (newx > 7 || newy > 7) {
-		cerr << "pieceJump: Jump obstructed at border\n";
+		if (interact) cerr << "pieceJump: Jump obstructed at border\n";
 		return false;
 	}
 	if (board[newx][newy].getInPlay()) {
-		cerr << "pieceJump: Jump obstructed by piece\n";
+		if (interact) cerr << "pieceJump: Jump obstructed by piece\n";
 		return false;
 	}
 
@@ -314,6 +335,8 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 	(*pieces)[jumper - 1]->setInPlay(true);
 	(*pieces)[jumper - 1]->setColor(j->getColor());
 	(*pieces)[jumper - 1]->id = jumper;
+	if (wasKing)
+		(*pieces)[jumper - 1]->setIsKing(true);
 
 	p->setInPlay(false);
 	if (turn)
@@ -409,7 +432,8 @@ int Match::receiveInput(unsigned piece, Direction d)
 		cerr << "Input Error; try again\n";
 		return 0;
 	}
-	cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or 'j' = jump: ";
+	cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or " <<
+			"'bl' = back left or 'br' = back right or 'j' = jump: ";
 	getline(cin,instring);
 	if (instring == "q") return -1;
 	/* Jumping */
@@ -433,8 +457,12 @@ int Match::receiveInput(unsigned piece, Direction d)
 		d = LEFT;
 	else if (instring == "r")
 		d = RIGHT;
+	else if (instring == "bl")
+		d = BKLEFT;
+	else if (instring == "br")
+		d = BKRIGHT;
 	else {
-		cerr << "Input Error; try again\n";
+		cout << "Input Error; try again\n";
 		return 0;
 	}
 

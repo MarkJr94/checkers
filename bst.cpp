@@ -11,7 +11,7 @@
 #include "player.hpp"
 
 GameTree::GameTree(unsigned level,const SaveGame record, const MoveRecord creator)
-		: level(level), scenario (record, false), children (),
+		: level(level), scenario (record, false, false), children (),
 		  p1Avg (scenario.getP1score()), p2Avg (scenario.getP2score())
 {
 	if (level > 1){
@@ -40,28 +40,64 @@ unsigned GameTree::testMoves(SaveGame savestate)
 	unsigned successCount = 0;
 
 	MoveRecord origin;
+	srand(time(NULL));
+	unsigned maybeRand;
+	unsigned mask1 = 1 << 8;
+	unsigned mask2 = 1 << 6;
+	unsigned mask3 = 1 << 4;
+	unsigned mask4 = 1 << 2;
 
 	for (unsigned piece = 1; piece <= 12; piece++) {
+		maybeRand = rand() %2;
 		/* Test left move */
-		retval = scenario.movePiece(piece,Match::LEFT);
-		if (retval) {
-			++successCount;
-			origin.jump = false;
-			origin.piece = piece;
-			origin.dir = Match::LEFT;
-			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
-			scenario.restoreToSave(savestate);
+		if (!(mask1 & maybeRand)) {
+			retval = scenario.movePiece(piece,Match::LEFT);
+			if (retval) {
+				++successCount;
+				origin.jump = false;
+				origin.piece = piece;
+				origin.dir = Match::LEFT;
+				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+				scenario.restoreToSave(savestate);
+			}
+		}
+		if (!(mask2 & maybeRand)) {
+			/* Test right move */
+			retval = scenario.movePiece(piece, Match::RIGHT);
+			if (retval) {
+				++successCount;
+				origin.jump = false;
+				origin.piece = piece;
+				origin.dir = Match::RIGHT;
+				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+				scenario.restoreToSave(savestate);
+			}
 		}
 
-		/* Test right move */
-		retval = scenario.movePiece(piece, Match::RIGHT);
-		if (retval) {
-			++successCount;
-			origin.jump = false;
-			origin.piece = piece;
-			origin.dir = Match::RIGHT;
-			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
-			scenario.restoreToSave(savestate);
+//		maybeRand = rand() %2;
+		if (!(mask3 & maybeRand)) {
+			/* Test back right move */
+			retval = scenario.movePiece(piece, Match::BKRIGHT);
+			if (retval) {
+				++successCount;
+				origin.jump = false;
+				origin.piece = piece;
+				origin.dir = Match::BKRIGHT;
+				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+				scenario.restoreToSave(savestate);
+			}
+		}
+		if (!(mask4 & maybeRand)) {
+			/* Test back left move */
+			retval = scenario.movePiece(piece, Match::BKLEFT);
+			if (retval) {
+				++successCount;
+				origin.jump = false;
+				origin.piece = piece;
+				origin.dir = Match::BKLEFT;
+				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+				scenario.restoreToSave(savestate);
+			}
 		}
 
 		/* Test jumping */
@@ -83,7 +119,12 @@ unsigned GameTree::testMoves(SaveGame savestate)
 void GameTree::recurse()
 {
 
-	if (level > 5) return;
+	srand(time(NULL));
+	if (rand() % 2) {
+		if (level > 5) return;
+	} else
+		if (level > 4) return;
+
 	SaveGame savestate = scenario.getSave();
 	unsigned num =  testMoves(savestate);
 	if (num < 1) return;
@@ -127,7 +168,7 @@ void GameTree::recursivePrint()
 	}
 }
 
-MoveRecord GameTree::getBestMove(bool optimizeForP2)
+MoveRecord GameTree::getBestMove(bool optimizeForP2, bool aggro)
 {
 	size_t nKids = children.size();
 
@@ -137,24 +178,43 @@ MoveRecord GameTree::getBestMove(bool optimizeForP2)
 	}
 
 	size_t favoredSon = 0;
-	double maxAvg = 0.0;
-	if (optimizeForP2) {
-		for (size_t i = 0; i < nKids; i++){
-			if (children[i]->p2Avg > maxAvg) {
-				maxAvg = children[i]->p2Avg;
-				favoredSon = i;
+	double bestAvg = 0.0;
+	if (!aggro) {
+		if (optimizeForP2) {
+			for (size_t i = 0; i < nKids; i++){
+				if (children[i]->p2Avg > bestAvg) {
+					bestAvg = children[i]->p2Avg;
+					favoredSon = i;
+				}
+			}
+		} else {
+			for (size_t i = 0; i < nKids; i++){
+				if (children[i]->p1Avg > bestAvg) {
+					bestAvg = children[i]->p1Avg;
+					favoredSon = i;
+				}
 			}
 		}
 	} else {
-		for (size_t i = 0; i < nKids; i++){
-			if (children[i]->p1Avg > maxAvg) {
-				maxAvg = children[i]->p1Avg;
-				favoredSon = i;
+		bestAvg = 999999999;
+		if (optimizeForP2) {
+			for (size_t i = 0; i < nKids; i++){
+				if (children[i]->p1Avg < bestAvg) {
+					bestAvg = children[i]->p1Avg;
+					favoredSon = i;
+				}
+			}
+		} else {
+			for (size_t i = 0; i < nKids; i++){
+				if (children[i]->p2Avg < bestAvg) {
+					bestAvg = children[i]->p2Avg;
+					favoredSon = i;
+				}
 			}
 		}
 	}
 
-	children[favoredSon]->printScene();
+//	children[favoredSon]->printScene();
 	return children[favoredSon]->getCreator();
 }
 
@@ -163,7 +223,7 @@ void gameDo()
 	using namespace std;
 
 	MoveRecord blank;
-	GameTree tree (1,Match(false).getSave(),blank);
+	GameTree tree (1,Match(false,false).getSave(),blank);
 	tree.recurse();
 	tree.updateScores();
 	tree.getBestMove();
@@ -174,7 +234,7 @@ void attemptToPlay(bool debug)
 	using namespace std;
 
 	MoveRecord blank;
-	Match theGame (false);
+	Match theGame (false,true);
 	unsigned prey;
 	unsigned piece;
 	Match::Direction d;
@@ -249,7 +309,7 @@ void simulate(bool debug)
 	using namespace std;
 
 	MoveRecord blank;
-	Match theGame (false);
+	Match theGame (false,false);
 	unsigned prey;
 	unsigned piece;
 	Match::Direction d;
@@ -278,7 +338,7 @@ void simulate(bool debug)
 			GameTree AI (1,theGame.getSave(),blank);
 			AI.recurse();
 			AI.updateScores();
-			blank = AI.getBestMove(false);
+			blank = AI.getBestMove(false,true);
 			bool success;
 			if (blank.jump) {
 				success = theGame.jumpPiece(blank.piece,blank.prey);
@@ -329,7 +389,7 @@ int main ()
 	using namespace std;
 
 //	gameDo();
-//	attemptToPlay(true);
-	simulate(true);
+	attemptToPlay(true);
+//	simulate(true);
 	return 0;
 }
