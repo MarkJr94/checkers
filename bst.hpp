@@ -21,17 +21,59 @@ private:
 	double p1Avg;
 	double p2Avg;
 	MoveRecord creator;
-	
+
 public:
 	GameTree(unsigned level, const SaveGame, const MoveRecord creator);
 	void printScene();
 	unsigned testMoves(SaveGame savestate);
-	void recurse();
+	void generateOutcomes();
 	std::vector<GameTree *> kidnap();
 	void updateScores();
 	void recursivePrint();
-	inline MoveRecord getCreator() { return creator;}
+
 	MoveRecord getBestMove(bool optimizeForP2 = true, bool aggro = false);
+
+	inline MoveRecord getCreator() {
+		return creator;
+	}
+
+	unsigned getLevel() const {
+		return level;
+	}
+
+	double getP1Avg() const {
+		return p1Avg;
+	}
+
+	void setP1Avg(double p1Avg) {
+		this->p1Avg = p1Avg;
+	}
+
+	double getP2Avg() const {
+		return p2Avg;
+	}
+
+	void setP2Avg(double p2Avg) {
+		this->p2Avg = p2Avg;
+	}
+
+	Match getScenario() const {
+		return scenario;
+	}
 };
+
+/* Play Player vs AI
+ * 	Arguments:
+ * 		theGame: pointer to an allocated game
+ * 		interact: whether to print interactive output.
+ */
+void playAgainstAI(Match *theGame, bool interact);
+
+/* Play AI VS AI Game.
+ * Arguments:
+ * 	theGame: Pointer to an allocated game
+ * 	interact: if interactive output should be printed
+ */
+void playAIvsAI(Match *theGame, bool interact);
 
 #endif /* GAME_TREE_ */

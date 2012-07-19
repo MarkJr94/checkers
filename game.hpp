@@ -17,16 +17,16 @@ struct cellRecord {
 class SaveGame {
 	std::vector<std::vector<cellRecord>> data;
 	bool turn;
-	
+
 public:
 	SaveGame(bool turn)
-			: data (8, std::vector<cellRecord> (8)), turn(turn)
+	: data (8, std::vector<cellRecord> (8)), turn(turn)
 	{;}
-	
+
 	/* Setter and getter for turn */
 	void setTurn (bool newval) {turn = newval;}
 	bool getTurn () {return turn;}
-	
+
 	SaveGame & operator=(const SaveGame other)
 	{
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -42,41 +42,41 @@ public:
 	{
 		return data[row][col];
 	}
-	
+
 	inline std::vector<cellRecord> & operator()(int row)
 	{
 		return data[row];
 	}
-	
+
 	void write(std::string fname)
 	{
 		using namespace std;
-		
+
 		fstream savefile;
 		savefile.open(fname.c_str(),fstream::trunc | fstream::out);
-		
+
 		savefile << turn << endl;
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			for (unsigned j = 0; j < BOARD_SIZE; j++) {
 				savefile << data[i][j].id << " " << data[i][j].alive 
-					<< " " << data[i][j].color << " " << data[i][j].isKing << " ";
+						<< " " << data[i][j].color << " " << data[i][j].isKing << " ";
 			}
 			savefile << endl;
 		}
 		savefile.close();
 	}
-	
+
 	void read(std::string fname)
 	{
 		using namespace std;
-		
+
 		fstream savefile;
 		savefile.open(fname.c_str(),fstream::in);
 		bool turn,alive, isKing ;
 		unsigned col;
 		unsigned id;
-		
-		
+
+
 		savefile >> turn;
 		this->turn = turn;
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -101,7 +101,7 @@ class Match {
 	bool debug;
 	SaveGame save;
 	bool interact;
-	
+
 public:
 	/* Enumerations for movement and jump directions */
 	enum Direction {LEFT,RIGHT,BKLEFT,BKRIGHT};
@@ -125,7 +125,7 @@ public:
 	/* restore game to save */
 	void restoreToSave(SaveGame& record);
 	/* Receive input for CLI */
-	int receiveInput(unsigned piece, Direction d);
+	int receiveInput();
 	/* Get p1 score */
 	inline unsigned getP1score() {	return p1.getnPieces();}
 	/* Get p2 score */

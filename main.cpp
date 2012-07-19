@@ -6,12 +6,13 @@
 #include "checkers.hpp"
 #include "player.hpp"
 #include "game.hpp"
+#include "bst.hpp"
 
 
-int main()
+int main ()
 {
 	using namespace std;
-	
+
 	string instr;
 	Match *theMatch;
 	SaveGame *loadGame, *saveGame;
@@ -27,11 +28,26 @@ int main()
 			cerr << "Error loading savefile \"" << instr << "\"" << endl;
 			return 1;
 		}
-		theMatch = new Match(*loadGame,true);
+		theMatch = new Match (*loadGame,true,true);
 	} else {
-		theMatch = new Match(true);
+		theMatch = new Match (true,true);
 	}
-	theMatch->play();
+	cout << "Please choose an option by entering it's number :\n"
+			<< "1.    Play against AI\t\t2.    Play against a friend\n"
+			<< "3.    Watch 2 AI's play each other.\n\n";
+	getline(cin,instr);
+
+	if (instr == "1")
+		playAgainstAI(theMatch,true);
+	else if (instr == "2") {
+		playPvP(theMatch);
+	} else if (instr == "3") {
+		playAIvsAI(theMatch,true);
+	} else {
+		cerr << "I'm sorry you haven't chosen a valid option. Goodbye!\n";
+		return 1;
+	}
+
 	cout << "Would you like to save your game? (y/n): ";
 	getline(cin,instr);
 	if (instr == "y") {

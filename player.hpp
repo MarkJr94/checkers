@@ -25,7 +25,7 @@ public:
 	void setnPieces(unsigned n) { numPieces = n;}
 	/* get pointer to pieces */
 	std::vector<Piece *> *getPieces() { return &pieces;}
-	
+
 	/* Destructor */
 	~Player();
 };

@@ -1,32 +1,31 @@
 #include <iostream>
 
 #include "checkers.hpp"
-
+/* Piece constructor:
+ * If any value is out of range, it is automatically set to 0.
+ */
 Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
-		: inPlay (false), isKing (false), x (xx), y (yy), col (color), id (idNo)
+: inPlay (false), isKing (false), x (xx), y (yy), col (color), id (idNo)
 {
 	if (idNo > 12 && idNo != ~0u) {
 		id = 0;
-		std::cerr << "id too large, set to 0\n";
 	} else {
 		id = idNo;
 	}
-	
+
 	if (xx > 7) {
 		x = 0;
-		std::cerr << "x value too large, set to 0\n";
 	} else {
 		x = xx;
 	}
-	
+
 	if (yy > 7) {
 		y = 0;
-		std::cerr << "y value too large, set to 0\n";
 	} else {
 		y = yy;
 	}
 }
-		
+
 unsigned Piece::getX() const {return x;}
 
 unsigned Piece::getY() const {return y;}
@@ -47,15 +46,15 @@ Piece & Piece::operator=(const Piece& other)
 		inPlay = other.inPlay;
 		col = other.col;
 	}
-	
+
 	return *this;
 }	
 
 void Piece::print() const
 {
 	std::cout << "id = " << id << " x = " << x << " y = " << y << " isKing = "
-		<< isKing << " inplay = " << inPlay << " col = "
-		<< (col == BLACK ? "Black" : "Red") << std::endl;
+			<< isKing << " inplay = " << inPlay << " col = "
+			<< (col == BLACK ? "Black" : "Red") << std::endl;
 }
 
 void Piece::setX(const unsigned xx) 

@@ -9,9 +9,9 @@
 
 
 Match::Match(bool db,bool interact)
-		: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
-			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE, Piece())), turn(true),
-			debug (db), save (true), interact(interact)
+: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
+  board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE, Piece())), turn(true),
+  debug (db), save (true), interact(interact)
 {
 	using namespace std;
 
@@ -32,7 +32,7 @@ Match::Match(bool db,bool interact)
 		p->setInPlay(true);
 		p->setColor(Piece::BLACK);
 		p->setIsKing(false);
-		p->id = id++;
+		p->setId(id++);
 		j += 2;
 		if (j == BOARD_SIZE) j = 1;
 		if (j == BOARD_SIZE + 1) j = 0;
@@ -53,7 +53,7 @@ Match::Match(bool db,bool interact)
 		p->setInPlay(true);
 		p->setColor(Piece::RED);
 		p->setIsKing(false);
-		p->id = id++;
+		p->setId(id++);
 		j += 2;
 		if (j == BOARD_SIZE) j = 1;
 		if (j == BOARD_SIZE + 1) j = 0;
@@ -65,9 +65,9 @@ Match::Match(bool db,bool interact)
 }
 
 Match::Match(SaveGame record, bool db, bool interact)
-		: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
-			board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)),
-			turn(record.getTurn()), debug (db), save (record), interact(interact)
+: p1 (Piece::BLACK, db), p2 (Piece::RED,db),
+  board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)),
+  turn(record.getTurn()), debug (db), save (record), interact(interact)
 {
 	restoreToSave(record);
 }
@@ -97,7 +97,7 @@ void Match::restoreToSave(SaveGame& record)
 			unsigned index = record(i,j).id;
 			if (record(i,j).alive) {
 				board[i][j].setInPlay(true);
-				board[i][j].id = index;
+				board[i][j].setId(index);
 				if (record(i,j).isKing)
 					board[i][j].setIsKing(true);
 				if (record(i,j).isKing)
@@ -132,7 +132,7 @@ inline void Match::updateSave() {
 	for (unsigned i =0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			auto & alias = board[i][j];
-			save(i,j).id = alias.id;
+			save(i,j).id = alias.getId();
 			save(i,j).color = alias.getColor();
 			save(i,j).alive = alias.getInPlay();
 			save(i,j).isKing = alias.getIsKing();
@@ -153,11 +153,16 @@ void Match::print() const
 	for (int j = (int)(BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			if (board[i][j].getInPlay()) {
-				unsigned thisid = board[i][j].id;
-				cout << (thisid < 10 ? "0" : "")<< thisid
-					<< (board[i][j].getColor() == Piece::RED? "R" : "B");
+				unsigned thisid = board[i][j].getId();
+				cout << (thisid < 10 ? "0" : "") << thisid;
+				if (board[i][j].getIsKing()) {
+					cout << (board[i][j].getColor() == Piece::RED? "R" : "B") <<
+							"K";
+				} else {
+					cout << (board[i][j].getColor() == Piece::RED? "RE" : "BL");
+				}
 			} else {
-				cout << "---";
+				cout << "----";
 			}
 		}
 		cout << "\n";
@@ -192,9 +197,9 @@ bool Match::movePiece(unsigned piece, Direction d)
 		return false;
 	}
 
+	/* Directions BKLEFT and BKRIGHT are only valid for kings */
 	bool wasKing = alias->getIsKing();
 	if (!wasKing) {
-//		return moveKing(pieces,alias,d);
 		if (d == BKLEFT || d == BKRIGHT) {
 			if (interact) cerr << "movePiece: Invalid direction for non-King piece.\n";
 			return false;
@@ -202,6 +207,7 @@ bool Match::movePiece(unsigned piece, Direction d)
 	}
 
 	if (debug) alias->print();
+
 	/* Determine next coordinates for jump */
 	unsigned nextx, nexty;
 
@@ -246,7 +252,7 @@ bool Match::movePiece(unsigned piece, Direction d)
 		alias->setColor(Piece::BLACK);
 	else
 		alias->setColor(Piece::RED);
-	alias->id = piece;
+	alias->setId(piece);
 	if (wasKing || nexty == 7 || nexty == 0)
 		alias->setIsKing(true);
 
@@ -314,12 +320,8 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 
 	/* Testing the validity of the jump */
 	unsigned newx = j->getX() + diff * 2;
-	unsigned newy = j->getX() + ydiff * 2;
-//	if (!turn) {
-//		newy = j->getY() - 2;
-//	} else {
-//		newy = j->getY() + 2;
-//	}
+	unsigned newy = j->getY() + ydiff * 2;
+
 	if (newx > 7 || newy > 7) {
 		if (interact) cerr << "pieceJump: Jump obstructed at border\n";
 		return false;
@@ -334,7 +336,7 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 	(*pieces)[jumper - 1] = &board[newx][newy];
 	(*pieces)[jumper - 1]->setInPlay(true);
 	(*pieces)[jumper - 1]->setColor(j->getColor());
-	(*pieces)[jumper - 1]->id = jumper;
+	(*pieces)[jumper - 1]->setId(jumper);
 	if (wasKing)
 		(*pieces)[jumper - 1]->setIsKing(true);
 
@@ -352,63 +354,55 @@ void Match::play()
 {
 	using namespace std;
 
-	if (debug) {
+	if (interact) {
 		p1.display();
 		p2.display();
 		print();
 	}
 
 	unsigned count1 = 0,count2 = 0;
-	unsigned piece;
-	Direction d;
 
 	while (1) {
-		if (debug) cout << p1.getnPieces() << " Player 1\n" << p2.getnPieces() << " Player 2\n\n";
-		
+		if (interact) cout << p1.getnPieces() << " Player 1\n" << p2.getnPieces() << " Player 2\n\n";
+
 		if (turn) {
 			if (p1.getnPieces() < 1) return;
-			if (debug) cout << "P1 pieces = " << p1.getnPieces() << endl;
+			if (interact) cout << "P1 pieces = " << p1.getnPieces() << endl;
 			while (1) {
-				if (debug) print();
+				if (interact) print();
 				if (count1 == 3) {
 					count1 = 0;
-					if (debug) cout << "Three failed moves P1; Lose a turn!\n\n";
+					if (interact) cout << "Three failed moves P1; Lose a turn!\n\n";
 					turn  =  !turn;
 					break;
 				}
-				if (debug) cout << "================ Player 1 (Black) ==============\n\n";
-				int c = receiveInput(piece,d);
-				switch (c) {
-					case -1: return;
-					case 0: {
-						count1++;
-						continue;
-					}
-					default:;
+				if (interact) cout << "================ Player 1 (Black) ==============\n\n";
+				int c = receiveInput();
+				if (c == -1) return;
+				else {
+					count1++;
+					continue;
 				}
 				count1 = 0;
 				break;
 			}
 		} else {
 			if (p2.getnPieces() <1) return;
-			if (debug) cout << "P2 pieces = " << p2.getnPieces() << endl;
+			if (interact) cout << "P2 pieces = " << p2.getnPieces() << endl;
 			while (1) {
-				if (debug) print();
+				if (interact) print();
 				if (count2 == 3) {
 					count2 = 0;
-					if (debug) cout << "Three failed moves P2; Lose a turn!\n\n";
+					if (interact) cout << "Three failed moves P2; Lose a turn!\n\n";
 					turn = !turn;
 					break;
 				}
-				if (debug) cout << "================ Player 2  (Red) ==============\n\n";
-				int c = receiveInput(piece,d);
-				switch (c) {
-					case -1: return;
-					case 0: {
-						count2++;
-						continue;
-					}
-					default:;
+				if (interact) cout << "================ Player 2  (Red) ==============\n\n";
+				int c = receiveInput();
+				if (c == -1) return;
+				else {
+					count2++;
+					continue;
 				}
 				count2 = 0;
 				break;
@@ -417,11 +411,12 @@ void Match::play()
 	}
 }
 
-int Match::receiveInput(unsigned piece, Direction d)
+int Match::receiveInput()
 {
 	using namespace std;
 
-	unsigned prey;
+	unsigned piece, prey;
+	Direction d;
 	string instring;
 
 	cout << "Enter piece id: ";

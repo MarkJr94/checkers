@@ -1,18 +1,39 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
+#include <exception>
 #include <iostream>
-#include <vector>
-#include <omp.h>
 #include <sstream>
+#include <vector>
 
 #include "bst.hpp"
 #include "checkers.hpp"
 #include "player.hpp"
 
+/* Sleep portability thing */
+#if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS__) || defined(__TOS_WIN__)
+
+#include <windows.h>
+
+inline void delay( unsigned long ms )
+{
+	Sleep( ms );
+}
+
+#else  /* presume POSIX */
+
+#include <unistd.h>
+
+inline void delay( unsigned long ms )
+{
+	usleep( ms * 1000 );
+}
+
+#endif
+
 GameTree::GameTree(unsigned level,const SaveGame record, const MoveRecord creator)
-		: level(level), scenario (record, false, false), children (),
-		  p1Avg (scenario.getP1score()), p2Avg (scenario.getP2score())
+: level(level), scenario (record, false, false), children (),
+  p1Avg (scenario.getP1score()), p2Avg (scenario.getP2score())
 {
 	if (level > 1){
 		this->creator.dir = creator.dir;
@@ -40,70 +61,14 @@ unsigned GameTree::testMoves(SaveGame savestate)
 	unsigned successCount = 0;
 
 	MoveRecord origin;
-	srand(time(NULL));
-	unsigned maybeRand;
-	unsigned mask1 = 1 << 8;
-	unsigned mask2 = 1 << 6;
-	unsigned mask3 = 1 << 4;
-	unsigned mask4 = 1 << 2;
 
+	unsigned jumpCount = 0;
 	for (unsigned piece = 1; piece <= 12; piece++) {
-		maybeRand = rand() %2;
-		/* Test left move */
-		if (!(mask1 & maybeRand)) {
-			retval = scenario.movePiece(piece,Match::LEFT);
-			if (retval) {
-				++successCount;
-				origin.jump = false;
-				origin.piece = piece;
-				origin.dir = Match::LEFT;
-				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
-				scenario.restoreToSave(savestate);
-			}
-		}
-		if (!(mask2 & maybeRand)) {
-			/* Test right move */
-			retval = scenario.movePiece(piece, Match::RIGHT);
-			if (retval) {
-				++successCount;
-				origin.jump = false;
-				origin.piece = piece;
-				origin.dir = Match::RIGHT;
-				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
-				scenario.restoreToSave(savestate);
-			}
-		}
-
-//		maybeRand = rand() %2;
-		if (!(mask3 & maybeRand)) {
-			/* Test back right move */
-			retval = scenario.movePiece(piece, Match::BKRIGHT);
-			if (retval) {
-				++successCount;
-				origin.jump = false;
-				origin.piece = piece;
-				origin.dir = Match::BKRIGHT;
-				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
-				scenario.restoreToSave(savestate);
-			}
-		}
-		if (!(mask4 & maybeRand)) {
-			/* Test back left move */
-			retval = scenario.movePiece(piece, Match::BKLEFT);
-			if (retval) {
-				++successCount;
-				origin.jump = false;
-				origin.piece = piece;
-				origin.dir = Match::BKLEFT;
-				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
-				scenario.restoreToSave(savestate);
-			}
-		}
-
 		/* Test jumping */
 		for (unsigned prey = 1; prey <= 12; prey++) {
 			retval = scenario.jumpPiece(piece,prey);
 			if (retval) {
+				++jumpCount;
 				++successCount;
 				origin.jump = true;
 				origin.piece = piece;
@@ -113,26 +78,70 @@ unsigned GameTree::testMoves(SaveGame savestate)
 			}
 		}
 	}
+	if (jumpCount > 0) return successCount;
+
+	for (unsigned piece = 1; piece <= 12; piece++) {
+
+		/* Test left move */
+		retval = scenario.movePiece(piece,Match::LEFT);
+		if (retval) {
+			++successCount;
+			origin.jump = false;
+			origin.piece = piece;
+			origin.dir = Match::LEFT;
+			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+			scenario.restoreToSave(savestate);
+		}
+
+		/* Test right move */
+		retval = scenario.movePiece(piece, Match::RIGHT);
+		if (retval) {
+			++successCount;
+			origin.jump = false;
+			origin.piece = piece;
+			origin.dir = Match::RIGHT;
+			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+			scenario.restoreToSave(savestate);
+		}
+
+		/* Test back right move */
+		retval = scenario.movePiece(piece, Match::BKRIGHT);
+		if (retval) {
+			++successCount;
+			origin.jump = false;
+			origin.piece = piece;
+			origin.dir = Match::BKRIGHT;
+			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+			scenario.restoreToSave(savestate);
+		}
+
+		/* Test back left move */
+		retval = scenario.movePiece(piece, Match::BKLEFT);
+		if (retval) {
+			++successCount;
+			origin.jump = false;
+			origin.piece = piece;
+			origin.dir = Match::BKLEFT;
+			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
+			scenario.restoreToSave(savestate);
+		}
+
+	}
 	return successCount;
 }
 
-void GameTree::recurse()
+void GameTree::generateOutcomes()
 {
 
-	srand(time(NULL));
-	if (rand() % 2) {
-		if (level > 5) return;
-	} else
-		if (level > 4) return;
+	if (level > 5) return;
 
 	SaveGame savestate = scenario.getSave();
 	unsigned num =  testMoves(savestate);
 	if (num < 1) return;
 
 	size_t numKids = children.size();
-	#pragma omp parallel for
 	for (size_t i = 0; i < numKids; i++) {
-		children[i]->recurse();
+		children[i]->generateOutcomes();
 	}
 }
 
@@ -143,7 +152,6 @@ void GameTree::updateScores()
 	if (children.empty()) return;
 
 	size_t numKids = children.size();
-	#pragma omp parallel for
 	for (size_t i = 0; i < numKids; i++) {
 		children[i]->updateScores();
 	}
@@ -213,166 +221,125 @@ MoveRecord GameTree::getBestMove(bool optimizeForP2, bool aggro)
 			}
 		}
 	}
-
-//	children[favoredSon]->printScene();
 	return children[favoredSon]->getCreator();
 }
 
-void gameDo()
+void playPvP(Match *theGame)
 {
 	using namespace std;
 
 	MoveRecord blank;
-	GameTree tree (1,Match(false,false).getSave(),blank);
-	tree.recurse();
-	tree.updateScores();
-	tree.getBestMove();
-}
-
-void attemptToPlay(bool debug)
-{
-	using namespace std;
-
-	MoveRecord blank;
-	Match theGame (false,true);
-	unsigned prey;
-	unsigned piece;
-	Match::Direction d;
 	string instring;
 	unsigned count1 = 0, count2 = 0;
 
-	theGame.print();
+	theGame->print();
 
 	while (1) {
-		if (debug) cout << theGame.getP1score() << " Player 1\n" << theGame.getP2score() << " Player 2\n\n";
+		cout << theGame->getP1score() << " Player 1\n" << theGame->getP2score() << " Player 2\n\n";
 
-		if (theGame.getTurn()) {
-			if (theGame.getP1score() < 1) return;
-			if (debug) cout << "P1 pieces = " << theGame.getP1score() << endl;
+		if (theGame->getTurn()) {
+			if (theGame->getP1score() < 1) return;
+			cout << "P1 pieces = " << theGame->getP1score() << endl;
 			while (1) {
-				if (debug) theGame.print();
+				theGame->print();
 				if (count1 == 3) {
 					count1 = 0;
-					if (debug) cout << "Three failed moves P1; Lose a turn!\n\n";
-					theGame.setTurn(!theGame.getTurn());
+					cout << "Three failed moves P1; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
 					break;
 				}
-				if (debug) cout << "================ Player 1 (Black) ==============\n\n";
-				int c = theGame.receiveInput(piece,d);
-				switch (c) {
-					case -1: return;
-					case 0: {
-						count1++;
-						continue;
-					}
-					default:;
+				cout << "================ Player 1 (Black) ==============\n\n";
+				int c = theGame->receiveInput();
+				if (c == -1) return;
+				else {
+					count1++;
+					continue;
 				}
 				count1 = 0;
 				break;
 			}
 		} else {
-			if (debug) theGame.print();
-			if (theGame.getP2score() <1) return;
-			if (debug) cout << "P2 pieces = " << theGame.getP2score() << endl;
-			if (debug) cout << "================ Player 2  (Red) ==============\n\n";
-
-			if (count2 == 3) {
+			if (theGame->getP2score() < 1) return;
+			cout << "P2 pieces = " << theGame->getP2score() << endl;
+			while (1) {
+				theGame->print();
+				if (count2 == 3) {
+					count2 = 0;
+					cout << "Three failed moves P2; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
+					break;
+				}
+				cout << "================ Player 2 (Red) ==============\n\n";
+				int c = theGame->receiveInput();
+				if (c == -1) return;
+				else {
+					count2++;
+					continue;
+				}
 				count2 = 0;
-				if (debug) cout << "Three failed moves P2; Lose a turn!\n\n";
-				theGame.setTurn(!theGame.getTurn());
 				break;
-			}
-
-
-			GameTree AI (1,theGame.getSave(),blank);
-			AI.recurse();
-			AI.updateScores();
-			blank = AI.getBestMove();
-			bool success;
-			if (blank.jump) {
-				success = theGame.jumpPiece(blank.piece,blank.prey);
-			} else {
-				success = theGame.movePiece(blank.piece,blank.dir);
-			}
-
-			if (!success) {
-				count2++;
-				continue;
 			}
 		}
 	}
-
 }
 
-void simulate(bool debug)
+void playAgainstAI(Match *theGame, bool interact)
 {
 	using namespace std;
 
 	MoveRecord blank;
-	Match theGame (false,false);
-	unsigned prey;
-	unsigned piece;
-	Match::Direction d;
 	string instring;
 	unsigned count1 = 0, count2 = 0;
 
-	theGame.print();
+	theGame->print();
 
 	while (1) {
-		if (debug) cout << theGame.getP1score() << " Player 1\n" << theGame.getP2score() << " Player 2\n\n";
+		if (interact) cout << theGame->getP1score() << " Player 1\n" << theGame->getP2score() << " Player 2\n\n";
 
-		if (theGame.getTurn()) {
-			if (debug) theGame.print();
-			if (theGame.getP1score() <1) return;
-			if (debug) cout << "P1 pieces = " << theGame.getP2score() << endl;
-			if (debug) cout << "================ Player 1  (Black) ==============\n\n";
-
-			if (count2 == 3) {
-				count2 = 0;
-				if (debug) cout << "Three failed moves P1; Lose a turn!\n\n";
-				theGame.setTurn(!theGame.getTurn());
+		if (theGame->getTurn()) {
+			if (theGame->getP1score() < 1) return;
+			if (interact) cout << "P1 pieces = " << theGame->getP1score() << endl;
+			while (1) {
+				if (interact) theGame->print();
+				if (count1 == 3) {
+					count1 = 0;
+					if (interact) cout << "Three failed moves P1; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
+					break;
+				}
+				if (interact) cout << "================ Player 1 (Black) ==============\n\n";
+				int c = theGame->receiveInput();
+				if (c == -1) return;
+				else {
+					count1++;
+					continue;
+				}
+				count1 = 0;
 				break;
-			}
-
-
-			GameTree AI (1,theGame.getSave(),blank);
-			AI.recurse();
-			AI.updateScores();
-			blank = AI.getBestMove(false,true);
-			bool success;
-			if (blank.jump) {
-				success = theGame.jumpPiece(blank.piece,blank.prey);
-			} else {
-				success = theGame.movePiece(blank.piece,blank.dir);
-			}
-
-			if (!success) {
-				count2++;
-				continue;
 			}
 		} else {
-			if (debug) theGame.print();
-			if (theGame.getP2score() <1) return;
-			if (debug) cout << "P2 pieces = " << theGame.getP2score() << endl;
-			if (debug) cout << "================ Player 2  (Red) ==============\n\n";
+			if (interact) theGame->print();
+			if (theGame->getP2score() <1) return;
+			if (interact) cout << "P2 pieces = " << theGame->getP2score() << endl;
+			if (interact) cout << "================ Player 2  (Red) ==============\n\n";
 
 			if (count2 == 3) {
 				count2 = 0;
-				if (debug) cout << "Three failed moves P2; Lose a turn!\n\n";
-				theGame.setTurn(!theGame.getTurn());
+				if (interact) cout << "Three failed moves P2; Lose a turn!\n\n";
+				theGame->setTurn(!theGame->getTurn());
 				break;
 			}
 
 
-			GameTree AI (1,theGame.getSave(),blank);
-			AI.recurse();
+			GameTree AI (1,theGame->getSave(),blank);
+			AI.generateOutcomes();
 			AI.updateScores();
 			blank = AI.getBestMove();
 			bool success;
 			if (blank.jump) {
-				success = theGame.jumpPiece(blank.piece,blank.prey);
+				success = theGame->jumpPiece(blank.piece,blank.prey);
 			} else {
-				success = theGame.movePiece(blank.piece,blank.dir);
+				success = theGame->movePiece(blank.piece,blank.dir);
 			}
 
 			if (!success) {
@@ -381,15 +348,82 @@ void simulate(bool debug)
 			}
 		}
 	}
-
 }
 
-int main ()
+void playAIvsAI(Match *theGame, bool interact)
 {
 	using namespace std;
 
-//	gameDo();
-	attemptToPlay(true);
-//	simulate(true);
-	return 0;
+	MoveRecord blank;
+	string instring;
+	unsigned count1 = 0, count2 = 0;
+
+	theGame->print();
+
+	while (1) {
+		if (interact) cout << theGame->getP1score() << " Player 1\n" << theGame->getP2score() << " Player 2\n\n";
+
+		if (theGame->getTurn()) {
+			if (interact) theGame->print();
+			if (theGame->getP1score() <1) return;
+			if (interact) cout << "P1 pieces = " << theGame->getP2score() << endl;
+			if (interact) cout << "================ Player 1  (Black) ==============\n\n";
+
+			if (count1 == 3) {
+				count1 = 0;
+				if (interact) cout << "Three failed moves P1; Lose a turn!\n\n";
+				theGame->setTurn(!theGame->getTurn());
+				break;
+			}
+
+
+			GameTree AI (1,theGame->getSave(),blank);
+			AI.generateOutcomes();
+			AI.updateScores();
+			blank = AI.getBestMove(false,true);
+			bool success;
+			if (blank.jump) {
+				success = theGame->jumpPiece(blank.piece,blank.prey);
+			} else {
+				success = theGame->movePiece(blank.piece,blank.dir);
+			}
+
+			if (!success) {
+				count2++;
+				continue;
+			}
+			delay(500);
+		} else {
+			if (interact) theGame->print();
+			if (theGame->getP2score() <1) return;
+			if (interact) cout << "P2 pieces = " << theGame->getP2score() << endl;
+			if (interact) cout << "================ Player 2  (Red) ==============\n\n";
+
+			if (count2 == 3) {
+				count2 = 0;
+				if (interact) cout << "Three failed moves P2; Lose a turn!\n\n";
+				theGame->setTurn(!theGame->getTurn());
+				break;
+			}
+
+
+			GameTree AI (1,theGame->getSave(),blank);
+			AI.generateOutcomes();
+			AI.updateScores();
+			blank = AI.getBestMove(true,true);
+			bool success;
+			if (blank.jump) {
+				success = theGame->jumpPiece(blank.piece,blank.prey);
+			} else {
+				success = theGame->movePiece(blank.piece,blank.dir);
+			}
+
+			if (!success) {
+				count2++;
+				continue;
+			}
+			delay(500);
+		}
+	}
+
 }

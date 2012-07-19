@@ -14,9 +14,16 @@ private:
 	unsigned x;
 	unsigned y;
 	Color col;
-	
-public:
 	unsigned id;
+
+public:
+	unsigned getId() const {
+		return id;
+	}
+
+	void setId(unsigned id) {
+		this->id = id;
+	}
 
 	Piece(unsigned idNo = 0, unsigned xx = 0, unsigned yy = 0, Color color = BLACK);
 	unsigned getX() const;
@@ -24,11 +31,11 @@ public:
 	bool getInPlay() const;
 	bool getIsKing() const;
 	Color getColor() const;
-	
+
 	Piece & operator=(const Piece& other);
-	
+
 	void print() const;
-	
+
 
 public:
 	void setX(const unsigned);
