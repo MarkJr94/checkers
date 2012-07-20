@@ -2,6 +2,7 @@
 The  rules used are the standard rules outlined in this Wikipedia
 	article:
 		http://en.wikipedia.org/wiki/Draughts
+		(multi-jumping not yet implemented)
 		
 I have implemented a simple load/save mechanism, which uses basic ASCII
 	text files. If you try to load an improper file, you will likely
