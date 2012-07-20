@@ -1,0 +1,48 @@
+=== An implementation of checkers, done in basic C++11
+The  rules used are the standard rules outlined in this Wikipedia
+	article:
+		http://en.wikipedia.org/wiki/Draughts
+		
+I have implemented a simple load/save mechanism, which uses basic ASCII
+	text files. If you try to load an improper file, you will likely
+	end up with an empty or very strange board.
+	
+To compile this project, simply type "make". The command used is:
+
+g++ -Wall -g -std=c++0x checkers.cpp player.cpp game.cpp bst.cpp main.cpp -o draughts
+	 
+	This project requires C++11
+	support to compile, so make sure you are using a more up to date
+	compiler. It only uses standard libraries, so it should be totally
+	cross-compatible on any platform with an appropriate compiler.
+	This will result in an executable called "draughts" (if you are
+	using my makefile of course.)
+
+To run, simply type "./draughts" on UNIX-like systems or "draughts" on 
+	Windows
+	
+The program is interactive. First you will be asked if you want to load
+	a save file, type 'y' or 'n', then enter a filepath.Then choose if you
+	want to play against a friend, the AI, or watch two AI's go at it.
+	Simply enter the option number.
+	
+For actual play, the basic paradigm is to first enter a piece's ID,
+	(displayed in terminal output), then an action:
+		'j' = jump
+			you will then be asked for the ID of the opponent's piece
+				you want to target.
+		'l' = move forward left
+		'r' = move forward right
+		'bl' = move backward left
+		'br' = move backward right
+		Note: 'bl' and 'br' only valid for kings.
+		Note: backwards and forwards are in relation to how a normal,
+			unkinged piece of your color must move.
+		Note: after three mistakes, either of input or illegal move
+			you will lose your turn.
+
+Enter 'q' at any prompt, to end the game.
+
+After the end of a game, whether by victory or by manually quitting, you
+	will be prompted to decide if you want to save your game. As before,
+	answer 'y' or 'n', and enter a file path.
