@@ -24,6 +24,7 @@ private:
 
 public:
 	GameTree(unsigned level, const SaveGame, const MoveRecord creator);
+	~GameTree();
 	void printScene();
 	unsigned testMoves(SaveGame savestate);
 	void generateOutcomes();
@@ -61,6 +62,12 @@ public:
 		return scenario;
 	}
 };
+
+/* Play Player vs Player
+ * 	Arguments:
+ * 		theGame: pointer to an allocated game
+ */
+void playPvP(Match *theGame);
 
 /* Play Player vs AI
  * 	Arguments:

@@ -43,6 +43,12 @@ GameTree::GameTree(unsigned level,const SaveGame record, const MoveRecord creato
 	}
 }
 
+GameTree::~GameTree()
+{
+	for (auto child: children)
+		delete child;
+}
+
 void GameTree::printScene()
 {
 	using namespace std;
@@ -228,7 +234,6 @@ void playPvP(Match *theGame)
 {
 	using namespace std;
 
-	MoveRecord blank;
 	string instring;
 	unsigned count1 = 0, count2 = 0;
 

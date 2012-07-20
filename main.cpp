@@ -29,6 +29,7 @@ int main ()
 			return 1;
 		}
 		theMatch = new Match (*loadGame,true,true);
+		delete loadGame;
 	} else {
 		theMatch = new Match (true,true);
 	}
@@ -55,6 +56,8 @@ int main ()
 		cout << "Enter save file path: ";
 		getline(cin, instr);
 		saveGame->write(instr);
+		delete saveGame;
 	}
+	delete theMatch;
 	return 0;
 }
