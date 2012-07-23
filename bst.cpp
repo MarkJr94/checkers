@@ -8,6 +8,7 @@
 
 #include "bst.hpp"
 #include "checkers.hpp"
+#include "game.hpp"
 #include "player.hpp"
 
 /* Sleep portability thing */
@@ -59,6 +60,28 @@ void GameTree::printScene()
 }
 
 
+bool GameTree::canMultiJump(unsigned piece)
+{
+	bool retval;
+	bool oldTurn = scenario.getTurn();
+	scenario.setTurn(!oldTurn);
+	SaveGame savestate = scenario.getSave();
+	/* Test jumping */
+	for (unsigned prey = 1; prey <= 12; prey++)
+	{
+		retval = scenario.jumpPiece(piece, prey);
+		if (retval)
+		{
+			scenario.restoreToSave(savestate);
+			scenario.setTurn(oldTurn);
+			return true;
+		}
+	}
+
+	scenario.setTurn(oldTurn);
+	return retval;
+}
+
 unsigned GameTree::testMoves(SaveGame savestate)
 {
 	using namespace std;
@@ -69,17 +92,25 @@ unsigned GameTree::testMoves(SaveGame savestate)
 	MoveRecord origin;
 
 	unsigned jumpCount = 0;
-	for (unsigned piece = 1; piece <= 12; piece++) {
+	for (unsigned piece = 1; piece <= 12; piece++)
+	{
 		/* Test jumping */
-		for (unsigned prey = 1; prey <= 12; prey++) {
-			retval = scenario.jumpPiece(piece,prey);
-			if (retval) {
+		for (unsigned prey = 1; prey <= 12; prey++)
+		{
+			retval = scenario.jumpPiece(piece, prey);
+			if (retval)
+			{
 				++jumpCount;
 				++successCount;
 				origin.jump = true;
 				origin.piece = piece;
 				origin.prey = prey;
-				children.push_back(new GameTree (level+1, scenario.getSave(), origin));
+				if (canMultiJump(piece)) {
+					scenario.setTurn(!scenario.getTurn());
+				} else {
+					scenario.setMustJump(0);
+				}
+				children.push_back(new GameTree (level+1, scenario.getSave(),origin));
 				scenario.restoreToSave(savestate);
 			}
 		}
@@ -89,45 +120,45 @@ unsigned GameTree::testMoves(SaveGame savestate)
 	for (unsigned piece = 1; piece <= 12; piece++) {
 
 		/* Test left move */
-		retval = scenario.movePiece(piece,Match::LEFT);
+		retval = scenario.movePiece(piece,Game::LEFT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = Match::LEFT;
+			origin.dir = Game::LEFT;
 			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
 			scenario.restoreToSave(savestate);
 		}
 
 		/* Test right move */
-		retval = scenario.movePiece(piece, Match::RIGHT);
+		retval = scenario.movePiece(piece, Game::RIGHT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = Match::RIGHT;
+			origin.dir = Game::RIGHT;
 			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
 			scenario.restoreToSave(savestate);
 		}
 
 		/* Test back right move */
-		retval = scenario.movePiece(piece, Match::BKRIGHT);
+		retval = scenario.movePiece(piece, Game::BKRIGHT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = Match::BKRIGHT;
+			origin.dir = Game::BKRIGHT;
 			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
 			scenario.restoreToSave(savestate);
 		}
 
 		/* Test back left move */
-		retval = scenario.movePiece(piece, Match::BKLEFT);
+		retval = scenario.movePiece(piece, Game::BKLEFT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = Match::BKLEFT;
+			origin.dir = Game::BKLEFT;
 			children.push_back(new GameTree (level+1, scenario.getSave(),origin));
 			scenario.restoreToSave(savestate);
 		}
@@ -230,12 +261,14 @@ MoveRecord GameTree::getBestMove(bool optimizeForP2, bool aggro)
 	return children[favoredSon]->getCreator();
 }
 
-void playPvP(Match *theGame)
+void playPvP(Game *theGame)
 {
 	using namespace std;
 
 	string instring;
 	unsigned count1 = 0, count2 = 0;
+	MoveRecord blank;
+	GameTree* predictor;
 
 	theGame->print();
 
@@ -255,10 +288,22 @@ void playPvP(Match *theGame)
 				}
 				cout << "================ Player 1 (Black) ==============\n\n";
 				int c = theGame->receiveInput();
-				if (c == -1) return;
-				else {
+				switch (c) {
+				case -1:
+					return;
+				case 0:
 					count1++;
 					continue;
+				case 2:
+					predictor = new GameTree (1,theGame->getSave(),blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
 				}
 				count1 = 0;
 				break;
@@ -276,10 +321,22 @@ void playPvP(Match *theGame)
 				}
 				cout << "================ Player 2 (Red) ==============\n\n";
 				int c = theGame->receiveInput();
-				if (c == -1) return;
-				else {
+				switch (c) {
+				case -1:
+					return;
+				case 0:
 					count2++;
 					continue;
+				case 2:
+					predictor = new GameTree (1,theGame->getSave(),blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
 				}
 				count2 = 0;
 				break;
@@ -288,13 +345,14 @@ void playPvP(Match *theGame)
 	}
 }
 
-void playAgainstAI(Match *theGame, bool interact)
+void playAgainstAI(Game *theGame, bool interact)
 {
 	using namespace std;
 
 	MoveRecord blank;
 	string instring;
 	unsigned count1 = 0, count2 = 0;
+	GameTree *predictor;
 
 	theGame->print();
 
@@ -314,10 +372,22 @@ void playAgainstAI(Match *theGame, bool interact)
 				}
 				if (interact) cout << "================ Player 1 (Black) ==============\n\n";
 				int c = theGame->receiveInput();
-				if (c == -1) return;
-				else {
+				switch (c) {
+				case -1:
+					return;
+				case 0:
 					count1++;
 					continue;
+				case 2:
+					predictor = new GameTree (1,theGame->getSave(),blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
 				}
 				count1 = 0;
 				break;
@@ -351,17 +421,28 @@ void playAgainstAI(Match *theGame, bool interact)
 				count2++;
 				continue;
 			}
+
+			if (blank.jump) {
+				predictor = new GameTree (1,theGame->getSave(),blank);
+				if (predictor->canMultiJump(theGame->getMustJump())) {
+					theGame->setTurn(!theGame->getTurn());
+					continue;
+				} else
+					theGame->setMustJump(0);
+				delete predictor;
+			}
 		}
 	}
 }
 
-void playAIvsAI(Match *theGame, bool interact)
+void playAIvsAI(Game *theGame, bool interact)
 {
 	using namespace std;
 
 	MoveRecord blank;
 	string instring;
 	unsigned count1 = 0, count2 = 0;
+	GameTree *predictor;
 
 	theGame->print();
 
@@ -397,6 +478,17 @@ void playAIvsAI(Match *theGame, bool interact)
 				count2++;
 				continue;
 			}
+
+			if (blank.jump) {
+				predictor = new GameTree (1,theGame->getSave(),blank);
+				if (predictor->canMultiJump(theGame->getMustJump())) {
+					theGame->setTurn(!theGame->getTurn());
+					continue;
+				} else
+					theGame->setMustJump(0);
+				delete predictor;
+			}
+
 			delay(500);
 		} else {
 			if (interact) theGame->print();
@@ -427,6 +519,17 @@ void playAIvsAI(Match *theGame, bool interact)
 				count2++;
 				continue;
 			}
+
+			if (blank.jump) {
+				predictor = new GameTree (1,theGame->getSave(),blank);
+				if (predictor->canMultiJump(theGame->getMustJump())) {
+					theGame->setTurn(!theGame->getTurn());
+					continue;
+				} else
+					theGame->setMustJump(0);
+				delete predictor;
+			}
+
 			delay(500);
 		}
 	}

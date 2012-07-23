@@ -7,7 +7,7 @@
 #include "game.hpp"
 
 struct MoveRecord {
-	Match::Direction dir;
+	Game::Direction dir;
 	bool jump;
 	unsigned char piece;
 	unsigned char prey;
@@ -16,7 +16,7 @@ struct MoveRecord {
 class GameTree {
 private:
 	unsigned level;
-	Match scenario;
+	Game scenario;
 	std::vector<GameTree *> children;
 	double p1Avg;
 	double p2Avg;
@@ -33,6 +33,7 @@ public:
 	void recursivePrint();
 
 	MoveRecord getBestMove(bool optimizeForP2 = true, bool aggro = false);
+	bool canMultiJump(unsigned piece);
 
 	inline MoveRecord getCreator() {
 		return creator;
@@ -58,7 +59,7 @@ public:
 		this->p2Avg = p2Avg;
 	}
 
-	Match getScenario() const {
+	Game getScenario() const {
 		return scenario;
 	}
 };
@@ -67,20 +68,20 @@ public:
  * 	Arguments:
  * 		theGame: pointer to an allocated game
  */
-void playPvP(Match *theGame);
+void playPvP(Game *theGame);
 
 /* Play Player vs AI
  * 	Arguments:
  * 		theGame: pointer to an allocated game
  * 		interact: whether to print interactive output.
  */
-void playAgainstAI(Match *theGame, bool interact);
+void playAgainstAI(Game *theGame, bool interact);
 
 /* Play AI VS AI Game.
  * Arguments:
  * 	theGame: Pointer to an allocated game
  * 	interact: if interactive output should be printed
  */
-void playAIvsAI(Match *theGame, bool interact);
+void playAIvsAI(Game *theGame, bool interact);
 
 #endif /* GAME_TREE_ */

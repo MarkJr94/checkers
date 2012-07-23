@@ -1,6 +1,7 @@
 #ifndef GAME_HPP_
 #define GAME_HPP_
 
+//#include "bst.hpp"
 #include "checkers.hpp"
 #include "player.hpp"
 #include <vector>
@@ -17,82 +18,39 @@ struct cellRecord {
 class SaveGame {
 	std::vector<std::vector<cellRecord>> data;
 	bool turn;
+	unsigned mustJump;
 
 public:
-	SaveGame(bool turn)
-	: data (8, std::vector<cellRecord> (8)), turn(turn)
-	{;}
-
+	SaveGame(bool turn);
 	/* Setter and getter for turn */
 	void setTurn (bool newval) {turn = newval;}
 	bool getTurn () {return turn;}
-
-	SaveGame & operator=(const SaveGame other)
-	{
-		for (unsigned i = 0; i < BOARD_SIZE; i++) {
-			for (unsigned j = 0; j < BOARD_SIZE; j++) {
-				data[i][j] = other.data[i][j];
-			}
-		}
-		this->turn = other.turn;
-		return *this;
-	}
-
+	/* Assignment operator */
+	SaveGame & operator=(const SaveGame other);
 	inline cellRecord & operator()(int row, int col)
 	{
 		return data[row][col];
 	}
-
 	inline std::vector<cellRecord> & operator()(int row)
 	{
 		return data[row];
 	}
 
-	void write(std::string fname)
+	void write(std::string fname);
+	void read(std::string fname);
+
+	unsigned getMustJump() const
 	{
-		using namespace std;
-
-		fstream savefile;
-		savefile.open(fname.c_str(),fstream::trunc | fstream::out);
-
-		savefile << turn << endl;
-		for (unsigned i = 0; i < BOARD_SIZE; i++) {
-			for (unsigned j = 0; j < BOARD_SIZE; j++) {
-				savefile << data[i][j].id << " " << data[i][j].alive 
-						<< " " << data[i][j].color << " " << data[i][j].isKing << " ";
-			}
-			savefile << endl;
-		}
-		savefile.close();
+		return mustJump;
 	}
 
-	void read(std::string fname)
+	void setMustJump(unsigned mustJump)
 	{
-		using namespace std;
-
-		fstream savefile;
-		savefile.open(fname.c_str(),fstream::in);
-		bool turn,alive, isKing ;
-		unsigned col;
-		unsigned id;
-
-
-		savefile >> turn;
-		this->turn = turn;
-		for (unsigned i = 0; i < BOARD_SIZE; i++) {
-			for (unsigned j = 0; j < BOARD_SIZE; j++) {
-				savefile >> id >> alive >> col >> isKing;
-				data[i][j].color = (Piece::Color)col;
-				data[i][j].alive = alive;
-				data[i][j].id = id;
-				data[i][j].isKing = isKing;
-			}
-		}
-		savefile.close();
+		this->mustJump = mustJump;
 	}
 };
 
-class Match {
+class Game {
 	Player p1;
 	Player p2;
 	std::vector<std::vector<Piece> > board;
@@ -101,15 +59,18 @@ class Match {
 	bool debug;
 	SaveGame save;
 	bool interact;
+	unsigned mustJump;
 
 public:
 	/* Enumerations for movement and jump directions */
 	enum Direction {LEFT,RIGHT,BKLEFT,BKRIGHT};
 
 	/* Constructor */
-	Match(bool db,bool interact);
+	Game(bool db,bool interact);
 	/* Constructor from memory */
-	Match(SaveGame record, bool db, bool interact);
+	Game(SaveGame record, bool db, bool interact);
+	/* Destructor */
+	virtual ~Game() {}
 	/* Update save game */
 	inline void updateSave();
 	/* return save game */
@@ -126,13 +87,35 @@ public:
 	void restoreToSave(SaveGame& record);
 	/* Receive input for CLI */
 	int receiveInput();
+
+	int getMustJump() const
+	{
+		return mustJump;
+	}
+
+	void setMustJump(int mustJump)
+	{
+		this->mustJump = mustJump;
+	}
 	/* Get p1 score */
 	inline unsigned getP1score() {	return p1.getnPieces();}
 	/* Get p2 score */
 	inline unsigned getP2score() {	return p2.getnPieces();}
 	/* Setter and getter for turn */
 	void setTurn (bool newval) {turn = newval;}
-	bool getTurn () {return turn;}
+	bool getTurn () const {return turn;}
+	std::vector<Piece>& operator[](unsigned row)
+	{
+		return board[row];
+	}
+	const std::vector<Piece>& operator[](unsigned row) const
+	{
+		return board[row];
+	}
+
+private:
+	virtual void _print() const;
+//	virtual int _receiveInput();
 };
 
 #endif /* GAME_HPP_ */

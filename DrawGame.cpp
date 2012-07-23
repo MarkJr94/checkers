@@ -8,6 +8,7 @@
 #include <allegro.h>
 #include <iostream>
 
+#include "bst.hpp"
 #include "checkers.hpp"
 #include "player.hpp"
 #include "game.hpp"
@@ -16,7 +17,7 @@
 BITMAP *buffer;
 
 DrawGame::DrawGame()
-: Game(false,false)
+: Game(true,true)
 {
 	const unsigned DRAW_SIZE = BOARD_SIZE * 30;
 	allegro_init();
@@ -27,7 +28,7 @@ DrawGame::DrawGame()
 }
 
 DrawGame::DrawGame(const SaveGame& record)
-: Game(record,false,false)
+: Game(record,true,true)
 {
 	const unsigned DRAW_SIZE = BOARD_SIZE * CELL_SIZE;
 	allegro_init();
@@ -79,13 +80,65 @@ DrawGame::~DrawGame()
 }
 END_OF_MAIN()
 
-int DrawGame::_receiveInput()
-{
-	return super::receiveInput();
-}
+//int DrawGame::_receiveInput()
+//{
+//	return super::receiveInput();
+//}
 
-int main()
-{
-	DrawGame *lol = new DrawGame();
-	delete lol;
+//int main()
+//{
+//	DrawGame *theMatch = new DrawGame();
+//	playAIvsAI(theMatch, true);
+//}
+
+int main() {
+	using namespace std;
+
+	string instr;
+	DrawGame *theMatch;
+	SaveGame *loadGame, *saveGame;
+	cout << "Would you like to load a game? (y/n): ";
+	getline(cin, instr);
+	if (instr == "y") {
+		cout << "Enter save file path: ";
+		getline(cin, instr);
+		try {
+			loadGame = new SaveGame(false);
+			loadGame->read(instr);
+		} catch (const ios_base::failure&) {
+			cerr << "Error loading savefile \"" << instr << "\"" << endl;
+			return 1;
+		}
+		theMatch = new DrawGame(*loadGame);
+		delete loadGame;
+	} else {
+		theMatch = new DrawGame();
+	}
+	cout << "Please choose an option by entering it's number :\n"
+			<< "1.    Play against AI\t\t2.    Play against a friend\n"
+			<< "3.    Watch 2 AI's play each other.\n\n";
+	getline(cin, instr);
+
+	if (instr == "1")
+		playAgainstAI(theMatch, true);
+	else if (instr == "2") {
+		playPvP(theMatch);
+	} else if (instr == "3") {
+		playAIvsAI(theMatch, true);
+	} else {
+		cerr << "I'm sorry you haven't chosen a valid option. Goodbye!\n";
+		return 1;
+	}
+
+	cout << "Would you like to save your game? (y/n): ";
+	getline(cin, instr);
+	if (instr == "y") {
+		saveGame = new SaveGame(theMatch->getSave());
+		cout << "Enter save file path: ";
+		getline(cin, instr);
+		saveGame->write(instr);
+		delete saveGame;
+	}
+	delete theMatch;
+	return 0;
 }

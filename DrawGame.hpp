@@ -15,7 +15,7 @@ const unsigned CELL_SIZE = 30;
 class DrawGame: public Game
 {
 	void _print() const;
-	int _receiveInput();
+//	int _receiveInput();
 	/* Typedef for super class  */
 	typedef Game super;
 public:

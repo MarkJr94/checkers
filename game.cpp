@@ -6,12 +6,68 @@
 #include "player.hpp"
 #include "game.hpp"
 
+SaveGame::SaveGame(bool turn)
+: data (8, std::vector<cellRecord> (8)), turn(turn)
+{}
+
+SaveGame& SaveGame::operator=(const SaveGame other)
+{
+	for (unsigned i = 0; i < BOARD_SIZE; i++) {
+		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			data[i][j] = other.data[i][j];
+		}
+	}
+	this->turn = other.turn;
+	this->mustJump = other.mustJump;
+	return *this;
+}
+
+void SaveGame::write(std::string fname)
+{
+	using namespace std;
+
+	fstream savefile;
+	savefile.open(fname.c_str(),fstream::trunc | fstream::out);
+
+	savefile << turn << " " << mustJump << endl;
+	for (unsigned i = 0; i < BOARD_SIZE; i++) {
+		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			savefile << data[i][j].id << " " << data[i][j].alive
+					<< " " << data[i][j].color << " " << data[i][j].isKing << " ";
+		}
+		savefile << endl;
+	}
+	savefile.close();
+}
+void SaveGame::read(std::string fname)
+{
+	using namespace std;
+
+	fstream savefile;
+	savefile.open(fname.c_str(),fstream::in);
+	bool turn,alive, isKing ;
+	unsigned col, id, mj;
 
 
-Match::Match(bool db,bool interact)
+	savefile >> turn >> mj;
+	this->turn = turn;
+	this->mustJump = mj;
+	for (unsigned i = 0; i < BOARD_SIZE; i++) {
+		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			savefile >> id >> alive >> col >> isKing;
+			data[i][j].color = (Piece::Color)col;
+			data[i][j].alive = alive;
+			data[i][j].id = id;
+			data[i][j].isKing = isKing;
+		}
+	}
+	savefile.close();
+}
+
+Game::Game(bool db,bool interact)
 : p1 (Piece::BLACK, db), p2 (Piece::RED,db),
   board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE, Piece())), turn(true),
-  debug (db), save (true), interact(interact)
+  debug (db), save (true), interact(interact), mustJump(0)
 {
 	using namespace std;
 
@@ -64,7 +120,7 @@ Match::Match(bool db,bool interact)
 	}
 }
 
-Match::Match(SaveGame record, bool db, bool interact)
+Game::Game(SaveGame record, bool db, bool interact)
 : p1 (Piece::BLACK, db), p2 (Piece::RED,db),
   board (BOARD_SIZE, std::vector< Piece> (BOARD_SIZE)),
   turn(record.getTurn()), debug (db), save (record), interact(interact)
@@ -72,7 +128,7 @@ Match::Match(SaveGame record, bool db, bool interact)
 	restoreToSave(record);
 }
 
-void Match::restoreToSave(SaveGame& record)
+void Game::restoreToSave(SaveGame& record)
 {
 	using namespace std;
 
@@ -85,6 +141,7 @@ void Match::restoreToSave(SaveGame& record)
 	}
 
 	turn = record.getTurn();
+	mustJump = record.getMustJump();
 
 	vector<Piece *> *p1pieces = p1.getPieces();
 	vector<Piece *> *p2pieces = p2.getPieces();
@@ -128,7 +185,7 @@ void Match::restoreToSave(SaveGame& record)
 	p2.setnPieces(p2numPieces);
 }
 
-inline void Match::updateSave() {
+inline void Game::updateSave() {
 	for (unsigned i =0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			auto & alias = board[i][j];
@@ -139,13 +196,19 @@ inline void Match::updateSave() {
 		}
 	}
 	save.setTurn(turn);
+	save.setMustJump(mustJump);
 }
-SaveGame Match::getSave() {
+SaveGame Game::getSave() {
 	updateSave();
 	return save;
 }
 
-void Match::print() const
+void Game::print() const
+{
+	_print();
+}
+
+void Game::_print() const
 {
 	using namespace std;
 
@@ -171,11 +234,16 @@ void Match::print() const
 }
 
 /* Piece movement */
-bool Match::movePiece(unsigned piece, Direction d)
+bool Game::movePiece(unsigned piece, Direction d)
 {
 	using namespace std;
 	Piece * alias;
 	vector<Piece *> * pieces;
+
+	if (mustJump) {
+		if (interact) cerr << "movePiece: You must jump" << endl;
+		return false;
+	}
 
 	/* Testing if piece selection is valid */
 	if ( piece > 12 || piece < 1) {
@@ -261,11 +329,19 @@ bool Match::movePiece(unsigned piece, Direction d)
 }
 
 /* Jumping */
-bool Match::jumpPiece(unsigned jumper, unsigned prey)
+bool Game::jumpPiece(unsigned jumper, unsigned prey)
 {
 	using namespace std;
 	Piece *j, *p;
 	vector<Piece *> * pieces;
+	if (mustJump) {
+		if (jumper != mustJump) {
+			if (interact) cerr << "movePiece: You must continue your jump" <<
+					" with the same piece." << endl;
+			return false;
+		}
+	}
+
 	if (turn) {
 		pieces = p1.getPieces();
 		j = (*pieces)[jumper - 1];
@@ -347,10 +423,11 @@ bool Match::jumpPiece(unsigned jumper, unsigned prey)
 		p1.setnPieces(p1.getnPieces() -1 );
 
 	turn = !turn;
+	setMustJump(jumper);
 	return true;
 }
 
-void Match::play()
+void Game::play()
 {
 	using namespace std;
 
@@ -411,7 +488,7 @@ void Match::play()
 	}
 }
 
-int Match::receiveInput()
+int Game::receiveInput()
 {
 	using namespace std;
 
@@ -444,7 +521,8 @@ int Match::receiveInput()
 			cerr << "Jumping error; try again\n";
 			return 0;
 		}
-		return 1;
+//		setMustJump(piece);
+		return 2;
 	}
 
 	/* Regular Movement */
