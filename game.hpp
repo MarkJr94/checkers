@@ -23,29 +23,33 @@ class SaveGame {
 public:
 	SaveGame(bool turn);
 	/* Setter and getter for turn */
-	void setTurn (bool newval) {turn = newval;}
-	bool getTurn () {return turn;}
+	void setTurn(bool newval) {
+		turn = newval;
+	}
+	bool getTurn() {
+		return turn;
+	}
 	/* Assignment operator */
 	SaveGame & operator=(const SaveGame other);
-	inline cellRecord & operator()(int row, int col)
-	{
+	inline cellRecord & operator()(int row, int col) {
 		return data[row][col];
 	}
-	inline std::vector<cellRecord> & operator()(int row)
-	{
+	inline std::vector<cellRecord> & operator()(int row) {
+		return data[row];
+	}
+
+	inline std::vector<cellRecord> & operator[](int row) {
 		return data[row];
 	}
 
 	void write(std::string fname);
 	void read(std::string fname);
 
-	unsigned getMustJump() const
-	{
+	unsigned getMustJump() const {
 		return mustJump;
 	}
 
-	void setMustJump(unsigned mustJump)
-	{
+	void setMustJump(unsigned mustJump) {
 		this->mustJump = mustJump;
 	}
 };
@@ -63,14 +67,17 @@ class Game {
 
 public:
 	/* Enumerations for movement and jump directions */
-	enum Direction {LEFT,RIGHT,BKLEFT,BKRIGHT};
+	enum Direction {
+		LEFT, RIGHT, BKLEFT, BKRIGHT
+	};
 
 	/* Constructor */
-	Game(bool db,bool interact);
+	Game(bool db, bool interact);
 	/* Constructor from memory */
 	Game(SaveGame record, bool db, bool interact);
 	/* Destructor */
-	virtual ~Game() {}
+	virtual ~Game() {
+	}
 	/* Update save game */
 	inline void updateSave();
 	/* return save game */
@@ -88,28 +95,32 @@ public:
 	/* Receive input for CLI */
 	int receiveInput();
 
-	int getMustJump() const
-	{
+	int getMustJump() const {
 		return mustJump;
 	}
 
-	void setMustJump(int mustJump)
-	{
+	void setMustJump(int mustJump) {
 		this->mustJump = mustJump;
 	}
 	/* Get p1 score */
-	inline unsigned getP1score() {	return p1.getnPieces();}
+	inline unsigned getP1score() {
+		return p1.getnPieces();
+	}
 	/* Get p2 score */
-	inline unsigned getP2score() {	return p2.getnPieces();}
+	inline unsigned getP2score() {
+		return p2.getnPieces();
+	}
 	/* Setter and getter for turn */
-	void setTurn (bool newval) {turn = newval;}
-	bool getTurn () const {return turn;}
-	std::vector<Piece>& operator[](unsigned row)
-	{
+	void setTurn(bool newval) {
+		turn = newval;
+	}
+	bool getTurn() const {
+		return turn;
+	}
+	std::vector<Piece>& operator[](unsigned row) {
 		return board[row];
 	}
-	const std::vector<Piece>& operator[](unsigned row) const
-	{
+	const std::vector<Piece>& operator[](unsigned row) const {
 		return board[row];
 	}
 

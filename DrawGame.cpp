@@ -56,9 +56,9 @@ void DrawGame::_print() const
 			if (!((i+j) % 2)) {
 				rectfill(buffer,xcord,ycord,xcord+CELL_SIZE, ycord+CELL_SIZE,SADDLEBROWN);
 			}
-			if ((*this)[i][j].getInPlay() ) {
+			if ((*this)[i][j].inPlay ) {
 				int pieceCol;
-				if ( (*this)[i][j].getColor() == Piece::RED) {
+				if ( (*this)[i][j].col == Piece::RED) {
 					pieceCol = RED;
 				} else {
 					pieceCol = BLACK;
