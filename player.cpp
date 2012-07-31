@@ -27,10 +27,10 @@ void Player::display() const {
 
 Player::~Player() {
 	for (auto p : pieces) {
-		if (p != NULL) {
-			if (p->id == ~0u) {
-				delete p;
-			}
-		}
+//		if (p != NULL) {
+//			if (p->id == ~0u) {
+//				delete p;
+//			}
+//		}
 	}
 }
