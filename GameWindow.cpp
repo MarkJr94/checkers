@@ -14,7 +14,6 @@
 
 #include "bst.hpp"
 #include "checkers.hpp"
-#include "player.hpp"
 #include "game.hpp"
 #include "DrawGame.hpp"
 #include "GameWindow.hpp"

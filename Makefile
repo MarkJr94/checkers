@@ -4,15 +4,18 @@ CPPFLAGS:=-Wall -g -std=c++0x
 ALLEGROFLAGS:=`allegro-config --libs`
 GTKFLAGS:=`pkg-config --cflags --libs gtkmm-3.0`
 cxx:=clang++
+bstfiles:=bst.cpp bst.hpp
+dgfiles:=DrawGame.cpp DrawGame.hpp
+gwfiles:=GameWindow.hpp GameWindow.cpp
 
-all: $(COMMONFILES) bst.cpp bst.hpp DrawGame.hpp DrawGame.cpp main.cpp GameWindow.hpp GameWindow.cpp
+all: $(COMMONFILES) $(bstfiles) $(dgfiles) main.cpp $(gwfiles)
 	 $(cxx) -o draughts $(CPPFLAGS) $(COMMONSRC) bst.cpp main.cpp
 	 $(cxx)  -o visual $(CPPFLAGS) $(COMMONSRC) bst.cpp DrawGame.cpp GameWindow.cpp $(GTKFLAGS) $(ALLEGROFLAGS)
 
-draughts: $(COMMONFILES) bst.cpp bst.hpp main.cpp
+draughts: $(COMMONFILES) $(bstfiles) main.cpp
 	$(cxx) -o $@ $(CPPFLAGS) $(COMMONSRC) bst.cpp main.cpp
 	
-visual: $(COMMONFILES) bst.cpp bst.hpp DrawGame.hpp DrawGame.cpp GameWindow.hpp GameWindow.cpp
+visual: $(COMMONFILES) $(bstfiles) $(dgfiles) $(gwfiles)
 	$(cxx) -o $@ $(CPPFLAGS) $(COMMONSRC) bst.cpp DrawGame.cpp GameWindow.cpp $(GTKFLAGS) $(ALLEGROFLAGS)
 
 clean:

@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "checkers.hpp"
-#include "player.hpp"
 #include "game.hpp"
 
 struct MoveRecord {

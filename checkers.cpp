@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "checkers.hpp"
+
 /* Piece constructor:
  * If any value is out of range, it is automatically set to 0.
  */
@@ -25,16 +26,6 @@ Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
 		y = yy;
 	}
 }
-//
-//unsigned Piece::getX() const {return x;}
-//
-//unsigned Piece::getY() const {return y;}
-//
-//bool Piece::getIsKing() const {return isKing;}
-//
-//bool Piece::getInPlay() const {return inPlay;}
-//
-//Piece::Color Piece::getColor() const {return col;}
 
 void Piece::print() const
 {
@@ -42,26 +33,3 @@ void Piece::print() const
 			<< isKing << " inplay = " << inPlay << " col = "
 			<< (col == BLACK ? "Black" : "Red") << std::endl;
 }
-
-//void Piece::setX(const unsigned xx)
-//{
-//	if (xx > 7) {
-//		std::cerr << "Invalid x value\n";
-//		return;
-//	}
-//	x = xx;
-//}
-//
-//void Piece::setY(const unsigned yy) {
-//	if (yy > 7) {
-//		std::cerr << "Invalid y value\n";
-//		return;
-//	}
-//	y = yy;
-//}
-//
-//void Piece::setIsKing(const bool newval) {isKing = newval;}
-//
-//void Piece::setInPlay(const bool newval) {inPlay = newval;}
-//
-//void Piece::setColor(const Color color) {col = color;}

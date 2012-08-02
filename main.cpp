@@ -4,7 +4,6 @@
 #include <exception>
 
 #include "checkers.hpp"
-#include "player.hpp"
 #include "game.hpp"
 #include "bst.hpp"
 

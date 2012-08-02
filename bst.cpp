@@ -9,7 +9,6 @@
 #include "bst.hpp"
 #include "checkers.hpp"
 #include "game.hpp"
-#include "player.hpp"
 
 /* Sleep portability thing */
 #if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS__) || defined(__TOS_WIN__)
@@ -216,6 +215,7 @@ MoveRecord GameTree::getBestMove(bool optimizeForP2, bool aggro) {
 
 	if (nKids == 0) {
 		std::cerr << "No Moves.\n";
+		creator.piece =  0xff;
 		return creator;
 	}
 
@@ -344,16 +344,12 @@ void playPvP(Game *theGame) {
 	}
 }
 
-void aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
+bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
 		GameTree* predictor, bool p1Turn) {
 	using namespace std;
 
 	unsigned count2 = 0;
-	string player;
-	if (p1Turn)
-		player = " Player 1 ";
-	else
-		player = " Player 2 ";
+	string player = (p1Turn ? " Player 1 " : " Player 2 ");
 
 	do {
 		if (interact)
@@ -375,6 +371,7 @@ void aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
 		AI.generateOutcomes();
 		AI.updateScores();
 		blank = AI.getBestMove();
+		if (blank.piece == 0xff) return true;
 		bool success;
 		if (blank.jump) {
 			success = theGame->jumpPiece(blank.piece, blank.prey);
@@ -396,7 +393,10 @@ void aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
 				theGame->setMustJump(0);
 			delete predictor;
 		}
+		break;
 	} while (1);
+
+	return false;
 }
 
 void playAgainstAI(Game *theGame, bool interact) {
@@ -404,7 +404,7 @@ void playAgainstAI(Game *theGame, bool interact) {
 
 	MoveRecord blank;
 	string instring;
-	unsigned countp2 = 0;
+	unsigned count1 = 0;
 	GameTree *predictor;
 
 	theGame->print();
@@ -418,50 +418,41 @@ void playAgainstAI(Game *theGame, bool interact) {
 		if ((turn = theGame->getTurn())) {
 			if (theGame->getP1score() < 1)
 				return;
-			aiInteract(theGame, interact, blank, predictor, turn);
-		} else {
-			if (interact)
+			cout << "P1 pieces = " << theGame->getP2score() << endl;
+			while (1) {
 				theGame->print();
-			if (theGame->getP2score() < 1)
-				return;
-			if (interact)
-				cout << "P2 pieces = " << theGame->getP2score() << endl;
-			if (interact)
-				cout << "================ Player 2  (Red) ==============\n\n";
-
-			if (countp2 == 3) {
-				countp2 = 0;
-				if (interact)
-					cout << "Three failed moves P2; Lose a turn!\n\n";
-				theGame->setTurn(!theGame->getTurn());
+				if (count1 == 3) {
+					count1 = 0;
+					cout << "Three failed moves P1; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
+					break;
+				}
+				cout << "================ Player 1 (Black) ==============\n\n";
+				int c = theGame->receiveInput();
+				switch (c) {
+				case -1:
+					return;
+				case 0:
+					count1++;
+					continue;
+				case 2:
+					predictor = new GameTree(1, theGame->getSave(), blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
+				}
+				count1 = 0;
 				break;
 			}
-
-			GameTree AI(1, theGame->getSave(), blank);
-			AI.generateOutcomes();
-			AI.updateScores();
-			blank = AI.getBestMove();
-			bool success;
-			if (blank.jump) {
-				success = theGame->jumpPiece(blank.piece, blank.prey);
-			} else {
-				success = theGame->movePiece(blank.piece, blank.dir);
-			}
-
-			if (!success) {
-				countp2++;
-				continue;
-			}
-
-			if (blank.jump) {
-				predictor = new GameTree(1, theGame->getSave(), blank);
-				if (predictor->canMultiJump(theGame->getMustJump())) {
-					theGame->setTurn(!theGame->getTurn());
-					continue;
-				} else
-					theGame->setMustJump(0);
-				delete predictor;
-			}
+		} else {
+			if (theGame->getP2score() < 1)
+				return;
+			if (aiInteract(theGame, interact, blank, predictor, turn)) return;
 		}
 	}
 }
@@ -471,8 +462,8 @@ void playAIvsAI(Game *theGame, bool interact) {
 
 	MoveRecord blank;
 	string instring;
-	unsigned count1 = 0, count2 = 0;
-	GameTree *predictor;
+	GameTree *predictor = NULL;
+	bool turn;
 
 	theGame->print();
 
@@ -481,96 +472,18 @@ void playAIvsAI(Game *theGame, bool interact) {
 			cout << theGame->getP1score() << " Player 1\n"
 					<< theGame->getP2score() << " Player 2\n\n";
 
-		if (theGame->getTurn()) {
-			if (interact)
-				theGame->print();
+		if ((turn = theGame->getTurn())) {
 			if (theGame->getP1score() < 1)
 				return;
-			if (interact)
-				cout << "P1 pieces = " << theGame->getP2score() << endl;
-			if (interact)
-				cout << "================ Player 1  (Black) ==============\n\n";
 
-			if (count1 == 3) {
-				count1 = 0;
-				if (interact)
-					cout << "Three failed moves P1; Lose a turn!\n\n";
-				theGame->setTurn(!theGame->getTurn());
-				break;
-			}
-
-			GameTree AI(1, theGame->getSave(), blank);
-			AI.generateOutcomes();
-			AI.updateScores();
-			blank = AI.getBestMove(false, true);
-			bool success;
-			if (blank.jump) {
-				success = theGame->jumpPiece(blank.piece, blank.prey);
-			} else {
-				success = theGame->movePiece(blank.piece, blank.dir);
-			}
-
-			if (!success) {
-				count2++;
-				continue;
-			}
-
-			if (blank.jump) {
-				predictor = new GameTree(1, theGame->getSave(), blank);
-				if (predictor->canMultiJump(theGame->getMustJump())) {
-					theGame->setTurn(!theGame->getTurn());
-					continue;
-				} else
-					theGame->setMustJump(0);
-				delete predictor;
-			}
-
-//			delay(500);
+			if (aiInteract(theGame, interact, blank, predictor, turn)) return;
+			delay(500);
 		} else {
-			if (interact)
-				theGame->print();
 			if (theGame->getP2score() < 1)
 				return;
-			if (interact)
-				cout << "P2 pieces = " << theGame->getP2score() << endl;
-			if (interact)
-				cout << "================ Player 2  (Red) ==============\n\n";
 
-			if (count2 == 3) {
-				count2 = 0;
-				if (interact)
-					cout << "Three failed moves P2; Lose a turn!\n\n";
-				theGame->setTurn(!theGame->getTurn());
-				break;
-			}
-
-			GameTree AI(1, theGame->getSave(), blank);
-			AI.generateOutcomes();
-			AI.updateScores();
-			blank = AI.getBestMove(true, true);
-			bool success;
-			if (blank.jump) {
-				success = theGame->jumpPiece(blank.piece, blank.prey);
-			} else {
-				success = theGame->movePiece(blank.piece, blank.dir);
-			}
-
-			if (!success) {
-				count2++;
-				continue;
-			}
-
-			if (blank.jump) {
-				predictor = new GameTree(1, theGame->getSave(), blank);
-				if (predictor->canMultiJump(theGame->getMustJump())) {
-					theGame->setTurn(!theGame->getTurn());
-					continue;
-				} else
-					theGame->setMustJump(0);
-				delete predictor;
-			}
-
-//			delay(500);
+			if (aiInteract(theGame, interact, blank, predictor, turn)) return;
+			delay(500);
 		}
 	}
 

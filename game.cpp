@@ -163,15 +163,6 @@ void Game::restoreToSave(SaveGame& record) {
 			}
 		}
 	}
-
-//	for (auto &p : *p1pieces) {
-//		if (p == NULL)
-//			p = new Piece(~0u, 0, 0, Piece::BLACK);
-//	}
-//	for (auto &p : *p2pieces) {
-//		if (p == NULL)
-//			p = new Piece(~0u, 0, 0, Piece::RED);
-//	}
 }
 
 inline void Game::updateSave() {
@@ -239,20 +230,15 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	}
 
 	/* Jumping */
-	map<int,Piece *>& pieces = (turn ? p1 : p2);
-	alias = pieces[piece];
+	map<int, Piece *>& pieces = (turn ? p1 : p2);
 
-	if (alias == NULL) {
-		if (interact)
-			cerr << "movePiece: Selected piece " << piece << " is null\n";
-		return false;
-	}
-
-	if (!alias->inPlay) {
+	if (pieces.find(piece) == pieces.end()) {
 		if (interact)
 			cerr << "movePiece: Selected piece " << piece << " not in play\n";
 		return false;
 	}
+
+	alias = pieces[piece];
 
 	/* Directions BKLEFT and BKRIGHT are only valid for kings */
 	bool wasKing = alias->isKing;
@@ -335,19 +321,8 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 		}
 	}
 
-
-	map<int, Piece *>& pieces = ( turn ? p1 : p2);
-	j = pieces[jumper];
-	p = (turn ? p2[prey] : p1[prey] );
-//	if (turn) {
-//		pieces = p1.getPieces();
-//		j = (*pieces)[jumper - 1];
-//		p = ((*p2.getPieces())[prey - 1]);
-//	} else {
-//		pieces = p2.getPieces();
-//		j = (*pieces)[jumper - 1];
-//		p = ((*p1.getPieces())[prey - 1]);
-//	}
+	map<int, Piece *>& pieces = (turn ? p1 : p2);
+	map<int, Piece *>& other = (turn ? p2 : p1);
 
 	/* Testing if piece selection is valid */
 	if (jumper > 12 || prey > 12) {
@@ -360,11 +335,17 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 			cerr << "pieceJump: Invalid piece number input" << endl;
 		return false;
 	}
-	if (j ==  NULL || p == NULL) {
-			if (interact)
-				cerr << "pieceJump: Selected piece not inplay\n";
-			return false;
-		}
+
+	if (pieces.find(jumper) == pieces.end()
+			|| other.find(prey) == other.end()) {
+		if (interact)
+			cerr << "pieceJump: Selected piece not inplay\n";
+		return false;
+	}
+
+	j = pieces[jumper];
+	p = other[prey];
+
 	if (!j->inPlay || !p->inPlay) {
 		if (interact)
 			cerr << "pieceJump: Selected piece not inplay\n";
@@ -432,10 +413,7 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 		pieces[jumper]->isKing = true;
 
 	p->inPlay = false;
-	if (turn)
-		p2.erase(prey);
-	else
-		p1.erase(prey);
+	other.erase(prey);
 
 	turn = !turn;
 	setMustJump(jumper);
