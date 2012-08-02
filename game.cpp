@@ -3,11 +3,10 @@
 #include <sstream>
 
 #include "checkers.hpp"
-//#include "player.hpp"
 #include "game.hpp"
 
 SaveGame::SaveGame(bool turn) :
-		data(8, std::vector<cellRecord>(8)), turn(turn) {
+		turn(turn), data(8, std::vector<cellRecord>(8)) {
 }
 
 SaveGame& SaveGame::operator=(const SaveGame other) {
@@ -92,7 +91,7 @@ Game::Game(bool db, bool interact) :
 			++i;
 			count = 0;
 		}
-		p1[k]->print();
+		p1[k]->print(cout);
 	}
 
 	id = 1;
@@ -116,7 +115,7 @@ Game::Game(bool db, bool interact) :
 			--i;
 			count = 0;
 		}
-		p2[k]->print();
+		p2[k]->print(cout);
 	}
 }
 
@@ -145,7 +144,7 @@ void Game::restoreToSave(SaveGame& record) {
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			unsigned index = record(i, j).id;
+			unsigned index = record[i][j].id;
 			if (record[i][j].alive) {
 				board[i][j].inPlay = (true);
 				board[i][j].id = (index);
@@ -251,7 +250,7 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	}
 
 	if (debug)
-		alias->print();
+		alias->print(cout);
 
 	/* Determine next coordinates for jump */
 	unsigned nextx, nexty;
@@ -352,9 +351,9 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 		return false;
 	}
 	if (debug) {
-		j->print();
+		j->print(cout);
 		cout << "Preying on: ";
-		p->print();
+		p->print(cout);
 	}
 
 	/* Testing if valid targets */

@@ -6,9 +6,9 @@
 #include <sstream>
 #include <vector>
 
-#include "bst.hpp"
 #include "checkers.hpp"
 #include "game.hpp"
+#include "bst.hpp"
 
 /* Sleep portability thing */
 #if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS__) || defined(__TOS_WIN__)
@@ -177,7 +177,7 @@ void GameTree::generateOutcomes() {
 	}
 }
 
-std::vector<GameTree *> GameTree::kidnap() {
+std::vector<GameTree *>& GameTree::kidnap() {
 	return children;
 }
 
@@ -215,7 +215,7 @@ MoveRecord GameTree::getBestMove(bool optimizeForP2, bool aggro) {
 
 	if (nKids == 0) {
 		std::cerr << "No Moves.\n";
-		creator.piece =  0xff;
+		creator.piece = 0xff;
 		return creator;
 	}
 
@@ -371,7 +371,8 @@ bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
 		AI.generateOutcomes();
 		AI.updateScores();
 		blank = AI.getBestMove();
-		if (blank.piece == 0xff) return true;
+		if (blank.piece == 0xff)
+			return true;
 		bool success;
 		if (blank.jump) {
 			success = theGame->jumpPiece(blank.piece, blank.prey);
@@ -452,7 +453,8 @@ void playAgainstAI(Game *theGame, bool interact) {
 		} else {
 			if (theGame->getP2score() < 1)
 				return;
-			if (aiInteract(theGame, interact, blank, predictor, turn)) return;
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
 		}
 	}
 }
@@ -476,13 +478,15 @@ void playAIvsAI(Game *theGame, bool interact) {
 			if (theGame->getP1score() < 1)
 				return;
 
-			if (aiInteract(theGame, interact, blank, predictor, turn)) return;
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
 			delay(500);
 		} else {
 			if (theGame->getP2score() < 1)
 				return;
 
-			if (aiInteract(theGame, interact, blank, predictor, turn)) return;
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
 			delay(500);
 		}
 	}

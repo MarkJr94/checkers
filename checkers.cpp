@@ -27,9 +27,9 @@ Piece::Piece(unsigned idNo, unsigned xx, unsigned yy, Piece::Color color)
 	}
 }
 
-void Piece::print() const
+void Piece::print(std::ostream& out) const
 {
-	std::cout << "id = " << id << " x = " << x << " y = " << y << " isKing = "
+	out << "id = " << id << " x = " << x << " y = " << y << " isKing = "
 			<< isKing << " inplay = " << inPlay << " col = "
 			<< (col == BLACK ? "Black" : "Red") << std::endl;
 }

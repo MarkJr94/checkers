@@ -1,8 +1,8 @@
+#pragma once
 #ifndef GAME_TREE_
 #define GAME_TREE_
 
 #include <vector>
-#include "checkers.hpp"
 #include "game.hpp"
 
 struct MoveRecord {
@@ -13,28 +13,20 @@ struct MoveRecord {
 };
 
 class GameTree {
-private:
-	unsigned level;
-	Game scenario;
-	std::vector<GameTree *> children;
-	double p1Avg;
-	double p2Avg;
-	MoveRecord creator;
-
 public:
 	GameTree(unsigned level, const SaveGame, const MoveRecord creator);
 	~GameTree();
 	void printScene();
 	unsigned testMoves(SaveGame savestate);
 	void generateOutcomes();
-	std::vector<GameTree *> kidnap();
+	std::vector<GameTree *>& kidnap();
 	void updateScores();
 	void recursivePrint();
 
 	MoveRecord getBestMove(bool optimizeForP2 = true, bool aggro = false);
 	bool canMultiJump(unsigned piece);
 
-	inline MoveRecord getCreator() {
+	MoveRecord getCreator() {
 		return creator;
 	}
 
@@ -61,6 +53,14 @@ public:
 	Game getScenario() const {
 		return scenario;
 	}
+
+private:
+	unsigned level;
+	Game scenario;
+	std::vector<GameTree *> children;
+	double p1Avg;
+	double p2Avg;
+	MoveRecord creator;
 };
 
 /* Play Player vs Player

@@ -1,9 +1,8 @@
+#pragma once
 #ifndef GAME_HPP_
 #define GAME_HPP_
 
-//#include "bst.hpp"
 #include "checkers.hpp"
-//#include "player.hpp"
 #include <fstream>
 #include <map>
 #include <string>
@@ -16,12 +15,11 @@ struct cellRecord {
 	bool isKing;
 };
 
-class SaveGame {
-	std::vector<std::vector<cellRecord>> data;
+struct SaveGame {
+
 	bool turn;
 	unsigned mustJump;
 
-public:
 	SaveGame(bool turn);
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
@@ -32,14 +30,8 @@ public:
 	}
 	/* Assignment operator */
 	SaveGame & operator=(const SaveGame other);
-	inline cellRecord & operator()(int row, int col) {
-		return data[row][col];
-	}
-	inline std::vector<cellRecord> & operator()(int row) {
-		return data[row];
-	}
 
-	inline std::vector<cellRecord> & operator[](int row) {
+	std::vector<cellRecord> & operator[](int row) {
 		return data[row];
 	}
 
@@ -53,18 +45,13 @@ public:
 	void setMustJump(unsigned mustJump) {
 		this->mustJump = mustJump;
 	}
+
+private:
+	std::vector<std::vector<cellRecord>> data;
 };
 
 class Game {
-	std::map <int,Piece *> p1;
-	std::map <int,Piece *> p2;
-	std::vector<std::vector<Piece> > board;
-	/* Tracks if it's P1's turn or not */
-	bool turn;
-	bool debug;
-	SaveGame save;
-	bool interact;
-	unsigned mustJump;
+
 
 public:
 	/* Enumerations for movement and jump directions */
@@ -124,8 +111,18 @@ public:
 	}
 
 private:
+	std::map <int,Piece *> p1;
+	std::map <int,Piece *> p2;
+	std::vector<std::vector<Piece> > board;
+	/* Tracks if it's P1's turn or not */
+	bool turn;
+	bool debug;
+	SaveGame save;
+	bool interact;
+	unsigned mustJump;
+
+
 	virtual void _print() const;
-//	virtual int _receiveInput();
 };
 
 #endif /* GAME_HPP_ */
