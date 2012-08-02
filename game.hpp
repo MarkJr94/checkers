@@ -3,10 +3,11 @@
 
 //#include "bst.hpp"
 #include "checkers.hpp"
-#include "player.hpp"
-#include <vector>
+//#include "player.hpp"
 #include <fstream>
+#include <map>
 #include <string>
+#include <vector>
 
 struct cellRecord {
 	bool alive;
@@ -55,8 +56,8 @@ public:
 };
 
 class Game {
-	Player p1;
-	Player p2;
+	std::map <int,Piece *> p1;
+	std::map <int,Piece *> p2;
 	std::vector<std::vector<Piece> > board;
 	/* Tracks if it's P1's turn or not */
 	bool turn;
@@ -88,8 +89,6 @@ public:
 	bool movePiece(unsigned piece, Direction d);
 	/* Jumping */
 	bool jumpPiece(unsigned jumper, unsigned prey);
-	/* Play */
-	void play();
 	/* restore game to save */
 	void restoreToSave(SaveGame& record);
 	/* Receive input for CLI */
@@ -104,11 +103,11 @@ public:
 	}
 	/* Get p1 score */
 	inline unsigned getP1score() {
-		return p1.getnPieces();
+		return p1.size();
 	}
 	/* Get p2 score */
 	inline unsigned getP2score() {
-		return p2.getnPieces();
+		return p2.size();
 	}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {

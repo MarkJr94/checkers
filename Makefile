@@ -1,5 +1,5 @@
-COMMONFILES:=checkers.cpp checkers.hpp player.cpp player.hpp game.hpp game.cpp
-COMMONSRC:=checkers.cpp player.cpp game.cpp
+COMMONFILES:=checkers.cpp checkers.hpp game.hpp game.cpp
+COMMONSRC:=checkers.cpp game.cpp
 CPPFLAGS:=-Wall -g -std=c++0x
 ALLEGROFLAGS:=`allegro-config --libs`
 GTKFLAGS:=`pkg-config --cflags --libs gtkmm-3.0`

@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "checkers.hpp"
-#include "player.hpp"
+//#include "player.hpp"
 #include "game.hpp"
 
 SaveGame::SaveGame(bool turn) :
@@ -61,9 +61,8 @@ void SaveGame::read(std::string fname) {
 }
 
 Game::Game(bool db, bool interact) :
-		p1(Piece::BLACK), p2(Piece::RED), board(BOARD_SIZE,
-				std::vector<Piece>(BOARD_SIZE, Piece())), turn(true), debug(db), save(
-				true), interact(interact), mustJump(0) {
+		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE, Piece())), turn(true), debug(
+				db), save(true), interact(interact), mustJump(0) {
 	using namespace std;
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -75,16 +74,15 @@ Game::Game(bool db, bool interact) :
 	}
 
 	unsigned i = 0, j = 0, count = 0, id = 1;
-	vector<Piece *> * pieces = (p1.getPieces());
 
-	for (auto &p : *pieces) {
-		p = &board[j][i];
-		p->x = j;
-		p->y = i;
-		p->inPlay = true;
-		p->col = Piece::BLACK;
-		p->isKing = false;
-		p->id = id++;
+	for (unsigned k = 1; k <= 12; k++) {
+		p1[k] = &board[j][i];
+		p1[k]->x = j;
+		p1[k]->y = i;
+		p1[k]->inPlay = true;
+		p1[k]->col = Piece::BLACK;
+		p1[k]->isKing = false;
+		p1[k]->id = id++;
 		j += 2;
 		if (j == BOARD_SIZE)
 			j = 1;
@@ -94,22 +92,21 @@ Game::Game(bool db, bool interact) :
 			++i;
 			count = 0;
 		}
-		p->print();
+		p1[k]->print();
 	}
 
 	id = 1;
 	count = 0;
 	i = 7, j = 1;
 
-	pieces = (p2.getPieces());
-	for (auto &p : *pieces) {
-		p = &board[j][i];
-		p->x = j;
-		p->y = i;
-		p->inPlay = true;
-		p->col = Piece::RED;
-		p->isKing = false;
-		p->id = id++;
+	for (unsigned k = 1; k <= 12; k++) {
+		p2[k] = &board[j][i];
+		p2[k]->x = j;
+		p2[k]->y = i;
+		p2[k]->inPlay = true;
+		p2[k]->col = Piece::RED;
+		p2[k]->isKing = false;
+		p2[k]->id = id++;
 		j += 2;
 		if (j == BOARD_SIZE)
 			j = 1;
@@ -119,14 +116,13 @@ Game::Game(bool db, bool interact) :
 			--i;
 			count = 0;
 		}
-		p->print();
+		p2[k]->print();
 	}
 }
 
 Game::Game(SaveGame record, bool db, bool interact) :
-		p1(Piece::BLACK), p2(Piece::RED), board(BOARD_SIZE,
-				std::vector<Piece>(BOARD_SIZE)), turn(record.getTurn()), debug(
-				db), save(record), interact(interact) {
+		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE)), turn(
+				record.getTurn()), debug(db), save(record), interact(interact) {
 	restoreToSave(record);
 }
 
@@ -144,44 +140,38 @@ void Game::restoreToSave(SaveGame& record) {
 	turn = record.getTurn();
 	mustJump = record.getMustJump();
 
-	vector<Piece *> *p1pieces = p1.getPieces();
-	vector<Piece *> *p2pieces = p2.getPieces();
-
 	unsigned p2numPieces = 0;
 	unsigned p1numPieces = 0;
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			unsigned index = record(i, j).id;
-			if (record(i, j).alive) {
+			if (record[i][j].alive) {
 				board[i][j].inPlay = (true);
 				board[i][j].id = (index);
-				if (record(i, j).isKing)
+				if (record[i][j].isKing)
 					board[i][j].isKing = (true);
-				if (record(i, j).color == Piece::BLACK) {
+				if (record[i][j].color == Piece::BLACK) {
 					p1numPieces++;
 					board[i][j].col = (Piece::BLACK);
-					(*p1pieces)[index - 1] = &board[i][j];
+					p1[index] = &board[i][j];
 				} else {
 					p2numPieces++;
 					board[i][j].col = (Piece::RED);
-					(*p2pieces)[index - 1] = &board[i][j];
+					p2[index] = &board[i][j];
 				}
 			}
 		}
 	}
 
-	for (auto &p : *p1pieces) {
-		if (p == NULL)
-			p = new Piece(~0u, 0, 0, Piece::BLACK);
-	}
-	for (auto &p : *p2pieces) {
-		if (p == NULL)
-			p = new Piece(~0u, 0, 0, Piece::RED);
-	}
-
-	p1.setnPieces(p1numPieces);
-	p2.setnPieces(p2numPieces);
+//	for (auto &p : *p1pieces) {
+//		if (p == NULL)
+//			p = new Piece(~0u, 0, 0, Piece::BLACK);
+//	}
+//	for (auto &p : *p2pieces) {
+//		if (p == NULL)
+//			p = new Piece(~0u, 0, 0, Piece::RED);
+//	}
 }
 
 inline void Game::updateSave() {
@@ -189,9 +179,9 @@ inline void Game::updateSave() {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
 			auto & alias = board[i][j];
 			save[i][j].id = alias.id;
-			save(i, j).color = alias.col;
-			save(i, j).alive = alias.inPlay;
-			save(i, j).isKing = alias.isKing;
+			save[i][j].color = alias.col;
+			save[i][j].alive = alias.inPlay;
+			save[i][j].isKing = alias.isKing;
 		}
 	}
 	save.setTurn(turn);
@@ -209,7 +199,7 @@ void Game::print() const {
 void Game::_print() const {
 	using namespace std;
 
-	cout << "P1: " << p1.getnPieces() << "\tP2: " << p2.getnPieces() << endl;
+	cout << "P1: " << p1.size() << "\tP2: " << p2.size() << endl;
 	for (int j = (int) (BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			if (board[i][j].inPlay) {
@@ -232,8 +222,8 @@ void Game::_print() const {
 /* Piece movement */
 bool Game::movePiece(unsigned piece, Direction d) {
 	using namespace std;
+
 	Piece * alias;
-	vector<Piece *> * pieces;
 
 	if (mustJump) {
 		if (interact)
@@ -249,12 +239,13 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	}
 
 	/* Jumping */
-	if (turn) {
-		pieces = p1.getPieces();
-		alias = (*pieces)[piece - 1];
-	} else {
-		pieces = p2.getPieces();
-		alias = (*pieces)[piece - 1];
+	map<int,Piece *>& pieces = (turn ? p1 : p2);
+	alias = pieces[piece];
+
+	if (alias == NULL) {
+		if (interact)
+			cerr << "movePiece: Selected piece " << piece << " is null\n";
+		return false;
 	}
 
 	if (!alias->inPlay) {
@@ -316,7 +307,7 @@ bool Game::movePiece(unsigned piece, Direction d) {
 
 	/* Complete the move */
 	alias->inPlay = false;
-	(*pieces)[piece - 1] = alias = &board[nextx][nexty];
+	pieces[piece] = alias = &board[nextx][nexty];
 	alias->inPlay = true;
 	if (turn)
 		alias->col = Piece::BLACK;
@@ -333,8 +324,8 @@ bool Game::movePiece(unsigned piece, Direction d) {
 /* Jumping */
 bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	using namespace std;
+
 	Piece *j, *p;
-	vector<Piece *> * pieces;
 	if (mustJump) {
 		if (jumper != mustJump) {
 			if (interact)
@@ -344,15 +335,19 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 		}
 	}
 
-	if (turn) {
-		pieces = p1.getPieces();
-		j = (*pieces)[jumper - 1];
-		p = ((*p2.getPieces())[prey - 1]);
-	} else {
-		pieces = p2.getPieces();
-		j = (*pieces)[jumper - 1];
-		p = ((*p1.getPieces())[prey - 1]);
-	}
+
+	map<int, Piece *>& pieces = ( turn ? p1 : p2);
+	j = pieces[jumper];
+	p = (turn ? p2[prey] : p1[prey] );
+//	if (turn) {
+//		pieces = p1.getPieces();
+//		j = (*pieces)[jumper - 1];
+//		p = ((*p2.getPieces())[prey - 1]);
+//	} else {
+//		pieces = p2.getPieces();
+//		j = (*pieces)[jumper - 1];
+//		p = ((*p1.getPieces())[prey - 1]);
+//	}
 
 	/* Testing if piece selection is valid */
 	if (jumper > 12 || prey > 12) {
@@ -365,6 +360,11 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 			cerr << "pieceJump: Invalid piece number input" << endl;
 		return false;
 	}
+	if (j ==  NULL || p == NULL) {
+			if (interact)
+				cerr << "pieceJump: Selected piece not inplay\n";
+			return false;
+		}
 	if (!j->inPlay || !p->inPlay) {
 		if (interact)
 			cerr << "pieceJump: Selected piece not inplay\n";
@@ -424,98 +424,22 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 
 	/* Move the piece */
 	j->inPlay = false;
-	(*pieces)[jumper - 1] = &board[newx][newy];
-	(*pieces)[jumper - 1]->inPlay = true;
-	(*pieces)[jumper - 1]->col = j->col;
-	(*pieces)[jumper - 1]->id = jumper;
+	pieces[jumper] = &board[newx][newy];
+	pieces[jumper]->inPlay = true;
+	pieces[jumper]->col = j->col;
+	pieces[jumper]->id = jumper;
 	if (wasKing)
-		(*pieces)[jumper - 1]->isKing = true;
+		pieces[jumper]->isKing = true;
 
 	p->inPlay = false;
 	if (turn)
-		p2.setnPieces(p2.getnPieces() - 1);
+		p2.erase(prey);
 	else
-		p1.setnPieces(p1.getnPieces() - 1);
+		p1.erase(prey);
 
 	turn = !turn;
 	setMustJump(jumper);
 	return true;
-}
-
-void Game::play() {
-	using namespace std;
-
-	if (interact) {
-		p1.display();
-		p2.display();
-		print();
-	}
-
-	unsigned count1 = 0, count2 = 0;
-
-	while (1) {
-		if (interact)
-			cout << p1.getnPieces() << " Player 1\n" << p2.getnPieces()
-					<< " Player 2\n\n";
-
-		if (turn) {
-			if (p1.getnPieces() < 1)
-				return;
-			if (interact)
-				cout << "P1 pieces = " << p1.getnPieces() << endl;
-			while (1) {
-				if (interact)
-					print();
-				if (count1 == 3) {
-					count1 = 0;
-					if (interact)
-						cout << "Three failed moves P1; Lose a turn!\n\n";
-					turn = !turn;
-					break;
-				}
-				if (interact)
-					cout
-							<< "================ Player 1 (Black) ==============\n\n";
-				int c = receiveInput();
-				if (c == -1)
-					return;
-				else {
-					count1++;
-					continue;
-				}
-				count1 = 0;
-				break;
-			}
-		} else {
-			if (p2.getnPieces() < 1)
-				return;
-			if (interact)
-				cout << "P2 pieces = " << p2.getnPieces() << endl;
-			while (1) {
-				if (interact)
-					print();
-				if (count2 == 3) {
-					count2 = 0;
-					if (interact)
-						cout << "Three failed moves P2; Lose a turn!\n\n";
-					turn = !turn;
-					break;
-				}
-				if (interact)
-					cout
-							<< "================ Player 2  (Red) ==============\n\n";
-				int c = receiveInput();
-				if (c == -1)
-					return;
-				else {
-					count2++;
-					continue;
-				}
-				count2 = 0;
-				break;
-			}
-		}
-	}
 }
 
 int Game::receiveInput() {
