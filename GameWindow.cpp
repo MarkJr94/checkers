@@ -77,8 +77,45 @@ GameWindow::~GameWindow() {
 
 void GameWindow::onGoButtonClicked()
 {
-	LoadGameDialog lg;
-	lg.run();
+//	LoadGameDialog lg;
+//	lg.run();
+	DrawGame *theGame = new DrawGame();
+	playAIvsAI(theGame, true);
+	delete theGame;
+}
+
+void playAI(Game *theGame, bool interact) {
+	using namespace std;
+
+	MoveRecord blank;
+	string instring;
+	GameTree *predictor = NULL;
+	bool turn;
+
+	theGame->print();
+
+	while (1) {
+		if (interact)
+			cout << theGame->getP1score() << " Player 1\n"
+					<< theGame->getP2score() << " Player 2\n\n";
+
+		if ((turn = theGame->getTurn())) {
+			if (theGame->getP1score() < 1)
+				return;
+
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
+//			delay(500);
+		} else {
+			if (theGame->getP2score() < 1)
+				return;
+
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
+//			delay(500);
+		}
+	}
+
 }
 
 int main(int argc, char *argv[])

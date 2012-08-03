@@ -63,6 +63,8 @@ private:
 	MoveRecord creator;
 };
 
+bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
+		GameTree* predictor, bool p1Turn);
 /* Play Player vs Player
  * 	Arguments:
  * 		theGame: pointer to an allocated game

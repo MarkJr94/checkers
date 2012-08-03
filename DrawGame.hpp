@@ -9,12 +9,13 @@
 #define DRAWGAME_H_
 
 #include "game.hpp"
+#include "../ogl-tryouts/World.hpp"
 
 const unsigned CELL_SIZE = 30;
 
 class DrawGame: public Game
 {
-	void _print() const;
+	void _print();
 
 	/* Typedef for super class  */
 	typedef Game super;
@@ -22,6 +23,7 @@ public:
 	DrawGame();
 	DrawGame(const SaveGame& record);
 	virtual ~DrawGame();
+	World world;
 };
 
 #endif /* DRAWGAME_H_ */

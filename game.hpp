@@ -71,7 +71,7 @@ public:
 	/* return save game */
 	SaveGame getSave();
 	/* Print game */
-	void print() const;
+	void print();
 	/* Piece Movement */
 	bool movePiece(unsigned piece, Direction d);
 	/* Jumping */
@@ -122,7 +122,7 @@ private:
 	unsigned mustJump;
 
 
-	virtual void _print() const;
+	virtual void _print();
 };
 
 #endif /* GAME_HPP_ */

@@ -182,11 +182,11 @@ SaveGame Game::getSave() {
 	return save;
 }
 
-void Game::print() const {
+void Game::print() {
 	_print();
 }
 
-void Game::_print() const {
+void Game::_print() {
 	using namespace std;
 
 	cout << "P1: " << p1.size() << "\tP2: " << p2.size() << endl;
