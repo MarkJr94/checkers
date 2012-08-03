@@ -1,40 +1,32 @@
+#pragma once
 #ifndef GAME_TREE_
 #define GAME_TREE_
 
 #include <vector>
-#include "checkers.hpp"
-#include "player.hpp"
 #include "game.hpp"
 
 struct MoveRecord {
-	Match::Direction dir;
+	Game::Direction dir;
 	bool jump;
 	unsigned char piece;
 	unsigned char prey;
 };
 
 class GameTree {
-private:
-	unsigned level;
-	Match scenario;
-	std::vector<GameTree *> children;
-	double p1Avg;
-	double p2Avg;
-	MoveRecord creator;
-
 public:
 	GameTree(unsigned level, const SaveGame, const MoveRecord creator);
 	~GameTree();
 	void printScene();
 	unsigned testMoves(SaveGame savestate);
 	void generateOutcomes();
-	std::vector<GameTree *> kidnap();
+	std::vector<GameTree *>& kidnap();
 	void updateScores();
 	void recursivePrint();
 
 	MoveRecord getBestMove(bool optimizeForP2 = true, bool aggro = false);
+	bool canMultiJump(unsigned piece);
 
-	inline MoveRecord getCreator() {
+	MoveRecord getCreator() {
 		return creator;
 	}
 
@@ -58,29 +50,37 @@ public:
 		this->p2Avg = p2Avg;
 	}
 
-	Match getScenario() const {
+	Game getScenario() const {
 		return scenario;
 	}
+
+private:
+	unsigned level;
+	Game scenario;
+	std::vector<GameTree *> children;
+	double p1Avg;
+	double p2Avg;
+	MoveRecord creator;
 };
 
 /* Play Player vs Player
  * 	Arguments:
  * 		theGame: pointer to an allocated game
  */
-void playPvP(Match *theGame);
+void playPvP(Game *theGame);
 
 /* Play Player vs AI
  * 	Arguments:
  * 		theGame: pointer to an allocated game
  * 		interact: whether to print interactive output.
  */
-void playAgainstAI(Match *theGame, bool interact);
+void playAgainstAI(Game *theGame, bool interact);
 
 /* Play AI VS AI Game.
  * Arguments:
  * 	theGame: Pointer to an allocated game
  * 	interact: if interactive output should be printed
  */
-void playAIvsAI(Match *theGame, bool interact);
+void playAIvsAI(Game *theGame, bool interact);
 
 #endif /* GAME_TREE_ */

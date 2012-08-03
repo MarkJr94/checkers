@@ -26,11 +26,13 @@
 								<option id="gnu.cpp.compiler.option.include.paths.732958472" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.6"/>
 									<listOptionValue builtIn="false" value="/home/markjr/checkers"/>
+									<listOptionValue builtIn="false" value="/usr/include/gtkmm-3.0"/>
+									<listOptionValue builtIn="false" value="/usr/include/glibmm-2.4"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1402649622" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.860524047" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
-								<option id="gnu.c.compiler.option.include.paths.717609259" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.c.compiler.option.include.paths.717609259" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/home/markjr/checkers"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2064635481" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
