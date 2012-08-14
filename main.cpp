@@ -2,18 +2,35 @@
 #include <string>
 #include <sstream>
 #include <exception>
+#include <argparse>
 
 #include "checkers.hpp"
 #include "game.hpp"
 #include "bst.hpp"
 #include "../ogl-tryouts/World.hpp"
 
-int main() {
+int main(int argc, char *argv[]) {
 	using namespace std;
 
+	ArgumentParser parser ("draughts");
+	parser.addarg<bool>("play",true,'p',false,"Choose whether or not to interact. default yes");
+	parser.addarg<bool>("help",false,'h',false,"Display this help message");
+	parser.parse(argc,argv);
+	bool play = parser.getarg<bool>("play");
+	bool help = parser.getarg<bool>("help");
+	if (help) {
+		parser.help();
+		return 0;
+	}
 	string instr;
 	Game *theMatch;
 	SaveGame *loadGame, *saveGame;
+
+	if (!play) {
+		theMatch = new Game(true, true);
+		playAIvsAI(theMatch,true);
+		return 0;
+	}
 	cout << "Would you like to load a game? (y/n): ";
 	getline(cin, instr);
 	if (instr == "y") {

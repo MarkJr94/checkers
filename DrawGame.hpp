@@ -16,6 +16,7 @@ const unsigned CELL_SIZE = 30;
 class DrawGame: public Game
 {
 	void _print();
+	enum State { MOVING, WAITING };
 
 	/* Typedef for super class  */
 	typedef Game super;
