@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 #include <exception>
-#include <argparse>
+#include <optparser>
 
 #include "checkers.hpp"
 #include "game.hpp"
@@ -12,12 +12,12 @@
 int main(int argc, char *argv[]) {
 	using namespace std;
 
-	ArgumentParser parser ("draughts");
-	parser.addarg<bool>("play",true,'p',false,"Choose whether or not to interact. default yes");
-	parser.addarg<bool>("help",false,'h',false,"Display this help message");
+	OP::OptParser parser ("draughts");
+	parser.addOpt<bool>("play",true,'p',false,"Choose whether or not to interact. default yes");
+	parser.addOpt<bool>("help",false,'h',false,"Display this help message");
 	parser.parse(argc,argv);
-	bool play = parser.getarg<bool>("play");
-	bool help = parser.getarg<bool>("help");
+	bool play = parser.getOpt<bool>("play");
+	bool help = parser.getOpt<bool>("help");
 	if (help) {
 		parser.help();
 		return 0;
