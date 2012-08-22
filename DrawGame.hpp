@@ -9,7 +9,6 @@
 #define DRAWGAME_H_
 
 #include "game.hpp"
-#include "../ogl-tryouts/World.hpp"
 
 const unsigned CELL_SIZE = 30;
 
@@ -24,7 +23,6 @@ public:
 	DrawGame();
 	DrawGame(const SaveGame& record);
 	virtual ~DrawGame();
-	World world;
 };
 
 #endif /* DRAWGAME_H_ */

@@ -12,60 +12,60 @@
 #include <gtkmm/stockid.h>
 #include <gtkmm/image.h>
 
+#include <SFML/Window.hpp>
+
 #include "bst.hpp"
 #include "checkers.hpp"
 #include "game.hpp"
 #include "DrawGame.hpp"
 #include "GameWindow.hpp"
 
-Gtk::Button* set_but(const char *label, const Gtk::StockID& stock)
-{
+Gtk::Button* set_but(const char *label, const Gtk::StockID& stock) {
 	using namespace Gtk;
 	Button *button = manage(new Button(label));
-	Image *img = manage(new Gtk::Image(stock,Gtk::ICON_SIZE_BUTTON));
+	Image *img = manage(new Gtk::Image(stock, Gtk::ICON_SIZE_BUTTON));
 	button->set_image(*img);
 	button->set_label(label);
 
 	return button;
 }
 
-LoadGameDialog::LoadGameDialog()
-{
+LoadGameDialog::LoadGameDialog() {
 	using namespace Gtk;
 
 	ButtonBox* actionArea = get_action_area();
-	yesButton = set_but("Yes",Gtk::Stock::DIRECTORY);
-	yesButton->signal_clicked().connect(sigc::mem_fun(*this,
-			&LoadGameDialog::onYesButtonClicked) );
-	noButton = set_but("No",Stock::NO);
-	noButton->signal_clicked().connect(sigc::mem_fun(*this,
-			&LoadGameDialog::onNoButtonClicked) );
+	yesButton = set_but("Yes", Gtk::Stock::DIRECTORY);
+	yesButton->signal_clicked().connect(
+			sigc::mem_fun(*this, &LoadGameDialog::onYesButtonClicked));
+	noButton = set_but("No", Stock::NO);
+	noButton->signal_clicked().connect(
+			sigc::mem_fun(*this, &LoadGameDialog::onNoButtonClicked));
 
-	actionArea->pack_start(*noButton,false, false);
-	actionArea->pack_start(*yesButton,false,false);
+	actionArea->pack_start(*noButton, false, false);
+	actionArea->pack_start(*yesButton, false, false);
 
 	show_all_children();
 }
 
-LoadGameDialog::~LoadGameDialog() {;}
-
-void LoadGameDialog::onYesButtonClicked()
-{
-	DrawGame *theGame = new DrawGame();
-	playAIvsAI(theGame,true);
-	delete 	theGame;
+LoadGameDialog::~LoadGameDialog() {
+	;
 }
 
-void LoadGameDialog::onNoButtonClicked()
-{
+void LoadGameDialog::onYesButtonClicked() {
+	DrawGame *theGame = new DrawGame();
+	playAIvsAI(theGame, true);
+	delete theGame;
+}
+
+void LoadGameDialog::onNoButtonClicked() {
 	hide();
 }
 
 GameWindow::GameWindow() {
 	// TODO Auto-generated constructor stub
-	goButton = set_but("GO!!",Gtk::Stock::APPLY);
-	goButton->signal_clicked().connect(sigc::mem_fun(*this,
-			&GameWindow::onGoButtonClicked));
+	goButton = set_but("GO!!", Gtk::Stock::APPLY);
+	goButton->signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onGoButtonClicked));
 
 	add(*goButton);
 	show_all_children();
@@ -75,8 +75,7 @@ GameWindow::~GameWindow() {
 	// TODO Auto-generated destructor stub
 }
 
-void GameWindow::onGoButtonClicked()
-{
+void GameWindow::onGoButtonClicked() {
 //	LoadGameDialog lg;
 //	lg.run();
 	DrawGame *theGame = new DrawGame();
@@ -118,13 +117,48 @@ void playAI(Game *theGame, bool interact) {
 
 }
 
-int main(int argc, char *argv[])
-{
-	Glib::RefPtr<Gtk::Application> app =
-			Gtk::Application::create(argc, argv,
-					"org.gtkmm.examples.base");
-	Gtk::Settings::get_default()->property_gtk_button_images() = true;
+bool sfHandleEvents(sf::Window& App) {
+	sf::Event Event;
+	bool ret = false;
+	while (App.GetEvent(Event)) {
+		// Window closed
+		if (Event.Type == sf::Event::Closed) {
+			App.Close();
+			ret = true;
+		}
+		// Escape key pressed
+		if ((Event.Type == sf::Event::KeyPressed)
+				&& (Event.Key.Code == sf::Key::Escape)) {
+			App.Close();
+			ret = true;
+		}
+	}
+	return ret;
+}
 
-	GameWindow window;
-	return app->run(window);
+void sfDrawThings(sf::Window& App) {
+	using namespace sf;
+	using namespace std;
+
+	Shape rect1  = Shape::Rectangle()
+}
+int main(int argc, char *argv[]) {
+//	Glib::RefPtr<Gtk::Application> app =
+//			Gtk::Application::create(argc, argv,
+//					"org.gtkmm.examples.base");
+//	Gtk::Settings::get_default()->property_gtk_button_images() = true;
+//
+//	GameWindow window;
+//	return app->run(window);
+	using namespace std;
+
+	sf::Window App(sf::VideoMode(800, 600, 32), "SFML Window");
+	bool Running = true;
+	while (Running) {
+		if (sfHandleEvents(App)) break;
+		App.Display();
+	}
+
+	return EXIT_SUCCESS;
+
 }

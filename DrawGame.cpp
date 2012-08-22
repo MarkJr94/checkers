@@ -18,26 +18,7 @@
 #include "../ogl-tryouts/Cylinder.hpp"
 
 DrawGame::DrawGame() :
-		Game(true, true), world() {
-	setup_opengl(1366, 768);
-//	const Color TAN = makeCol(0xff,0xda,0xb9);
-	const Color BLACK = makeCol(0x0, 0xff, 0x0);
-	const Color RED = makeCol(0xff, 0x0, 0x0);
-	const Color SADDLEBROWN = makeCol(0x8b, 0x45, 0x13);
-	Color col;
-	unsigned counter = 0;
-	world.add(new Box(0, -32, 0, 66, SADDLEBROWN, true));
-	for (int i = -28; i <= 28; i += 8) {
-		for (int j = -28; j <= 28; j += 8) {
-			if (counter++ % 2)
-				col = RED;
-			else
-				col = BLACK;
-			world.add(new Box(i, -2, j, 8, col, true));
-		}
-	}
-	world.prepare();
-	_print();
+		Game(true, true) {
 }
 
 DrawGame::DrawGame(const SaveGame& record) :
@@ -47,11 +28,9 @@ DrawGame::DrawGame(const SaveGame& record) :
 
 void DrawGame::_print() {
 	double d = .01;
-	world.draw(d);
 
 }
 
 DrawGame::~DrawGame() {
-	World::quit_opengl(0);
 }
 
