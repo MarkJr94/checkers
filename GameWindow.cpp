@@ -13,6 +13,7 @@
 #include <gtkmm/image.h>
 
 #include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "bst.hpp"
 #include "checkers.hpp"
@@ -117,7 +118,7 @@ void playAI(Game *theGame, bool interact) {
 
 }
 
-bool sfHandleEvents(sf::Window& App) {
+bool sfHandleEvents(sf::RenderWindow& App) {
 	sf::Event Event;
 	bool ret = false;
 	while (App.GetEvent(Event)) {
@@ -136,11 +137,12 @@ bool sfHandleEvents(sf::Window& App) {
 	return ret;
 }
 
-void sfDrawThings(sf::Window& App) {
+void sfDrawThings(sf::RenderWindow& App) {
 	using namespace sf;
 	using namespace std;
 
-	Shape rect1  = Shape::Rectangle()
+	Shape rect1 = Shape::Rectangle(0,0,50,50,Color(0xff,0,0));
+	App.Draw(rect1);
 }
 int main(int argc, char *argv[]) {
 //	Glib::RefPtr<Gtk::Application> app =
@@ -152,10 +154,11 @@ int main(int argc, char *argv[]) {
 //	return app->run(window);
 	using namespace std;
 
-	sf::Window App(sf::VideoMode(800, 600, 32), "SFML Window");
+	sf::RenderWindow App(sf::VideoMode(800, 600, 32), "SFML Window");
 	bool Running = true;
 	while (Running) {
 		if (sfHandleEvents(App)) break;
+		sfDrawThings(App);
 		App.Display();
 	}
 

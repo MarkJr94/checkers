@@ -6,7 +6,7 @@
 #include "game.hpp"
 
 SaveGame::SaveGame(bool turn) :
-		turn(turn), data(8, std::vector<cellRecord>(8)) {
+		turn(turn), data(8, std::vector<CellRecord>(8)) {
 }
 
 SaveGame& SaveGame::operator=(const SaveGame other) {

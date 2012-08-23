@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-struct cellRecord {
+struct CellRecord {
 	bool alive;
 	Piece::Color color;
 	unsigned id;
@@ -31,7 +31,7 @@ struct SaveGame {
 	/* Assignment operator */
 	SaveGame & operator=(const SaveGame other);
 
-	std::vector<cellRecord> & operator[](int row) {
+	std::vector<CellRecord> & operator[](int row) {
 		return data[row];
 	}
 
@@ -47,7 +47,7 @@ struct SaveGame {
 	}
 
 private:
-	std::vector<std::vector<cellRecord>> data;
+	std::vector<std::vector<CellRecord>> data;
 };
 
 class Game {
