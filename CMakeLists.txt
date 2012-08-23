@@ -16,8 +16,8 @@ include_directories( ${GTKMM_INCLUDE_DIRS} ${GLIBMM_INCLUDE_DIRS} )
 add_executable(draughts checkers.cpp game.cpp bst.cpp main.cpp)
 target_link_libraries(draughts ${CORELIBS})
 
-add_executable(visual checkers.cpp game.cpp bst.cpp DrawGame.cpp GameWindow.cpp)
-target_link_libraries(visual ${CORELIBS} ${GLIBMM_LIBRARIES} ${GTKMM_LIBRARIES} ${SFML_LIBS} )
+#add_executable(visual checkers.cpp game.cpp bst.cpp DrawGame.cpp GameWindow.cpp)
+#target_link_libraries(visual ${CORELIBS} ${GLIBMM_LIBRARIES} ${GTKMM_LIBRARIES} ${SFML_LIBS} )
 
-add_executable(new checkers.cpp DrawGame.cpp Save.cpp )
+add_executable(new checkers.cpp Save.cpp  DrawGame.cpp AI.cpp)
 target_link_libraries(new ${CORELIBS} ${SFML_LIBS} )

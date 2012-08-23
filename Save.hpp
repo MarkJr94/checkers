@@ -38,6 +38,10 @@ struct Save {
 		return data[row];
 	}
 
+	const std::vector<CellRecord>& operator[](const int row) const {
+		return data[row];
+	}
+
 	void write(std::string);
 	void read(std::string);
 

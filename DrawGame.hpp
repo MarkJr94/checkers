@@ -17,31 +17,45 @@
 #include <string>
 #include <vector>
 
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
+
+
+
 class DrawGame {
 public:
-	/* Enumerations for movement and jump directions */
-	enum Direction {
-		LEFT, RIGHT, BKLEFT, BKRIGHT
-	};
+	friend class GameWin;
 
 	/* Constructor */
-	DrawGame(bool db, bool interact);
+	DrawGame(bool db = false, bool interact = false);
 	/* Constructor from memory */
-	DrawGame(Save record, bool db, bool interact);
+	DrawGame(const Save& record, bool db = false, bool interact = false);
 	/* Destructor */
 	~DrawGame();
+
 	/* Update save game */
 	inline void updateSave();
 	/* return save game */
 	Save getSave();
 	/* Print game */
 	void print() const;
+	/* Draw */
+	void draw(double dt);
+
+	/* Enumerations for movement and jump directions */
+	enum Direction {
+		LEFT, RIGHT, BKLEFT, BKRIGHT
+	};
+
+	enum State { MOVING, READY };
+
 	/* Piece Movement */
 	bool movePiece(unsigned piece, Direction d);
 	/* Jumping */
 	bool jumpPiece(unsigned jumper, unsigned prey);
 	/* restore game to save */
-	void restoreToSave(Save& record);
+	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
 	int receiveInput();
 
@@ -87,6 +101,26 @@ private:
 
 	/* Save of initial game for simpler construction */
 	static Save templateSave;
+};
+
+class GameWin : public sf::RenderWindow {
+public:
+	GameWin(const int wide = 800, const int high = 640);
+	~GameWin();
+	void drawGame();
+	bool sfHandleEvents();
+	void createGame(bool db = false, bool interact = false) {
+		game = new DrawGame(db,interact);
+	}
+	/* Constructor from memory */
+	void createGame(const Save& record, bool db = false, bool interact = false) {
+		game = new DrawGame(record,db,interact);
+	}
+
+private:
+	typedef sf::RenderWindow super;
+	typedef std::vector<std::vector<Piece> > GameBoard;
+	DrawGame* game;
 };
 
 #endif /* GAME_HPP_ */

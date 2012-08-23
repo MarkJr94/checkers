@@ -9,7 +9,6 @@
 #include <vector>
 #include <sstream>
 
-
 #include "DrawGame.hpp"
 
 Save DrawGame::templateSave;
@@ -22,7 +21,7 @@ DrawGame::DrawGame(bool db, bool interact) :
 	restoreToSave(templateSave);
 }
 
-DrawGame::DrawGame(Save record, bool db, bool interact) :
+DrawGame::DrawGame(const Save& record, bool db, bool interact) :
 		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE)), turn(record.turn), debug(
 				db), save(record), interact(interact) {
 	restoreToSave(record);
@@ -31,7 +30,7 @@ DrawGame::DrawGame(Save record, bool db, bool interact) :
 DrawGame::~DrawGame() {
 }
 
-void DrawGame::restoreToSave(Save& record) {
+void DrawGame::restoreToSave(const Save& record) {
 	using namespace std;
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -382,8 +381,46 @@ int DrawGame::receiveInput() {
 	return 1;
 }
 
-int main() {
-	DrawGame d(true, true);
-	d.print();
-	return 0;
+GameWin::GameWin(const int wide, const int high) :
+		super(sf::VideoMode(800, 600, 32), "Game Window") {
+
+}
+
+GameWin::~GameWin() {
+//	delete game;
+}
+
+bool GameWin::sfHandleEvents() {
+	sf::Event Event;
+	bool ret = false;
+	while (GetEvent(Event)) {
+		// Window closed
+		if (Event.Type == sf::Event::Closed) {
+			Close();
+			ret = true;
+		}
+		// Escape key pressed
+		if ((Event.Type == sf::Event::KeyPressed)
+				&& (Event.Key.Code == sf::Key::Escape)) {
+			Close();
+			ret = true;
+		}
+	}
+	return ret;
+}
+
+void GameWin::drawGame() {
+	using namespace std;
+	using namespace sf;
+
+	GameBoard& board = game->board;
+
+	GameBoard::const_reverse_iterator rit = board.rbegin();
+
+	while (rit != board.rend()) {
+		for (auto& piece : *rit) {
+			Shape cell = Shape::Circle(piece.x+25,piece.y+25,40,Color(0xff,0,0));
+			Draw(cell);
+		}
+	}
 }
