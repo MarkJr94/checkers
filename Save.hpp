@@ -17,12 +17,14 @@
 struct CellRecord {
 	bool alive;
 	Piece::Color color;
-	unsigned id;
+	short id;
 	bool isKing;
 };
 
-struct Save {
+class Save {
 
+public:
+public:
 	bool turn;
 	unsigned mustJump;
 
@@ -30,8 +32,8 @@ struct Save {
 	Save(bool);
 	~Save();
 
-	/* Assignment operator */
-	Save& operator=(const Save&);
+	/* Equality test */
+	bool operator==(const Save& other);
 
 	/* Subscript operator */
 	std::vector<CellRecord>& operator[](const int row) {

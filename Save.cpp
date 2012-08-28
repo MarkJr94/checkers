@@ -13,7 +13,7 @@ Save::Save() :
 
 	unsigned i = 0, j = 0, count = 0;
 
-	for (unsigned k = 1; k <= 12; k++) {
+	for (char k = 1; k <= 12; k++) {
 		data[j][i] = {true, Piece::BLACK, k, false};
 		j += 2;
 		if (j == BOARD_SIZE)
@@ -29,7 +29,7 @@ Save::Save() :
 	count = 0;
 	i = 7, j = 1;
 
-	for (unsigned k = 1; k <= 12; k++) {
+	for (char k = 1; k <= 12; k++) {
 		data[j][i] = {true, Piece::RED, k, false};
 		j += 2;
 		if (j == BOARD_SIZE)
@@ -47,16 +47,16 @@ Save::Save(bool turn) :
 		turn(turn), mustJump(0), data(8, std::vector<CellRecord>(8)) {
 }
 
-Save& Save::operator=(const Save& other) {
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			data[i][j] = other.data[i][j];
-		}
-	}
-	this->turn = other.turn;
-	this->mustJump = other.mustJump;
-	return *this;
-}
+//Save& Save::operator=(const Save& other) {
+//	for (unsigned i = 0; i < BOARD_SIZE; i++) {
+//		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+//			data[i][j] = other.data[i][j];
+//		}
+//	}
+//	this->turn = other.turn;
+//	this->mustJump = other.mustJump;
+//	return *this;
+//}
 
 Save::~Save() {
 
@@ -84,7 +84,8 @@ void Save::read(std::string fname) {
 	fstream savefile;
 	savefile.open(fname.c_str(), fstream::in);
 	bool turn, alive, isKing;
-	unsigned col, id, mj;
+	unsigned col, mj;
+	short id;
 
 	savefile >> turn >> mj;
 	this->turn = turn;

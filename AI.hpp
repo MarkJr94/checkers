@@ -23,7 +23,7 @@ struct MoveRecord {
 
 class AI {
 public:
-	AI(unsigned degree, const Save& record, const MoveRecord& creator);
+	AI(unsigned degree, const Save& record, const MoveRecord& creator, const AI* parent = NULL);
 	~AI();
 
 	void printScene();
@@ -54,6 +54,7 @@ private:
 	double p2Avg;
 	MoveRecord creator;
 	Save save;
+	AI* parent;
 };
 
 #endif /* AI_HPP_ */
