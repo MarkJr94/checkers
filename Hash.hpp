@@ -21,6 +21,7 @@ Zkey rand64(void)
 class Zobrist {
 public:
 	Zobrist();
+
 	Zkey** operator[](unsigned row) { return zobrist[row];}
 	const Zkey** operator[](unsigned row) const { return zobrist[row];}
 
