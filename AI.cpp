@@ -157,10 +157,10 @@ unsigned AI::testMoves(const Save& savestate) {
 	return successCount;
 }
 
-void AI::generateOutcomes() {
+void AI::generateOutcomes(const int nLevels) {
 
-	if (degree > 5)
-		return;
+	int next = nLevels-1;
+	if (next <= 1) return;
 
 //	Save savestate = scenario.getSave();
 	Save savestate = save;
@@ -170,7 +170,7 @@ void AI::generateOutcomes() {
 
 	size_t numKids = children.size();
 	for (size_t i = 0; i < numKids; i++) {
-		children[i]->generateOutcomes();
+		children[i]->generateOutcomes(next);
 	}
 }
 
@@ -375,7 +375,7 @@ bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
 		}
 
 		AI ai(1, theGame->getSave(), blank);
-		ai.generateOutcomes();
+		ai.generateOutcomes(5);
 		ai.updateScores();
 		blank = ai.getBestMove(!p1Turn);
 		if (blank.piece == 0xff)

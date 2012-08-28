@@ -32,7 +32,7 @@ public:
 
 	unsigned testMoves(const Save& savestate);
 
-	void generateOutcomes();
+	void generateOutcomes(const int);
 
 	void updateScores();
 
@@ -55,6 +55,7 @@ private:
 	MoveRecord creator;
 	Save save;
 	AI* parent;
+	int hashTable[1000000];
 };
 
 bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
