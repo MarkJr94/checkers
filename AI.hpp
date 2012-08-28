@@ -23,7 +23,7 @@ struct MoveRecord {
 
 class AI {
 public:
-	AI(unsigned degree, const Save& record, const MoveRecord& creator, const AI* parent = NULL);
+	AI(unsigned degree, const Save& record, const MoveRecord& creator, AI* const parent = NULL);
 	~AI();
 
 	void printScene();

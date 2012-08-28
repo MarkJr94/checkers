@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "checkers.hpp"
+#include "Piece.hpp"
 
 /* Piece constructor:
  * If any value is out of range, it is automatically set to 0.

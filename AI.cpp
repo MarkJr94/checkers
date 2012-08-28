@@ -30,7 +30,7 @@ inline void delay(unsigned long ms) {
 
 DrawGame AI::scenario;
 
-AI::AI(unsigned degree, const Save& record, const MoveRecord& creator, const AI* parent) :
+AI::AI(unsigned degree, const Save& record, const MoveRecord& creator, AI* const parent) :
 		degree(degree), children(), save(record), parent(parent) {
 	if (degree > 1) {
 		this->creator.dir = creator.dir;

@@ -8,33 +8,30 @@
 #ifndef HASH_HPP_
 #define HASH_HPP_
 
-#include "checkers.hpp"
-
 namespace Hash {
-typedef uint64_t Zkey;
-Zkey rand64(void)
-{
-    return rand() ^ ((Zkey)rand() << 15) ^ ((Zkey)rand() << 30) ^
-        ((Zkey)rand() << 45) ^ ((Zkey)rand() << 60);
-}
+typedef long unsigned Zkey;
+Zkey rand64(void);
 
-class Zobrist {
+/* Singleton class for GameWide zobrist table and hashing*/
+class ZobristTable {
 public:
-	Zobrist();
+	static ZobristTable& instance();
 
-	Zkey** operator[](unsigned row) { return zobrist[row];}
-	const Zkey** operator[](unsigned row) const { return zobrist[row];}
+	~ZobristTable();
+	Zkey**& operator[](const int row) {
+		return zobrist[row];
+	}
+	const Zkey* const * const & operator[](const int row) const {
+		return zobrist[row];
+	}
 
 private:
-	Zkey zobrist [2][2][64];
-	static bool done;
+	ZobristTable();
+	ZobristTable(const ZobristTable&);
+	void operator=(ZobristTable&);
+	Zkey*** zobrist;
 };
 
 }
-class Hash {
-public:
-	Hash();
-	virtual ~Hash();
-};
 
 #endif /* HASH_HPP_ */

@@ -20,3 +20,6 @@ target_link_libraries(draughts ${CORELIBS})
 
 add_executable(new checkers.cpp Save.cpp  DrawGame.cpp AI.cpp)
 target_link_libraries(new ${CORELIBS} ${SFML_LIBS} )
+
+add_executable(hash_test Hash.hpp Hash.cpp Hash_test.cpp)
+target_link_libraries(hash_test optparser)
