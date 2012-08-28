@@ -11,7 +11,6 @@ set(CMAKE_CXX_FLAGS "-g -Wall -std=c++0x")
 set(CORELIBS liboptparser.so)
 set(SFML_LIBS sfml-graphics sfml-window sfml-system)
 include_directories( ${GTKMM_INCLUDE_DIRS} ${GLIBMM_INCLUDE_DIRS} )
-#link_directories( 
 
 add_executable(draughts checkers.cpp game.cpp bst.cpp main.cpp)
 target_link_libraries(draughts ${CORELIBS})

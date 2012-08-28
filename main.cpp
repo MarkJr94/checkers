@@ -7,7 +7,6 @@
 #include "checkers.hpp"
 #include "game.hpp"
 #include "bst.hpp"
-#include "../ogl-tryouts/World.hpp"
 
 int main(int argc, char *argv[]) {
 	using namespace std;
