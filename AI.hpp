@@ -10,12 +10,12 @@
 
 #include <vector>
 
-#include "checkers.hpp"
+#include "Piece.hpp"
 #include "Save.hpp"
 #include "DrawGame.hpp"
 
 struct MoveRecord {
-	DrawGame::Direction dir;
+	Game::Direction dir;
 	bool jump;
 	unsigned char piece;
 	unsigned char prey;
@@ -48,7 +48,7 @@ public:
 
 private:
 	unsigned degree;
-	static DrawGame scenario;
+	static Game* scenario;
 	std::vector<AI *> children;
 	double p1Avg;
 	double p2Avg;
@@ -56,5 +56,27 @@ private:
 	Save save;
 	AI* parent;
 };
+
+bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
+		AI* predictor, bool p1Turn);
+/* Play Player vs Player
+ * 	Arguments:
+ * 		theGame: pointer to an allocated game
+ */
+void playPvP(Game *theGame);
+
+/* Play Player vs AI
+ * 	Arguments:
+ * 		theGame: pointer to an allocated game
+ * 		interact: whether to print interactive output.
+ */
+void playAgainstAI(Game *theGame, bool interact);
+
+/* Play AI VS AI Game.
+ * Arguments:
+ * 	theGame: Pointer to an allocated game
+ * 	interact: if interactive output should be printed
+ */
+void playAIvsAI(Game *theGame, bool interact);
 
 #endif /* AI_HPP_ */

@@ -2,130 +2,30 @@
 #include <vector>
 #include <sstream>
 
-#include "checkers.hpp"
-#include "game.hpp"
+#include "Piece.hpp"
+#include "Game.hpp"
 
-SaveGame::SaveGame(bool turn) :
-		turn(turn), data(8, std::vector<CellRecord>(8)) {
-}
+Save Game::templateSave;
 
-SaveGame& SaveGame::operator=(const SaveGame other) {
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			data[i][j] = other.data[i][j];
-		}
-	}
-	this->turn = other.turn;
-	this->mustJump = other.mustJump;
-	return *this;
-}
-
-void SaveGame::write(std::string fname) {
-	using namespace std;
-
-	fstream savefile;
-	savefile.open(fname.c_str(), fstream::trunc | fstream::out);
-
-	savefile << turn << " " << mustJump << endl;
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			savefile << data[i][j].id << " " << data[i][j].alive << " "
-					<< data[i][j].color << " " << data[i][j].isKing << " ";
-		}
-		savefile << endl;
-	}
-	savefile.close();
-}
-void SaveGame::read(std::string fname) {
-	using namespace std;
-
-	fstream savefile;
-	savefile.open(fname.c_str(), fstream::in);
-	bool turn, alive, isKing;
-	unsigned col, id, mj;
-
-	savefile >> turn >> mj;
-	this->turn = turn;
-	this->mustJump = mj;
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			savefile >> id >> alive >> col >> isKing;
-			data[i][j].color = (Piece::Color) col;
-			data[i][j].alive = alive;
-			data[i][j].id = id;
-			data[i][j].isKing = isKing;
-		}
-	}
-	savefile.close();
-}
-
-Game::Game(bool db, bool interact) :
+Game::Game(const bool db, const bool interact) :
 		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE, Piece())), turn(true), debug(
 				db), save(true), interact(interact), mustJump(0) {
 	using namespace std;
 
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			board[i][j].x = i;
-			board[i][j].y = j;
-			board[i][j].inPlay = false;
-		}
-	}
-
-	unsigned i = 0, j = 0, count = 0, id = 1;
-
-	for (unsigned k = 1; k <= 12; k++) {
-		p1[k] = &board[j][i];
-		p1[k]->x = j;
-		p1[k]->y = i;
-		p1[k]->inPlay = true;
-		p1[k]->col = Piece::BLACK;
-		p1[k]->isKing = false;
-		p1[k]->id = id++;
-		j += 2;
-		if (j == BOARD_SIZE)
-			j = 1;
-		if (j == BOARD_SIZE + 1)
-			j = 0;
-		if (++count == 4) {
-			++i;
-			count = 0;
-		}
-		p1[k]->print(cout);
-	}
-
-	id = 1;
-	count = 0;
-	i = 7, j = 1;
-
-	for (unsigned k = 1; k <= 12; k++) {
-		p2[k] = &board[j][i];
-		p2[k]->x = j;
-		p2[k]->y = i;
-		p2[k]->inPlay = true;
-		p2[k]->col = Piece::RED;
-		p2[k]->isKing = false;
-		p2[k]->id = id++;
-		j += 2;
-		if (j == BOARD_SIZE)
-			j = 1;
-		if (j == BOARD_SIZE + 1)
-			j = 0;
-		if (++count == 4) {
-			--i;
-			count = 0;
-		}
-		p2[k]->print(cout);
-	}
+	restoreToSave(templateSave);
 }
 
-Game::Game(SaveGame record, bool db, bool interact) :
+Game::Game(const Save& record, const bool db, const bool interact) :
 		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE)), turn(
-				record.getTurn()), debug(db), save(record), interact(interact) {
+				record.turn), debug(db), save(record), interact(interact) {
 	restoreToSave(record);
 }
 
-void Game::restoreToSave(SaveGame& record) {
+Game::~Game() {
+
+}
+
+void Game::restoreToSave(const Save& record) {
 	using namespace std;
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -136,8 +36,8 @@ void Game::restoreToSave(SaveGame& record) {
 		}
 	}
 
-	turn = record.getTurn();
-	mustJump = record.getMustJump();
+	turn = record.turn;
+	mustJump = record.mustJump;
 
 	unsigned p2numPieces = 0;
 	unsigned p1numPieces = 0;
@@ -174,19 +74,15 @@ inline void Game::updateSave() {
 			save[i][j].isKing = alias.isKing;
 		}
 	}
-	save.setTurn(turn);
-	save.setMustJump(mustJump);
+	save.turn = turn;
+	save.mustJump =  mustJump;
 }
-SaveGame Game::getSave() {
+Save Game::getSave() {
 	updateSave();
 	return save;
 }
 
 void Game::print() {
-	_print();
-}
-
-void Game::_print() {
 	using namespace std;
 
 	cout << "P1: " << p1.size() << "\tP2: " << p2.size() << endl;

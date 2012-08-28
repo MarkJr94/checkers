@@ -8,7 +8,9 @@
 #ifndef SAVE_HPP_
 #define SAVE_HPP_
 
-#include "checkers.hpp"
+#include "Piece.hpp"
+
+
 #include <fstream>
 #include <map>
 #include <string>

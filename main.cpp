@@ -4,9 +4,9 @@
 #include <exception>
 #include <optparser>
 
-#include "checkers.hpp"
-#include "game.hpp"
-#include "bst.hpp"
+#include "Piece.hpp"
+#include "Game.hpp"
+#include "AI.hpp"
 
 int main(int argc, char *argv[]) {
 	using namespace std;
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 	}
 	string instr;
 	Game *theMatch;
-	SaveGame *loadGame, *saveGame;
+	Save *loadGame, *saveGame;
 
 	if (!play) {
 		theMatch = new Game(true, true);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 		cout << "Enter save file path: ";
 		getline(cin, instr);
 		try {
-			loadGame = new SaveGame(false);
+			loadGame = new Save(false);
 			loadGame->read(instr);
 		} catch (const ios_base::failure&) {
 			cerr << "Error loading savefile \"" << instr << "\"" << endl;
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	cout << "Would you like to save your game? (y/n): ";
 	getline(cin, instr);
 	if (instr == "y") {
-		saveGame = new SaveGame(theMatch->getSave());
+		saveGame = new Save(theMatch->getSave());
 		cout << "Enter save file path: ";
 		getline(cin, instr);
 		saveGame->write(instr);

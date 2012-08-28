@@ -2,53 +2,12 @@
 #ifndef GAME_HPP_
 #define GAME_HPP_
 
-#include "checkers.hpp"
-#include <fstream>
+#include "Piece.hpp"
+#include "Save.hpp"
+
 #include <map>
 #include <string>
 #include <vector>
-
-struct CellRecord {
-	bool alive;
-	Piece::Color color;
-	unsigned id;
-	bool isKing;
-};
-
-struct SaveGame {
-
-	bool turn;
-	unsigned mustJump;
-
-	SaveGame(bool turn);
-	/* Setter and getter for turn */
-	void setTurn(bool newval) {
-		turn = newval;
-	}
-	bool getTurn() {
-		return turn;
-	}
-	/* Assignment operator */
-	SaveGame & operator=(const SaveGame other);
-
-	std::vector<CellRecord> & operator[](int row) {
-		return data[row];
-	}
-
-	void write(std::string fname);
-	void read(std::string fname);
-
-	unsigned getMustJump() const {
-		return mustJump;
-	}
-
-	void setMustJump(unsigned mustJump) {
-		this->mustJump = mustJump;
-	}
-
-private:
-	std::vector<std::vector<CellRecord>> data;
-};
 
 class Game {
 
@@ -60,24 +19,25 @@ public:
 	};
 
 	/* Constructor */
-	Game(bool db, bool interact);
+	Game(const bool db, const bool interact);
 	/* Constructor from memory */
-	Game(SaveGame record, bool db, bool interact);
+	Game(const Save& record, const bool db, const bool interact);
 	/* Destructor */
-	virtual ~Game() {
-	}
+	virtual ~Game();
+
 	/* Update save game */
-	inline void updateSave();
+	void updateSave();
 	/* return save game */
-	SaveGame getSave();
+	Save getSave();
 	/* Print game */
 	void print();
+
 	/* Piece Movement */
-	bool movePiece(unsigned piece, Direction d);
+	bool movePiece(const unsigned piece, const  Direction d);
 	/* Jumping */
-	bool jumpPiece(unsigned jumper, unsigned prey);
+	bool jumpPiece(const unsigned jumper, const unsigned prey);
 	/* restore game to save */
-	void restoreToSave(SaveGame& record);
+	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
 	int receiveInput();
 
@@ -85,15 +45,15 @@ public:
 		return mustJump;
 	}
 
-	void setMustJump(int mustJump) {
+	void setMustJump(const int mustJump) {
 		this->mustJump = mustJump;
 	}
 	/* Get p1 score */
-	inline unsigned getP1score() {
+	unsigned getP1score() {
 		return p1.size();
 	}
 	/* Get p2 score */
-	inline unsigned getP2score() {
+	unsigned getP2score() {
 		return p2.size();
 	}
 	/* Setter and getter for turn */
@@ -110,19 +70,18 @@ public:
 		return board[row];
 	}
 
-private:
+protected:
 	std::map <int,Piece *> p1;
 	std::map <int,Piece *> p2;
 	std::vector<std::vector<Piece> > board;
 	/* Tracks if it's P1's turn or not */
 	bool turn;
 	bool debug;
-	SaveGame save;
+	Save save;
 	bool interact;
 	unsigned mustJump;
 
-
-	virtual void _print();
+	static Save templateSave;
 };
 
 #endif /* GAME_HPP_ */
