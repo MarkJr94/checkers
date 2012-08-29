@@ -30,6 +30,8 @@ inline void delay(unsigned long ms) {
 
 Game* AI::scenario;
 
+short AI::hashTable[1000000];
+
 AI::AI(unsigned degree, const Save& record, const MoveRecord& creator,
 		AI* const parent) :
 		degree(degree), children(), save(record), parent(parent) {

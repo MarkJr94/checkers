@@ -13,6 +13,7 @@
 #include "Piece.hpp"
 #include "Save.hpp"
 #include "DrawGame.hpp"
+#include "Hash.hpp"
 
 struct MoveRecord {
 	Game::Direction dir;
@@ -55,7 +56,8 @@ private:
 	MoveRecord creator;
 	Save save;
 	AI* parent;
-	int hashTable[1000000];
+	static short hashTable[1000000];
+	static Hash::Zkey hashGame(const Game * const game);
 };
 
 bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,

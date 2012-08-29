@@ -12,6 +12,11 @@ namespace Hash {
 typedef long unsigned Zkey;
 Zkey rand64(void);
 
+struct HashEntry {
+	bool used;
+	int level;
+};
+
 /* Singleton class for GameWide zobrist table and hashing*/
 class ZobristTable {
 public:
