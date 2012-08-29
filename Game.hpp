@@ -9,10 +9,14 @@
 #include <string>
 #include <vector>
 
+class AI;
+
 class Game {
 
 
 public:
+	friend class AI;
+
 	/* Enumerations for movement and jump directions */
 	enum Direction {
 		LEFT, RIGHT, BKLEFT, BKRIGHT
@@ -70,10 +74,12 @@ public:
 		return board[row];
 	}
 
-protected:
+private:
 	std::map <int,Piece *> p1;
 	std::map <int,Piece *> p2;
+protected:
 	std::vector<std::vector<Piece> > board;
+private:
 	/* Tracks if it's P1's turn or not */
 	bool turn;
 	bool debug;

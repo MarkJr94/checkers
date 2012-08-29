@@ -30,11 +30,12 @@ inline void delay(unsigned long ms) {
 
 Game* AI::scenario;
 
-short AI::hashTable[1000000];
+AI* AI::hashTable[100000000];
 
-AI::AI(unsigned degree, const Save& record, const MoveRecord& creator,
-		AI* const parent) :
-		degree(degree), children(), save(record), parent(parent) {
+unsigned AI::tableSz = 100000000;
+
+AI::AI(unsigned degree, const Save& record, const MoveRecord& creator) :
+		degree(degree), children(), save(record), done(false) {
 	if (degree > 1) {
 		this->creator.dir = creator.dir;
 		this->creator.jump = creator.jump;
@@ -47,6 +48,15 @@ AI::AI(unsigned degree, const Save& record, const MoveRecord& creator,
 	scenario->restoreToSave(record);
 	p1Avg = scenario->getP1score();
 	p2Avg = scenario->getP2score();
+	p2Avg = scenario->p2.size();
+
+
+	int bucket = hashGame() % tableSz;
+	if (hashTable[bucket]) {
+		done = true;
+	} else {
+		hashTable[bucket] = this;
+	}
 }
 
 AI::~AI() {
@@ -161,8 +171,11 @@ unsigned AI::testMoves(const Save& savestate) {
 
 void AI::generateOutcomes(const int nLevels) {
 
-	int next = nLevels-1;
-	if (next <= 1) return;
+	int next = nLevels - 1;
+	if (next <= 1)
+		return;
+
+	if (done) return;
 
 //	Save savestate = scenario.getSave();
 	Save savestate = save;
@@ -263,6 +276,31 @@ void AI::clearToSave(const Save& saveState) {
 	scenario->restoreToSave(saveState);
 	p1Avg = scenario->getP1score();
 	p2Avg = scenario->getP2score();
+}
+
+Hash::Zkey AI::hashGame() {
+	using namespace Hash;
+	scenario->restoreToSave(save);
+
+	Zkey hash = 0;
+
+	ZobristTable& zt = ZobristTable::instance();
+
+	for (auto& p : scenario->p1) {
+		hash ^= zt[p.second->isKing][Piece::BLACK][p.second->x + 8 * p.second->y];
+	}
+
+	for (auto& p : scenario->p2) {
+		hash ^= zt[p.second->isKing][Piece::RED][p.second->x + 8 * p.second->y];
+	}
+
+	int bucket = hash % tableSz;
+	if (hashTable[bucket]) {
+		std::cerr << "already done";
+	}
+//	hashTable[bucket]++;
+
+	return hash;
 }
 
 void playPvP(Game *theGame) {

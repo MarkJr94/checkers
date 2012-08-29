@@ -375,4 +375,3 @@ int Game::receiveInput() {
 	}
 	return 1;
 }
-

@@ -24,7 +24,7 @@ struct MoveRecord {
 
 class AI {
 public:
-	AI(unsigned degree, const Save& record, const MoveRecord& creator, AI* const parent = NULL);
+	AI(unsigned degree, const Save& record, const MoveRecord& creator);
 	~AI();
 
 	void printScene();
@@ -47,17 +47,22 @@ public:
 
 	void clearToSave(const Save&);
 
+
+
 private:
 	unsigned degree;
-	static Game* scenario;
 	std::vector<AI *> children;
 	double p1Avg;
 	double p2Avg;
 	MoveRecord creator;
 	Save save;
-	AI* parent;
-	static short hashTable[1000000];
-	static Hash::Zkey hashGame(const Game * const game);
+	bool done;
+
+	static Game* scenario;
+	static AI* hashTable[100000000];
+	static unsigned tableSz;
+
+	Hash::Zkey hashGame();
 };
 
 bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
