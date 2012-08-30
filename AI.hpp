@@ -12,12 +12,16 @@
 
 #include "Piece.hpp"
 #include "Save.hpp"
+#include "Game.hpp"
 #include "DrawGame.hpp"
+#include "TranspositionTable.hpp"
 
 class AI {
 public:
-	AI(unsigned degree, const Save& record, const MoveRecord& creator);
+	AI(unsigned, const Save&, const MoveRecord& creator = MoveRecord());
 	~AI();
+
+	void resetToSave(const Save&);
 
 	void printScene();
 
@@ -28,19 +32,23 @@ public:
 	MoveRecord evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
 
 private:
+	AI(const AI&);
+	AI& operator=(const AI&);
+
 	unsigned degree;
 	std::vector<AI *> children;
 	double p1Avg;
 	double p2Avg;
 	MoveRecord creator;
 	Save save;
-	bool done;
 
 	static Game* scenario;
 
-	unsigned testMoves(const Save& savestate);
+	static TT tranTable;
 
-	void generateOutcomes(const int);
+	unsigned testMoves(const unsigned);
+
+	size_t generateOutcomes(const unsigned);
 
 	void updateScores();
 };

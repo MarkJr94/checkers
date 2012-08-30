@@ -11,13 +11,13 @@
 #include <vector>
 
 #include "Piece.hpp"
-#include "Save.hpp"
 #include "Hash.hpp"
 
 class AI;
 
 typedef class TranspositionTable {
 public:
+	friend class AI;
 	TranspositionTable();
 	~TranspositionTable();
 

@@ -28,10 +28,12 @@ inline void delay(unsigned long ms) {
 
 #endif
 
-Game* AI::scenario;
+Game* AI::scenario = new Game(false, false);
+
+TT AI::tranTable;
 
 AI::AI(unsigned degree, const Save& record, const MoveRecord& creator) :
-		degree(degree), children(), save(record), done(false) {
+		degree(degree), children(), save(record) {
 	if (degree > 1) {
 		this->creator.dir = creator.dir;
 		this->creator.jump = creator.jump;
@@ -39,7 +41,6 @@ AI::AI(unsigned degree, const Save& record, const MoveRecord& creator) :
 		this->creator.prey = creator.prey;
 	}
 
-	scenario = new Game(record, false, false);
 
 	scenario->restoreToSave(record);
 	p1Avg = scenario->getP1score();
@@ -50,6 +51,13 @@ AI::AI(unsigned degree, const Save& record, const MoveRecord& creator) :
 AI::~AI() {
 	for (auto child : children)
 		delete child;
+}
+
+void AI::resetToSave(const Save& record) {
+	save = record;
+	scenario->restoreToSave(record);
+	p1Avg = p2Avg = 0;
+
 }
 
 void AI::printScene() {
@@ -73,14 +81,14 @@ void AI::recursivePrint() {
 	}
 }
 
-unsigned AI::testMoves(const Save& savestate) {
+unsigned AI::testMoves(const unsigned level) {
 	using namespace std;
 
 	bool retval;
 	unsigned successCount = 0;
 
 	MoveRecord origin;
-	scenario->restoreToSave(savestate);
+	const Save& savestate = scenario->getSave();
 
 	unsigned jumpCount = 0;
 	for (unsigned piece = 1; piece <= 12; piece++) {
@@ -93,11 +101,11 @@ unsigned AI::testMoves(const Save& savestate) {
 				origin.jump = true;
 				origin.piece = piece;
 				origin.prey = prey;
-				if (canMultiJump(piece)) {
-					scenario->setTurn(!scenario->getTurn());
-				} else {
-					scenario->setMustJump(0);
-				}
+//				if (canMultiJump(piece)) {
+//					scenario->setTurn(!scenario->getTurn());
+//				} else {
+//					scenario->setMustJump(0);
+//				}
 				children.push_back(
 						new AI(degree + 1, scenario->getSave(), origin));
 				scenario->restoreToSave(savestate);
@@ -107,13 +115,13 @@ unsigned AI::testMoves(const Save& savestate) {
 	if (jumpCount > 0)
 		return successCount;
 
+	origin.jump = false;
 	for (unsigned piece = 1; piece <= 12; piece++) {
 
 		/* Test left move */
 		retval = scenario->movePiece(piece, LEFT);
 		if (retval) {
 			++successCount;
-			origin.jump = false;
 			origin.piece = piece;
 			origin.dir = LEFT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
@@ -124,7 +132,6 @@ unsigned AI::testMoves(const Save& savestate) {
 		retval = scenario->movePiece(piece, RIGHT);
 		if (retval) {
 			++successCount;
-			origin.jump = false;
 			origin.piece = piece;
 			origin.dir = RIGHT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
@@ -135,7 +142,6 @@ unsigned AI::testMoves(const Save& savestate) {
 		retval = scenario->movePiece(piece, BKRIGHT);
 		if (retval) {
 			++successCount;
-			origin.jump = false;
 			origin.piece = piece;
 			origin.dir = BKRIGHT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
@@ -146,7 +152,6 @@ unsigned AI::testMoves(const Save& savestate) {
 		retval = scenario->movePiece(piece, BKLEFT);
 		if (retval) {
 			++successCount;
-			origin.jump = false;
 			origin.piece = piece;
 			origin.dir = BKLEFT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
@@ -157,24 +162,23 @@ unsigned AI::testMoves(const Save& savestate) {
 	return successCount;
 }
 
-void AI::generateOutcomes(const int nLevels) {
+size_t AI::generateOutcomes(const unsigned nLevels) {
 
-	int next = nLevels - 1;
+	unsigned next = nLevels - 1;
 	if (next <= 1)
-		return;
+		return 0;
 
-	if (done) return;
-
-//	Save savestate = scenario.getSave();
-	Save savestate = save;
-	unsigned num = testMoves(savestate);
+	unsigned num = testMoves(next);
 	if (num < 1)
-		return;
+		return 0;
 
 	size_t numKids = children.size();
 	for (size_t i = 0; i < numKids; i++) {
 		children[i]->generateOutcomes(next);
 	}
+
+	std::cout << "Numkids = " << numKids << " ";
+	return numKids;
 }
 
 void AI::updateScores() {
@@ -195,10 +199,17 @@ void AI::updateScores() {
 }
 
 MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
-	generateOutcomes(5);
+
+	TableEnt& ent = tranTable[scenario->getHash() % TT::tableSz];
+//	if (ent.done) {
+////		ent.move;
+//		return ent.move;
+//	}
+
+	size_t nKids = generateOutcomes(5);
 	updateScores();
 
-	size_t nKids = children.size();
+//	size_t nKids = children.size();
 
 	if (nKids == 0) {
 		std::cerr << "No Moves.\n";
@@ -242,6 +253,9 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 			}
 		}
 	}
+
+	ent.done = true;
+	ent.move = children[favoredSon]->creator;
 	return children[favoredSon]->creator;
 }
 
@@ -484,14 +498,14 @@ void playAIvsAI(Game *theGame, bool interact) {
 
 			if (aiInteract(theGame, interact, blank, predictor, turn))
 				return;
-			delay(500);
+//			delay(500);
 		} else {
 			if (theGame->getP2score() < 1)
 				return;
 
 			if (aiInteract(theGame, interact, blank, predictor, turn))
 				return;
-			delay(500);
+//			delay(500);
 		}
 	}
 

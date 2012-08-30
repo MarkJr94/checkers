@@ -275,9 +275,9 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	bool wasKing = j->isKing;
 	if (!wasKing) {
 		if (!turn) {
-			if (p->y > j->y) {
+			if (p->x > j->x) {
 				if (interact)
-					cerr << "pieceJump: Invalid target in Y direction\n";
+					cerr << "pieceJump: Invalid target in X direction\n";
 				return false;
 			}
 		} else {

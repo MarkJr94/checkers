@@ -7,7 +7,9 @@
 const unsigned BOARD_SIZE = 8;
 
 struct Piece {
-	enum Color { BLACK, RED};
+	enum Color {
+		BLACK, RED
+	};
 
 	bool inPlay;
 	bool isKing;
@@ -16,7 +18,8 @@ struct Piece {
 	Color col;
 	unsigned id;
 
-	Piece(unsigned idNo = 0, unsigned xx = 0, unsigned yy = 0, Color color = BLACK);
+	Piece(unsigned idNo = 0, unsigned xx = 0, unsigned yy = 0, Color color =
+			BLACK);
 
 	void print(std::ostream& out) const;
 };
@@ -35,8 +38,11 @@ struct MoveRecord {
 struct TableEnt {
 	MoveRecord move;
 	bool done;
+	unsigned char depth;
 
-	TableEnt() :done(false) {}
+	TableEnt() :
+			done(false), depth(0) {
+	}
 };
 
 #endif /* CHECKERS_HPP_ */
