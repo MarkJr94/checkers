@@ -10,32 +10,6 @@
 #include "AI.hpp"
 #include "DrawGame.hpp"
 
-void printMove (const MoveRecord& move) {
-	using std::cout;
-
-	if (move.jump) {
-		cout << "Piece No. (" << (int)move.piece << ") preying on Piece No. (" << (int)move.prey << ")" << std::endl;
-		return;
-	}
-
-	cout << "Piece No. (" << (int)move.piece << ")" << " moving in direction: ";
-	switch (move.dir) {
-	case LEFT:
-		cout << "LEFT";
-		break;
-	case RIGHT:
-		cout << "RIGHT";
-		break;
-	case BKRIGHT:
-		cout << "BKRIGHT";
-		break;
-	case BKLEFT:
-		cout << "BKLEFT";
-		break;
-	}
-	cout << ".\n";
-}
-
 void testGame() {
 
 	Game g(true, true);

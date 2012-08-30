@@ -62,20 +62,6 @@ void Game::restoreToSave(const Save& record) {
 			}
 		}
 	}
-
-
-	hash = 0;
-
-	Hash::ZobristTable& zt = Hash::ZobristTable::instance();
-
-	for (auto& p : p1) {
-		hash ^=
-				zt[p.second->isKing][p.second->col][p.second->x + 8 * p.second->y];
-	}
-
-	for (auto& p : p2) {
-		hash ^= zt[p.second->isKing][p.second->col][p.second->x + 8 * p.second->y];
-	}
 }
 
 inline void Game::updateSave() {
@@ -204,9 +190,7 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	}
 
 	/* Complete the move  and update hash */
-	Hash::ZobristTable& zt = Hash::ZobristTable::instance();
 	alias->inPlay = false;
-	hash ^= zt[alias->isKing][alias->col][alias->x + 8 * alias->y];
 	pieces[piece] = alias = &board[nextx][nexty];
 
 	alias->inPlay = true;
@@ -217,7 +201,6 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	alias->id = piece;
 	if (wasKing || nexty == 7 || nexty == 0)
 		alias->isKing = true;
-	hash ^= zt[alias->isKing][alias->col][alias->x + 8 * alias->y];
 
 	turn = !turn;
 	return true;
@@ -320,12 +303,10 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	}
 
 	/* Move the piece */
-	Hash::ZobristTable& zt = Hash::ZobristTable::instance();
 
 	j->inPlay = false;
 	Piece::Color oldCol = j->col;
 
-	hash ^= zt[j->isKing][j->col][j->x + 8 * j->y];
 
 	pieces[jumper] = j = &board[newx][newy];
 	j->inPlay = true;
@@ -334,12 +315,10 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	if (wasKing)
 		pieces[jumper]->isKing = true;
 
-	hash ^= zt[j->isKing][j->col][j->x + 8 * j->y];
 
 	p->inPlay = false;
 	other.erase(prey);
 
-	hash ^= zt[p->isKing][p->col][p->x + 8 * p->y];
 
 	turn = !turn;
 	mustJump = jumper;

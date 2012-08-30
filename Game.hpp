@@ -4,8 +4,6 @@
 
 #include "Piece.hpp"
 #include "Save.hpp"
-#include "Hash.hpp"
-#include "TranspositionTable.hpp"
 
 #include <map>
 #include <string>
@@ -69,7 +67,6 @@ public:
 		return board[row];
 	}
 
-	Hash::Zkey getHash() const { return hash; }
 
 protected:
 	std::vector<std::vector<Piece> > board;
@@ -83,7 +80,6 @@ private:
 	Save save;
 	bool interact;
 	unsigned mustJump;
-	Hash::Zkey hash;
 
 	static Save templateSave;
 };

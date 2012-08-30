@@ -14,7 +14,6 @@
 #include "Save.hpp"
 #include "Game.hpp"
 #include "DrawGame.hpp"
-#include "TranspositionTable.hpp"
 
 class AI {
 public:
@@ -44,9 +43,7 @@ private:
 
 	static Game* scenario;
 
-	static TT tranTable;
-
-	unsigned testMoves(const unsigned);
+	unsigned testMoves();
 
 	unsigned generateOutcomes(const unsigned);
 
@@ -55,26 +52,28 @@ private:
 	void updateScores();
 };
 
-//bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
-//		AI* predictor, bool p1Turn);
-///* Play Player vs Player
-// * 	Arguments:
-// * 		theGame: pointer to an allocated game
-// */
-//void playPvP(Game *theGame);
-//
-///* Play Player vs AI
-// * 	Arguments:
-// * 		theGame: pointer to an allocated game
-// * 		interact: whether to print interactive output.
-// */
-//void playAgainstAI(Game *theGame, bool interact);
-//
-///* Play AI VS AI Game.
-// * Arguments:
-// * 	theGame: Pointer to an allocated game
-// * 	interact: if interactive output should be printed
-// */
-//void playAIvsAI(Game *theGame, bool interact);
+bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
+		AI* predictor, bool p1Turn);
+/* Play Player vs Player
+ * 	Arguments:
+ * 		theGame: pointer to an allocated game
+ */
+void playPvP(Game *theGame);
+
+/* Play Player vs AI
+ * 	Arguments:
+ * 		theGame: pointer to an allocated game
+ * 		interact: whether to print interactive output.
+ */
+void playAgainstAI(Game *theGame, bool interact);
+
+/* Play AI VS AI Game.
+ * Arguments:
+ * 	theGame: Pointer to an allocated game
+ * 	interact: if interactive output should be printed
+ */
+void playAIvsAI(Game *theGame, bool interact);
+
+void printMove(const MoveRecord&);
 
 #endif /* AI_HPP_ */

@@ -30,7 +30,6 @@ inline void delay(unsigned long ms) {
 
 Game* AI::scenario = new Game(false, false);
 
-TT AI::tranTable;
 
 AI::AI(unsigned degree, const Save& record, const MoveRecord& _creator) :
 		degree(degree), children() {
@@ -41,7 +40,6 @@ AI::AI(unsigned degree, const Save& record, const MoveRecord& _creator) :
 	scenario->restoreToSave(record);
 	p1Avg = scenario->getP1score();
 	p2Avg = scenario->getP2score();
-	p2Avg = scenario->p2.size();
 }
 
 AI::~AI() {
@@ -81,7 +79,7 @@ void AI::printScene() {
 //	}
 //}
 
-unsigned AI::testMoves(const unsigned level) {
+unsigned AI::testMoves() {
 	using namespace std;
 
 	bool retval;
@@ -168,7 +166,7 @@ unsigned AI::generateOutcomes(const unsigned nLevels) {
 	if (next <= 1)
 		return 0;
 
-	unsigned num = testMoves(next);
+	unsigned num = testMoves();
 	if (num < 1)
 		return 0;
 
@@ -198,12 +196,6 @@ void AI::updateScores() {
 
 MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 
-	TableEnt& ent = tranTable[scenario->getHash()];
-//	if (ent.done) {
-////		ent.move;
-//		return ent.move;
-//	}
-
 	unsigned nKids = generateOutcomes(5);
 	updateScores();
 
@@ -222,6 +214,7 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 	if (!aggro) {
 		if (!optimizeForP1) {
 			for (unsigned i = 0; i < nKids; i++) {
+				printMove(children[i]->creator);
 				if (children[i]->p2Avg > bestAvg) {
 					bestAvg = children[i]->p2Avg;
 					favoredSon = i;
@@ -229,6 +222,7 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 			}
 		} else {
 			for (unsigned i = 0; i < nKids; i++) {
+				printMove(children[i]->creator);
 				if (children[i]->p1Avg > bestAvg) {
 					bestAvg = children[i]->p1Avg;
 					favoredSon = i;
@@ -239,6 +233,7 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 		bestAvg = 999999999;
 		if (!optimizeForP1) {
 			for (unsigned i = 0; i < nKids; i++) {
+				printMove(children[i]->creator);
 				if (children[i]->p1Avg < bestAvg) {
 					bestAvg = children[i]->p1Avg;
 					favoredSon = i;
@@ -246,16 +241,16 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 			}
 		} else {
 			for (unsigned i = 0; i < nKids; i++) {
+				printMove(children[i]->creator);
 				if (children[i]->p2Avg < bestAvg) {
 					bestAvg = children[i]->p2Avg;
 					favoredSon = i;
+
 				}
 			}
 		}
 	}
 
-	ent.done = true;
-	ent.move = children[favoredSon]->creator;
 	return children[favoredSon]->creator;
 }
 
@@ -282,133 +277,133 @@ bool AI::canMultiJump(unsigned piece) {
 	return retval;
 }
 
-//void playPvP(Game *theGame) {
-//	using namespace std;
-//
-//	string instring;
-//	unsigned count1 = 0, count2 = 0;
-//	MoveRecord blank;
-//	AI* predictor;
-//
-//	theGame->print();
-//
-//	while (1) {
-//		cout << theGame->getP1score() << " Player 1\n" << theGame->getP2score()
-//				<< " Player 2\n\n";
-//
-//		if (theGame->getTurn()) {
-//			if (theGame->getP1score() < 1)
-//				return;
-//			cout << "P1 pieces = " << theGame->getP1score() << endl;
-//			while (1) {
-//				theGame->print();
-//				if (count1 == 3) {
-//					count1 = 0;
-//					cout << "Three failed moves P1; Lose a turn!\n\n";
-//					theGame->setTurn(!theGame->getTurn());
-//					break;
-//				}
-//				cout << "================ Player 1 (Black) ==============\n\n";
-//				int c = theGame->receiveInput();
-//				switch (c) {
-//				case -1:
-//					return;
-//				case 0:
-//					count1++;
-//					continue;
-//				case 2:
-//					predictor = new AI(1, theGame->getSave(), blank);
-//					if (predictor->canMultiJump(theGame->getMustJump())) {
-//						theGame->setTurn(!theGame->getTurn());
-//						continue;
-//					}
-//					delete predictor;
-//				default:
-//					theGame->setMustJump(0);
-//					break;
-//				}
-//				count1 = 0;
-//				break;
-//			}
-//		} else {
-//			if (theGame->getP2score() < 1)
-//				return;
-//			cout << "P2 pieces = " << theGame->getP2score() << endl;
-//			while (1) {
-//				theGame->print();
-//				if (count2 == 3) {
-//					count2 = 0;
-//					cout << "Three failed moves P2; Lose a turn!\n\n";
-//					theGame->setTurn(!theGame->getTurn());
-//					break;
-//				}
-//				cout << "================ Player 2 (Red) ==============\n\n";
-//				int c = theGame->receiveInput();
-//				switch (c) {
-//				case -1:
-//					return;
-//				case 0:
-//					count2++;
-//					continue;
-//				case 2:
-//					predictor = new AI(1, theGame->getSave(), blank);
-//					if (predictor->canMultiJump(theGame->getMustJump())) {
-//						theGame->setTurn(!theGame->getTurn());
-//						continue;
-//					}
-//					delete predictor;
-//				default:
-//					theGame->setMustJump(0);
-//					break;
-//				}
-//				count2 = 0;
-//				break;
-//			}
-//		}
-//	}
-//}
-//
-//bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
-//		AI* predictor, bool p1Turn) {
-//	using namespace std;
-//
-//	unsigned count2 = 0;
-//	string player = (p1Turn ? " Player 1 " : " Player 2 ");
-//
-//	do {
-//		if (interact)
-//			theGame->print();
-//		if (interact) {
-//			unsigned score = (
-//					p1Turn ? theGame->getP1score() : theGame->getP2score());
-//			cout << player << "pieces = " << score << endl;
-//			cout << "================ " << player << " ==============\n\n";
-//		}
-//
-//		if (count2 == 3) {
-//			count2 = 0;
-//			if (interact)
-//				cout << "Three failed moves" << player << "; Lose a turn!\n\n";
-//			theGame->setTurn(!theGame->getTurn());
-//			break;
-//		}
-//
-//		AI ai(1, theGame->getSave(), blank);
-//		blank = ai.evaluateMoves(p1Turn);
-//		if (blank.piece == 0xff)
-//			return true;
-//		bool success;
-//		if (blank.jump) {
-//			success = theGame->jumpPiece(blank.piece, blank.prey);
-//		} else {
-//			success = theGame->movePiece(blank.piece, blank.dir);
-//		}
-//
-//		if (!success) {
-//			count2++;
-//			continue;
-//		}
-//
+void playPvP(Game *theGame) {
+	using namespace std;
+
+	string instring;
+	unsigned count1 = 0, count2 = 0;
+	MoveRecord blank;
+	AI* predictor;
+
+	theGame->print();
+
+	while (1) {
+		cout << theGame->getP1score() << " Player 1\n" << theGame->getP2score()
+				<< " Player 2\n\n";
+
+		if (theGame->getTurn()) {
+			if (theGame->getP1score() < 1)
+				return;
+			cout << "P1 pieces = " << theGame->getP1score() << endl;
+			while (1) {
+				theGame->print();
+				if (count1 == 3) {
+					count1 = 0;
+					cout << "Three failed moves P1; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
+					break;
+				}
+				cout << "================ Player 1 (Black) ==============\n\n";
+				int c = theGame->receiveInput();
+				switch (c) {
+				case -1:
+					return;
+				case 0:
+					count1++;
+					continue;
+				case 2:
+					predictor = new AI(1, theGame->getSave(), blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
+				}
+				count1 = 0;
+				break;
+			}
+		} else {
+			if (theGame->getP2score() < 1)
+				return;
+			cout << "P2 pieces = " << theGame->getP2score() << endl;
+			while (1) {
+				theGame->print();
+				if (count2 == 3) {
+					count2 = 0;
+					cout << "Three failed moves P2; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
+					break;
+				}
+				cout << "================ Player 2 (Red) ==============\n\n";
+				int c = theGame->receiveInput();
+				switch (c) {
+				case -1:
+					return;
+				case 0:
+					count2++;
+					continue;
+				case 2:
+					predictor = new AI(1, theGame->getSave(), blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
+				}
+				count2 = 0;
+				break;
+			}
+		}
+	}
+}
+
+bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
+		AI* predictor, bool p1Turn) {
+	using namespace std;
+
+	unsigned count2 = 0;
+	string player = (p1Turn ? " Player 1 " : " Player 2 ");
+
+	do {
+		if (interact)
+			theGame->print();
+		if (interact) {
+			unsigned score = (
+					p1Turn ? theGame->getP1score() : theGame->getP2score());
+			cout << player << "pieces = " << score << endl;
+			cout << "================ " << player << " ==============\n\n";
+		}
+
+		if (count2 == 3) {
+			count2 = 0;
+			if (interact)
+				cout << "Three failed moves" << player << "; Lose a turn!\n\n";
+			theGame->setTurn(!theGame->getTurn());
+			break;
+		}
+
+		AI ai(1, theGame->getSave(), blank);
+		blank = ai.evaluateGame(*theGame);
+		if (blank.piece == 0xff)
+			return true;
+		bool success;
+		if (blank.jump) {
+			success = theGame->jumpPiece(blank.piece, blank.prey);
+		} else {
+			success = theGame->movePiece(blank.piece, blank.dir);
+		}
+
+		if (!success) {
+			count2++;
+			continue;
+		}
+
 //		if (blank.jump) {
 //			predictor = new AI(1, theGame->getSave(), blank);
 //			if (predictor->canMultiJump(theGame->getMustJump())) {
@@ -418,101 +413,127 @@ bool AI::canMultiJump(unsigned piece) {
 //				theGame->setMustJump(0);
 //			delete predictor;
 //		}
-//		break;
-//	} while (1);
-//
-//	return false;
-//}
-//
-//void playAgainstAI(Game *theGame, bool interact) {
-//	using namespace std;
-//
-//	MoveRecord blank;
-//	string instring;
-//	unsigned count1 = 0;
-//	AI *predictor;
-//
-//	theGame->print();
-//	bool turn;
-//
-//	while (1) {
-//		if (interact)
-//			cout << theGame->getP1score() << " Player 1\n"
-//					<< theGame->getP2score() << " Player 2\n\n";
-//
-//		if ((turn = theGame->getTurn())) {
-//			if (theGame->getP1score() < 1)
-//				return;
-//			cout << "P1 pieces = " << theGame->getP2score() << endl;
-//			while (1) {
-//				theGame->print();
-//				if (count1 == 3) {
-//					count1 = 0;
-//					cout << "Three failed moves P1; Lose a turn!\n\n";
-//					theGame->setTurn(!theGame->getTurn());
-//					break;
-//				}
-//				cout << "================ Player 1 (Black) ==============\n\n";
-//				int c = theGame->receiveInput();
-//				switch (c) {
-//				case -1:
-//					return;
-//				case 0:
-//					count1++;
-//					continue;
-//				case 2:
-//					predictor = new AI(1, theGame->getSave(), blank);
-//					if (predictor->canMultiJump(theGame->getMustJump())) {
-//						theGame->setTurn(!theGame->getTurn());
-//						continue;
-//					}
-//					delete predictor;
-//				default:
-//					theGame->setMustJump(0);
-//					break;
-//				}
-//				count1 = 0;
-//				break;
-//			}
-//		} else {
-//			if (theGame->getP2score() < 1)
-//				return;
-//			if (aiInteract(theGame, interact, blank, predictor, turn))
-//				return;
-//		}
-//	}
-//}
-//
-//void playAIvsAI(Game *theGame, bool interact) {
-//	using namespace std;
-//
-//	MoveRecord blank;
-//	string instring;
-//	AI *predictor = NULL;
-//	bool turn;
-//
-//	theGame->print();
-//
-//	while (1) {
-//		if (interact)
-//			cout << theGame->getP1score() << " Player 1\n"
-//					<< theGame->getP2score() << " Player 2\n\n";
-//
-//		if ((turn = theGame->getTurn())) {
-//			if (theGame->getP1score() < 1)
-//				return;
-//
-//			if (aiInteract(theGame, interact, blank, predictor, turn))
-//				return;
-////			delay(500);
-//		} else {
-//			if (theGame->getP2score() < 1)
-//				return;
-//
-//			if (aiInteract(theGame, interact, blank, predictor, turn))
-//				return;
-////			delay(500);
-//		}
-//	}
-//
-//}
+		break;
+	} while (1);
+
+	return false;
+}
+
+void playAgainstAI(Game *theGame, bool interact) {
+	using namespace std;
+
+	MoveRecord blank;
+	string instring;
+	unsigned count1 = 0;
+	AI *predictor;
+
+	theGame->print();
+	bool turn;
+
+	while (1) {
+		if (interact)
+			cout << theGame->getP1score() << " Player 1\n"
+					<< theGame->getP2score() << " Player 2\n\n";
+
+		if ((turn = theGame->getTurn())) {
+			if (theGame->getP1score() < 1)
+				return;
+			cout << "P1 pieces = " << theGame->getP2score() << endl;
+			while (1) {
+				theGame->print();
+				if (count1 == 3) {
+					count1 = 0;
+					cout << "Three failed moves P1; Lose a turn!\n\n";
+					theGame->setTurn(!theGame->getTurn());
+					break;
+				}
+				cout << "================ Player 1 (Black) ==============\n\n";
+				int c = theGame->receiveInput();
+				switch (c) {
+				case -1:
+					return;
+				case 0:
+					count1++;
+					continue;
+				case 2:
+					predictor = new AI(1, theGame->getSave(), blank);
+					if (predictor->canMultiJump(theGame->getMustJump())) {
+						theGame->setTurn(!theGame->getTurn());
+						continue;
+					}
+					delete predictor;
+				default:
+					theGame->setMustJump(0);
+					break;
+				}
+				count1 = 0;
+				break;
+			}
+		} else {
+			if (theGame->getP2score() < 1)
+				return;
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
+		}
+	}
+}
+
+void playAIvsAI(Game *theGame, bool interact) {
+	using namespace std;
+
+	MoveRecord blank;
+	string instring;
+	AI *predictor = NULL;
+	bool turn;
+
+	theGame->print();
+
+	while (1) {
+		if (interact)
+			cout << theGame->getP1score() << " Player 1\n"
+					<< theGame->getP2score() << " Player 2\n\n";
+
+		if ((turn = theGame->getTurn())) {
+			if (theGame->getP1score() < 1)
+				return;
+
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
+//			delay(500);
+		} else {
+			if (theGame->getP2score() < 1)
+				return;
+
+			if (aiInteract(theGame, interact, blank, predictor, turn))
+				return;
+//			delay(500);
+		}
+	}
+
+}
+
+void printMove (const MoveRecord& move) {
+	using std::cout;
+
+	if (move.jump) {
+		cout << "Piece No. (" << (int)move.piece << ") preying on Piece No. (" << (int)move.prey << ")" << std::endl;
+		return;
+	}
+
+	cout << "Piece No. (" << (int)move.piece << ")" << " moving in direction: ";
+	switch (move.dir) {
+	case LEFT:
+		cout << "LEFT";
+		break;
+	case RIGHT:
+		cout << "RIGHT";
+		break;
+	case BKRIGHT:
+		cout << "BKRIGHT";
+		break;
+	case BKLEFT:
+		cout << "BKLEFT";
+		break;
+	}
+	cout << ".\n";
+}

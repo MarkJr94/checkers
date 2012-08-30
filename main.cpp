@@ -38,8 +38,9 @@ int main(int argc, char *argv[]) {
 		try {
 			loadGame = new Save(false);
 			loadGame->read(instr);
-		} catch (const ios_base::failure&) {
+		} catch (const ios_base::failure& e) {
 			cerr << "Error loading savefile \"" << instr << "\"" << endl;
+			cerr << e.what() << endl;
 			return 1;
 		}
 		theMatch = new Game(*loadGame, true, true);
