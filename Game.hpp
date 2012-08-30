@@ -4,6 +4,8 @@
 
 #include "Piece.hpp"
 #include "Save.hpp"
+#include "Hash.hpp"
+#include "TranspositionTable.hpp"
 
 #include <map>
 #include <string>
@@ -12,15 +14,9 @@
 class AI;
 
 class Game {
-
-
 public:
 	friend class AI;
-
-	/* Enumerations for movement and jump directions */
-	enum Direction {
-		LEFT, RIGHT, BKLEFT, BKRIGHT
-	};
+	friend class TranspositionTable;
 
 	/* Constructor */
 	Game(const bool db, const bool interact);
@@ -74,18 +70,21 @@ public:
 		return board[row];
 	}
 
+	Hash::Zkey getHash() const { return hash; }
+
+protected:
+	std::vector<std::vector<Piece> > board;
+
 private:
 	std::map <int,Piece *> p1;
 	std::map <int,Piece *> p2;
-protected:
-	std::vector<std::vector<Piece> > board;
-private:
 	/* Tracks if it's P1's turn or not */
 	bool turn;
 	bool debug;
 	Save save;
 	bool interact;
 	unsigned mustJump;
+	Hash::Zkey hash;
 
 	static Save templateSave;
 };

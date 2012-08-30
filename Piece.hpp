@@ -21,4 +21,22 @@ struct Piece {
 	void print(std::ostream& out) const;
 };
 
+enum Direction {
+	LEFT, RIGHT, BKLEFT, BKRIGHT
+};
+
+struct MoveRecord {
+	Direction dir;
+	bool jump;
+	unsigned char piece;
+	unsigned char prey;
+};
+
+struct TableEnt {
+	MoveRecord move;
+	bool done;
+
+	TableEnt() :done(false) {}
+};
+
 #endif /* CHECKERS_HPP_ */

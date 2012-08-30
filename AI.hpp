@@ -13,14 +13,6 @@
 #include "Piece.hpp"
 #include "Save.hpp"
 #include "DrawGame.hpp"
-#include "Hash.hpp"
-
-struct MoveRecord {
-	Game::Direction dir;
-	bool jump;
-	unsigned char piece;
-	unsigned char prey;
-};
 
 class AI {
 public:
@@ -31,23 +23,9 @@ public:
 
 	void recursivePrint();
 
-	unsigned testMoves(const Save& savestate);
-
-	void generateOutcomes(const int);
-
-	void updateScores();
-
 	bool canMultiJump(unsigned piece);
 
-	MoveRecord getBestMove(bool optimizeForP2 = true, bool aggro = false);
-
-	MoveRecord getCreator() const {
-		return creator;
-	}
-
-	void clearToSave(const Save&);
-
-
+	MoveRecord evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
 
 private:
 	unsigned degree;
@@ -59,10 +37,12 @@ private:
 	bool done;
 
 	static Game* scenario;
-	static AI* hashTable[100000000];
-	static unsigned tableSz;
 
-	Hash::Zkey hashGame();
+	unsigned testMoves(const Save& savestate);
+
+	void generateOutcomes(const int);
+
+	void updateScores();
 };
 
 bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,

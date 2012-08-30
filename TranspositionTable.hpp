@@ -12,33 +12,23 @@
 
 #include "Piece.hpp"
 #include "Save.hpp"
-#include "Game.hpp"
-#include "DrawGame.hpp"
 #include "Hash.hpp"
 
 class AI;
-
-struct TableEnt {
-	MoveRecord move;
-	bool done;
-
-	TableEnt() :done(false) {}
-};
 
 typedef class TranspositionTable {
 public:
 	TranspositionTable();
 	~TranspositionTable();
 
-	bool hasEvaluated(const Game&);
+	TableEnt& operator[](const int elem) { return entries[elem];}
 
-	MoveRecord getMove( Game&);
+	const TableEnt& operator[](const int elem) const {return entries[elem];}
 
-	static Hash::Zkey hashGame(const Game&);
+	bool hasEvaluated(const Hash::Zkey);
 
 private:
 	std::vector<TableEnt> entries;
-	AI* ai;
 
 	static unsigned tableSz;
 } TT;

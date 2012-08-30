@@ -7,30 +7,31 @@
 #include <iostream>
 
 #include "TranspositionTable.hpp"
+#include "Game.hpp"
 
 int main() {
 	using namespace std;
+	using namespace Hash;
 	TT table;
 
 	Game g(false, false);
-	int i = 20;
-	while (i-- >= 0) {
-		cout << TT::hashGame(g) << endl;
-		cout << table.hasEvaluated(g) << std::endl;
-	}
+	cout << g.getHash() << " " << table.hasEvaluated(g.getHash()) << endl;
+	g.print();
+	table[g.getHash() % 100000000].done = true;
+	const Save& s = g.getSave();
 
-	Save s = g.getSave();
-
+	g.movePiece(9, RIGHT);
+	cout << g.getHash() << " " << table.hasEvaluated(g.getHash()) << endl;
 	g.print();
 
-	MoveRecord m = table.getMove(g);
+	g.movePiece(9, RIGHT);
+	g.movePiece(12, RIGHT);
+	g.jumpPiece(9, 9);
+	cout << g.getHash() << " " << table.hasEvaluated(g.getHash()) << endl;
+	g.print();
 
-	if (m.jump) {
-		g.jumpPiece(m.piece, m.prey);
-	} else {
-		g.movePiece(m.piece, m.dir);
-	}
-
+	g.restoreToSave(s);
+	cout << g.getHash() << " " << table.hasEvaluated(g.getHash()) << endl;
 	g.print();
 
 	return 0;

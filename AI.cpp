@@ -30,10 +30,6 @@ inline void delay(unsigned long ms) {
 
 Game* AI::scenario;
 
-AI* AI::hashTable[100000000];
-
-unsigned AI::tableSz = 100000000;
-
 AI::AI(unsigned degree, const Save& record, const MoveRecord& creator) :
 		degree(degree), children(), save(record), done(false) {
 	if (degree > 1) {
@@ -49,14 +45,6 @@ AI::AI(unsigned degree, const Save& record, const MoveRecord& creator) :
 	p1Avg = scenario->getP1score();
 	p2Avg = scenario->getP2score();
 	p2Avg = scenario->p2.size();
-
-
-	int bucket = hashGame() % tableSz;
-	if (hashTable[bucket]) {
-		done = true;
-	} else {
-		hashTable[bucket] = this;
-	}
 }
 
 AI::~AI() {
@@ -105,11 +93,11 @@ unsigned AI::testMoves(const Save& savestate) {
 				origin.jump = true;
 				origin.piece = piece;
 				origin.prey = prey;
-//				if (canMultiJump(piece)) {
-//					scenario.setTurn(!scenario.getTurn());
-//				} else {
-//					scenario.setMustJump(0);
-//				}
+				if (canMultiJump(piece)) {
+					scenario->setTurn(!scenario->getTurn());
+				} else {
+					scenario->setMustJump(0);
+				}
 				children.push_back(
 						new AI(degree + 1, scenario->getSave(), origin));
 				scenario->restoreToSave(savestate);
@@ -122,45 +110,45 @@ unsigned AI::testMoves(const Save& savestate) {
 	for (unsigned piece = 1; piece <= 12; piece++) {
 
 		/* Test left move */
-		retval = scenario->movePiece(piece, DrawGame::LEFT);
+		retval = scenario->movePiece(piece, LEFT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = DrawGame::LEFT;
+			origin.dir = LEFT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
 			scenario->restoreToSave(savestate);
 		}
 
 		/* Test right move */
-		retval = scenario->movePiece(piece, DrawGame::RIGHT);
+		retval = scenario->movePiece(piece, RIGHT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = DrawGame::RIGHT;
+			origin.dir = RIGHT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
 			scenario->restoreToSave(savestate);
 		}
 
 		/* Test back right move */
-		retval = scenario->movePiece(piece, DrawGame::BKRIGHT);
+		retval = scenario->movePiece(piece, BKRIGHT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = DrawGame::BKRIGHT;
+			origin.dir = BKRIGHT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
 			scenario->restoreToSave(savestate);
 		}
 
 		/* Test back left move */
-		retval = scenario->movePiece(piece, DrawGame::BKLEFT);
+		retval = scenario->movePiece(piece, BKLEFT);
 		if (retval) {
 			++successCount;
 			origin.jump = false;
 			origin.piece = piece;
-			origin.dir = DrawGame::BKLEFT;
+			origin.dir = BKLEFT;
 			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
 			scenario->restoreToSave(savestate);
 		}
@@ -206,7 +194,10 @@ void AI::updateScores() {
 	p2Avg = temp2 / children.size();
 }
 
-MoveRecord AI::getBestMove(bool optimizeForP2, bool aggro) {
+MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
+	generateOutcomes(5);
+	updateScores();
+
 	size_t nKids = children.size();
 
 	if (nKids == 0) {
@@ -218,7 +209,7 @@ MoveRecord AI::getBestMove(bool optimizeForP2, bool aggro) {
 	size_t favoredSon = 0;
 	double bestAvg = 0.0;
 	if (!aggro) {
-		if (optimizeForP2) {
+		if (!optimizeForP1) {
 			for (size_t i = 0; i < nKids; i++) {
 				if (children[i]->p2Avg > bestAvg) {
 					bestAvg = children[i]->p2Avg;
@@ -235,7 +226,7 @@ MoveRecord AI::getBestMove(bool optimizeForP2, bool aggro) {
 		}
 	} else {
 		bestAvg = 999999999;
-		if (optimizeForP2) {
+		if (!optimizeForP1) {
 			for (size_t i = 0; i < nKids; i++) {
 				if (children[i]->p1Avg < bestAvg) {
 					bestAvg = children[i]->p1Avg;
@@ -251,7 +242,7 @@ MoveRecord AI::getBestMove(bool optimizeForP2, bool aggro) {
 			}
 		}
 	}
-	return children[favoredSon]->getCreator();
+	return children[favoredSon]->creator;
 }
 
 bool AI::canMultiJump(unsigned piece) {
@@ -269,38 +260,6 @@ bool AI::canMultiJump(unsigned piece) {
 
 	scenario->restoreToSave(savestate);
 	return retval;
-}
-
-void AI::clearToSave(const Save& saveState) {
-	children.clear();
-	scenario->restoreToSave(saveState);
-	p1Avg = scenario->getP1score();
-	p2Avg = scenario->getP2score();
-}
-
-Hash::Zkey AI::hashGame() {
-	using namespace Hash;
-	scenario->restoreToSave(save);
-
-	Zkey hash = 0;
-
-	ZobristTable& zt = ZobristTable::instance();
-
-	for (auto& p : scenario->p1) {
-		hash ^= zt[p.second->isKing][Piece::BLACK][p.second->x + 8 * p.second->y];
-	}
-
-	for (auto& p : scenario->p2) {
-		hash ^= zt[p.second->isKing][Piece::RED][p.second->x + 8 * p.second->y];
-	}
-
-	int bucket = hash % tableSz;
-	if (hashTable[bucket]) {
-		std::cerr << "already done";
-	}
-//	hashTable[bucket]++;
-
-	return hash;
 }
 
 void playPvP(Game *theGame) {
@@ -415,9 +374,7 @@ bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
 		}
 
 		AI ai(1, theGame->getSave(), blank);
-		ai.generateOutcomes(5);
-		ai.updateScores();
-		blank = ai.getBestMove(!p1Turn);
+		blank = ai.evaluateMoves(p1Turn);
 		if (blank.piece == 0xff)
 			return true;
 		bool success;

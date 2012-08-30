@@ -23,3 +23,5 @@ target_link_libraries(new ${CORELIBS} ${SFML_LIBS} )
 
 add_executable(hash_test Hash.hpp Hash.cpp Hash_test.cpp)
 target_link_libraries(hash_test optparser)
+
+add_executable(table_test Piece.cpp Game.cpp Save.cpp Hash.cpp AI.cpp TranspositionTable.cpp TranspositionTable_test.cpp)
