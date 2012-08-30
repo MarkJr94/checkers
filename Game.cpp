@@ -100,6 +100,8 @@ Save Game::getSave() {
 void Game::print() {
 	using namespace std;
 
+	if (turn) cout << "Player 1's turn.\n";
+	else cout << "Player 2's turn.\n";
 	cout << "P1: " << p1.size() << "\tP2: " << p2.size() << endl;
 	for (int j = (int) (BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
@@ -126,11 +128,11 @@ bool Game::movePiece(unsigned piece, Direction d) {
 
 	Piece * alias;
 
-	if (mustJump) {
-		if (interact)
-			cerr << "movePiece: You must jump" << endl;
-		return false;
-	}
+//	if (mustJump) {
+//		if (interact)
+//			cerr << "movePiece: You must jump" << endl;
+//		return false;
+//	}
 
 	/* Testing if piece selection is valid */
 	if (piece > 12 || piece < 1) {
@@ -226,14 +228,14 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	using namespace std;
 
 	Piece *j, *p;
-	if (mustJump) {
-		if (jumper != mustJump) {
-			if (interact)
-				cerr << "movePiece: You must continue your jump"
-						<< " with the same piece." << endl;
-			return false;
-		}
-	}
+//	if (mustJump) {
+//		if (jumper != mustJump) {
+//			if (interact)
+//				cerr << "movePiece: You must continue your jump"
+//						<< " with the same piece." << endl;
+//			return false;
+//		}
+//	}
 
 	map<int, Piece *>& pieces = (turn ? p1 : p2);
 	map<int, Piece *>& other = (turn ? p2 : p1);
@@ -319,18 +321,24 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 
 	/* Move the piece */
 	Hash::ZobristTable& zt = Hash::ZobristTable::instance();
+
 	j->inPlay = false;
+	Piece::Color oldCol = j->col;
+
 	hash ^= zt[j->isKing][j->col][j->x + 8 * j->y];
+
 	pieces[jumper] = j = &board[newx][newy];
 	j->inPlay = true;
-	j->col = board[newx][newy].col;
+	j->col = oldCol;
 	j->id = jumper;
 	if (wasKing)
 		pieces[jumper]->isKing = true;
+
 	hash ^= zt[j->isKing][j->col][j->x + 8 * j->y];
 
 	p->inPlay = false;
 	other.erase(prey);
+
 	hash ^= zt[p->isKing][p->col][p->x + 8 * p->y];
 
 	turn = !turn;

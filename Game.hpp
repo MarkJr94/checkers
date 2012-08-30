@@ -16,7 +16,6 @@ class AI;
 class Game {
 public:
 	friend class AI;
-	friend class TranspositionTable;
 
 	/* Constructor */
 	Game(const bool db, const bool interact);

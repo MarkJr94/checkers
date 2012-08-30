@@ -25,11 +25,11 @@ public:
 
 	void printScene();
 
-	void recursivePrint();
+//	void recursivePrint();
 
 	bool canMultiJump(unsigned piece);
 
-	MoveRecord evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
+	MoveRecord evaluateGame(Game&);
 
 private:
 	AI(const AI&);
@@ -40,7 +40,7 @@ private:
 	double p1Avg;
 	double p2Avg;
 	MoveRecord creator;
-	Save save;
+//	Save save;
 
 	static Game* scenario;
 
@@ -48,31 +48,33 @@ private:
 
 	unsigned testMoves(const unsigned);
 
-	size_t generateOutcomes(const unsigned);
+	unsigned generateOutcomes(const unsigned);
+
+	MoveRecord evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
 
 	void updateScores();
 };
 
-bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
-		AI* predictor, bool p1Turn);
-/* Play Player vs Player
- * 	Arguments:
- * 		theGame: pointer to an allocated game
- */
-void playPvP(Game *theGame);
-
-/* Play Player vs AI
- * 	Arguments:
- * 		theGame: pointer to an allocated game
- * 		interact: whether to print interactive output.
- */
-void playAgainstAI(Game *theGame, bool interact);
-
-/* Play AI VS AI Game.
- * Arguments:
- * 	theGame: Pointer to an allocated game
- * 	interact: if interactive output should be printed
- */
-void playAIvsAI(Game *theGame, bool interact);
+//bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,
+//		AI* predictor, bool p1Turn);
+///* Play Player vs Player
+// * 	Arguments:
+// * 		theGame: pointer to an allocated game
+// */
+//void playPvP(Game *theGame);
+//
+///* Play Player vs AI
+// * 	Arguments:
+// * 		theGame: pointer to an allocated game
+// * 		interact: whether to print interactive output.
+// */
+//void playAgainstAI(Game *theGame, bool interact);
+//
+///* Play AI VS AI Game.
+// * Arguments:
+// * 	theGame: Pointer to an allocated game
+// * 	interact: if interactive output should be printed
+// */
+//void playAIvsAI(Game *theGame, bool interact);
 
 #endif /* AI_HPP_ */

@@ -18,7 +18,7 @@ target_link_libraries(draughts ${CORELIBS})
 #add_executable(visual Piece.cpp Game.cpp bst.cpp DrawGame.cpp GameWindow.cpp)
 #target_link_libraries(visual ${CORELIBS} ${GLIBMM_LIBRARIES} ${GTKMM_LIBRARIES} ${SFML_LIBS} )
 
-add_executable(new Piece.cpp Save.cpp  Game.cpp DrawGame.cpp AI.cpp Hash.cpp new.cpp)
+add_executable(new Piece.cpp Save.cpp  Game.cpp DrawGame.cpp AI.cpp Hash.cpp TranspositionTable.cpp new.cpp)
 target_link_libraries(new ${CORELIBS} ${SFML_LIBS} )
 
 add_executable(hash_test Hash.hpp Hash.cpp Hash_test.cpp)

@@ -20,6 +20,5 @@ TT::~TranspositionTable() {
 
 bool TT::hasEvaluated(const Hash::Zkey z) {
 
-	int bucket = z % tableSz;
-	return entries[bucket].done;
+	return entries[z % tableSz].done;
 }

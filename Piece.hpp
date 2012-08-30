@@ -31,17 +31,20 @@ enum Direction {
 struct MoveRecord {
 	Direction dir;
 	bool jump;
-	unsigned char piece;
-	unsigned char prey;
+	char piece;
+	char prey;
 };
+
+class AINode;
 
 struct TableEnt {
 	MoveRecord move;
 	bool done;
-	unsigned char depth;
+	char depth;
+	char score;
 
 	TableEnt() :
-			done(false), depth(0) {
+			done(false) {
 	}
 };
 

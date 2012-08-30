@@ -17,7 +17,7 @@ int main() {
 	Game g(false, false);
 	cout << g.getHash() << " " << table.hasEvaluated(g.getHash()) << endl;
 	g.print();
-	table[g.getHash() % 100000000].done = true;
+	table[g.getHash()].done = true;
 	const Save& s = g.getSave();
 
 	g.movePiece(9, RIGHT);

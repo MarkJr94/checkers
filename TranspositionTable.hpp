@@ -21,9 +21,9 @@ public:
 	TranspositionTable();
 	~TranspositionTable();
 
-	TableEnt& operator[](const int elem) { return entries[elem];}
+	TableEnt& operator[](const Hash::Zkey hash) { return entries[hash % tableSz];}
 
-	const TableEnt& operator[](const int elem) const {return entries[elem];}
+	const TableEnt& operator[](const Hash::Zkey hash) const {return entries[hash % tableSz];}
 
 	bool hasEvaluated(const Hash::Zkey);
 
