@@ -17,10 +17,10 @@
 
 class AI {
 public:
-	AI(unsigned, const Save&, const MoveRecord& creator = MoveRecord());
+	AI(unsigned, const Save&, const MoveRecord& creator = MoveRecord(), const unsigned difficulty = 5);
 	~AI();
 
-	void resetToSave(const Save&);
+//	void resetToSave(const Save&);
 
 	void printScene();
 
@@ -34,22 +34,25 @@ private:
 	AI(const AI&);
 	AI& operator=(const AI&);
 
-	unsigned degree;
-	std::vector<AI *> children;
-	double p1Avg;
-	double p2Avg;
-	MoveRecord creator;
-//	Save save;
+	unsigned _level;
+	unsigned _difficulty;
+	std::vector<AI *> _children;
+	float _p1Avg;
+	float _p2Avg;
+	MoveRecord _move;
+	Save _save;
 
-	static Game* scenario;
+	static Game* _game;
 
 	unsigned testMoves();
 
-	unsigned generateOutcomes(const unsigned);
+	unsigned generateOutcomes();
 
 	MoveRecord evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
 
 	void updateScores();
+
+	void resetToSave(const Save&);
 };
 
 bool aiInteract(Game *theGame, const bool interact, MoveRecord& blank,

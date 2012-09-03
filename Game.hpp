@@ -22,8 +22,6 @@ public:
 	/* Destructor */
 	virtual ~Game();
 
-	/* Update save game */
-	void updateSave();
 	/* return save game */
 	Save getSave();
 	/* Print game */
@@ -39,11 +37,11 @@ public:
 	int receiveInput();
 
 	int getMustJump() const {
-		return mustJump;
+		return _mustJump;
 	}
 
 	void setMustJump(const int mustJump) {
-		this->mustJump = mustJump;
+		this->_mustJump = mustJump;
 	}
 	/* Get p1 score */
 	unsigned getP1score() {
@@ -55,10 +53,10 @@ public:
 	}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
-		turn = newval;
+		_turn = newval;
 	}
 	bool getTurn() const {
-		return turn;
+		return _turn;
 	}
 	std::vector<Piece>& operator[](unsigned row) {
 		return board[row];
@@ -75,13 +73,16 @@ private:
 	std::map <int,Piece *> p1;
 	std::map <int,Piece *> p2;
 	/* Tracks if it's P1's turn or not */
-	bool turn;
-	bool debug;
-	Save save;
-	bool interact;
-	unsigned mustJump;
+	bool _turn;
+	bool _debug;
+	Save _save;
+	bool _interact;
+	unsigned _mustJump;
 
 	static Save templateSave;
+
+	/* Update save game */
+	void updateSave();
 };
 
 #endif /* GAME_HPP_ */

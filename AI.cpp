@@ -28,43 +28,40 @@ inline void delay(unsigned long ms) {
 
 #endif
 
-Game* AI::scenario = new Game(false, false);
+Game* AI::_game = new Game(false, false);
 
+AI::AI(unsigned degree, const Save& save, const MoveRecord& creator,
+		const unsigned difficulty) :
+		_level(degree), _difficulty(difficulty), _children(), _move(creator), _save(
+				save) {
 
-AI::AI(unsigned degree, const Save& record, const MoveRecord& _creator) :
-		degree(degree), children() {
-//	if (degree > 1) {
-		creator = _creator;
-//	}
-
-	scenario->restoreToSave(record);
-	p1Avg = scenario->getP1score();
-	p2Avg = scenario->getP2score();
 }
 
 AI::~AI() {
-	for (auto child : children)
+	for (auto child : _children)
 		delete child;
 
 }
 
-void AI::resetToSave(const Save& record) {
-	scenario->restoreToSave(record);
-	p1Avg = p2Avg = 0;
+void AI::resetToSave(const Save& save) {
+	_game->restoreToSave(save);
+	_save = save;
+	_p1Avg = _game->getP1score();
+	_p2Avg = _game->getP2score();
 
-	for (auto child : children)
+	for (auto child : _children)
 		delete child;
 
-	children.clear();
+	_children.clear();
 }
 
 void AI::printScene() {
 	using namespace std;
 
-	cout << "This is a degree " << degree << " AI with " << "P1 Min: " << p1Avg
-			<< "\tP2 Min: " << p2Avg << endl;
+	cout << "This is a degree " << _level << " AI with " << "P1 Min: " << _p1Avg
+			<< "\tP2 Min: " << _p2Avg << endl;
 //	Save oldsave = scenario->getSave();
-//	scenario->restoreToSave(save);
+//	scenario->restoreToSave(_save);
 //	scenario->print();
 //	scenario->restoreToSave(oldsave);
 }
@@ -86,27 +83,27 @@ unsigned AI::testMoves() {
 	unsigned successCount = 0;
 
 	MoveRecord origin;
-	const Save savestate = scenario->getSave();
-
+//	_game->restoreToSave(_save);
 	unsigned jumpCount = 0;
 	for (unsigned piece = 1; piece <= 12; piece++) {
 		/* Test jumping */
 		for (unsigned prey = 1; prey <= 12; prey++) {
-			retval = scenario->jumpPiece(piece, prey);
+			_game->restoreToSave(_save);
+			retval = _game->jumpPiece(piece, prey);
 			if (retval) {
 				++jumpCount;
 				++successCount;
 				origin.jump = true;
 				origin.piece = piece;
 				origin.prey = prey;
+//				printMove(origin);
 //				if (canMultiJump(piece)) {
 //					scenario->setTurn(!scenario->getTurn());
 //				} else {
-					scenario->setMustJump(0);
+				_game->setMustJump(0);
 //				}
-				children.push_back(
-						new AI(degree + 1, scenario->getSave(), origin));
-				scenario->restoreToSave(savestate);
+				_children.push_back(
+						new AI(_level + 1, _game->getSave(), origin));
 			}
 		}
 	}
@@ -117,114 +114,110 @@ unsigned AI::testMoves() {
 	for (unsigned piece = 1; piece <= 12; piece++) {
 
 		/* Test left move */
-		retval = scenario->movePiece(piece, LEFT);
+		_game->restoreToSave(_save);
+		retval = _game->movePiece(piece, LEFT);
 		if (retval) {
 			++successCount;
 			origin.piece = piece;
 			origin.dir = LEFT;
-			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
-			scenario->restoreToSave(savestate);
+			_children.push_back(new AI(_level + 1, _game->getSave(), origin));
 		}
 
 		/* Test right move */
-		retval = scenario->movePiece(piece, RIGHT);
+		_game->restoreToSave(_save);
+		retval = _game->movePiece(piece, RIGHT);
 		if (retval) {
 			++successCount;
 			origin.piece = piece;
 			origin.dir = RIGHT;
-			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
-			scenario->restoreToSave(savestate);
+			_children.push_back(new AI(_level + 1, _game->getSave(), origin));
 		}
 
 		/* Test back right move */
-		retval = scenario->movePiece(piece, BKRIGHT);
+		_game->restoreToSave(_save);
+		retval = _game->movePiece(piece, BKRIGHT);
 		if (retval) {
 			++successCount;
 			origin.piece = piece;
 			origin.dir = BKRIGHT;
-			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
-			scenario->restoreToSave(savestate);
+			_children.push_back(new AI(_level + 1, _game->getSave(), origin));
 		}
 
 		/* Test back left move */
-		retval = scenario->movePiece(piece, BKLEFT);
+		_game->restoreToSave(_save);
+		retval = _game->movePiece(piece, BKLEFT);
 		if (retval) {
 			++successCount;
 			origin.piece = piece;
 			origin.dir = BKLEFT;
-			children.push_back(new AI(degree + 1, scenario->getSave(), origin));
-			scenario->restoreToSave(savestate);
+			_children.push_back(new AI(_level + 1, _game->getSave(), origin));
 		}
 
 	}
 	return successCount;
 }
 
-unsigned AI::generateOutcomes(const unsigned nLevels) {
+unsigned AI::generateOutcomes() {
 
-	unsigned next = nLevels - 1;
-	if (next <= 1)
+	if (_level == _difficulty - 1)
 		return 0;
 
 	unsigned num = testMoves();
 	if (num < 1)
 		return 0;
 
-	for (auto child : children)
-		child->generateOutcomes(next);
+	for (auto child : _children)
+		child->generateOutcomes();
 
-//	std::cout << "Num Moves = " << num << " ";
 	return num;
 }
 
 void AI::updateScores() {
-	if (children.empty())
+	if (_children.empty())
 		return;
 
-	for (auto& child : children)
+	for (auto& child : _children)
 		child->updateScores();
 
-	double temp1 = 0, temp2 = 0;
-	for (auto& child : children) {
-		temp1 += child->p1Avg;
-		temp2 += child->p2Avg;
+	float temp1 = 0, temp2 = 0;
+	for (auto& child : _children) {
+		temp1 += child->_p1Avg;
+		temp2 += child->_p2Avg;
 	}
 
-	p1Avg = temp1 / children.size();
-	p2Avg = temp2 / children.size();
+	_p1Avg = temp1 / _children.size();
+	_p2Avg = temp2 / _children.size();
 }
 
 MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 
-	unsigned nKids = generateOutcomes(5);
+	unsigned nKids = generateOutcomes();
 	updateScores();
-
-//	size_t nKids = children.size();
 
 	if (nKids == 0) {
 		std::cerr << "NO MOVES.\n";
-		creator.piece = 0xff;
-		return creator;
+		_move.piece = 0xff;
+		return _move;
 	}
 
 	std::cout << "Number of moves:  " << nKids << std::endl;
 
 	unsigned favoredSon = 0;
-	double bestAvg = 0.0;
+	float bestAvg = 0.0;
 	if (!aggro) {
 		if (!optimizeForP1) {
 			for (unsigned i = 0; i < nKids; i++) {
-				printMove(children[i]->creator);
-				if (children[i]->p2Avg > bestAvg) {
-					bestAvg = children[i]->p2Avg;
+				printMove(_children[i]->_move);
+				if (_children[i]->_p2Avg > bestAvg) {
+					bestAvg = _children[i]->_p2Avg;
 					favoredSon = i;
 				}
 			}
 		} else {
 			for (unsigned i = 0; i < nKids; i++) {
-				printMove(children[i]->creator);
-				if (children[i]->p1Avg > bestAvg) {
-					bestAvg = children[i]->p1Avg;
+				printMove(_children[i]->_move);
+				if (_children[i]->_p1Avg > bestAvg) {
+					bestAvg = _children[i]->_p1Avg;
 					favoredSon = i;
 				}
 			}
@@ -233,17 +226,17 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 		bestAvg = 999999999;
 		if (!optimizeForP1) {
 			for (unsigned i = 0; i < nKids; i++) {
-				printMove(children[i]->creator);
-				if (children[i]->p1Avg < bestAvg) {
-					bestAvg = children[i]->p1Avg;
+				printMove(_children[i]->_move);
+				if (_children[i]->_p1Avg < bestAvg) {
+					bestAvg = _children[i]->_p1Avg;
 					favoredSon = i;
 				}
 			}
 		} else {
 			for (unsigned i = 0; i < nKids; i++) {
-				printMove(children[i]->creator);
-				if (children[i]->p2Avg < bestAvg) {
-					bestAvg = children[i]->p2Avg;
+				printMove(_children[i]->_move);
+				if (_children[i]->_p2Avg < bestAvg) {
+					bestAvg = _children[i]->_p2Avg;
 					favoredSon = i;
 
 				}
@@ -251,7 +244,7 @@ MoveRecord AI::evaluateMoves(bool optimizeForP1, bool aggro) {
 		}
 	}
 
-	return children[favoredSon]->creator;
+	return _children[favoredSon]->_move;
 }
 
 MoveRecord AI::evaluateGame(Game& game) {
@@ -262,18 +255,18 @@ MoveRecord AI::evaluateGame(Game& game) {
 
 bool AI::canMultiJump(unsigned piece) {
 	bool retval = false;
-	scenario->setTurn(!scenario->getTurn());
-	Save savestate = scenario->getSave();
+	_game->setTurn(!_game->getTurn());
+	Save savestate = _game->getSave();
 	/* Test jumping */
 	for (unsigned prey = 1; prey <= 12; prey++) {
-		retval = scenario->jumpPiece(piece, prey);
+		retval = _game->jumpPiece(piece, prey);
 		if (retval) {
-			scenario->restoreToSave(savestate);
+			_game->restoreToSave(savestate);
 			return true;
 		}
 	}
 
-	scenario->restoreToSave(savestate);
+	_game->restoreToSave(savestate);
 	return retval;
 }
 
@@ -512,15 +505,17 @@ void playAIvsAI(Game *theGame, bool interact) {
 
 }
 
-void printMove (const MoveRecord& move) {
+void printMove(const MoveRecord& move) {
 	using std::cout;
 
 	if (move.jump) {
-		cout << "Piece No. (" << (int)move.piece << ") preying on Piece No. (" << (int)move.prey << ")" << std::endl;
+		cout << "Piece No. (" << (int) move.piece << ") preying on Piece No. ("
+				<< (int) move.prey << ")" << std::endl;
 		return;
 	}
 
-	cout << "Piece No. (" << (int)move.piece << ")" << " moving in direction: ";
+	cout << "Piece No. (" << (int) move.piece << ")"
+			<< " moving in direction: ";
 	switch (move.dir) {
 	case LEFT:
 		cout << "LEFT";

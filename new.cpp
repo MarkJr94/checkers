@@ -14,7 +14,7 @@ void testGame() {
 
 	Game g(true, true);
 	MoveRecord nextMove;
-	AI ai(1, g.getSave(), nextMove);
+	AI* ai = new AI (1, g.getSave(), nextMove);
 
 	bool success;
 	unsigned numErrors = 0;
@@ -22,7 +22,9 @@ void testGame() {
 	do {
 		g.print();
 //		ai.resetToSave(g.getSave());
-		nextMove = ai.evaluateGame(g);
+		ai = new AI (1, g.getSave(), nextMove);
+		nextMove = ai->evaluateGame(g);
+		std::cout << "Chosen Move: \n";
 		printMove(nextMove);
 		if (nextMove.jump) {
 			success = g.jumpPiece(nextMove.piece, nextMove.prey);
@@ -30,11 +32,16 @@ void testGame() {
 			success = g.movePiece(nextMove.piece, nextMove.dir);
 		}
 
+		delete ai;
+		ai = NULL;
+
 		if (!success) {
 			std::cerr << "AN ERROR OCCURED\n";
 			return;
 		}
 	} while (g.getP1score() * g.getP2score() > 0 && numErrors == 0);
+
+	delete ai;
 
 	std::cerr << "EXITING NORMALLY\n";
 }
