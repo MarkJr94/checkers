@@ -55,7 +55,7 @@ void GameWin::drawGame() {
 	using namespace std;
 	using namespace sf;
 
-	GameBoard& board = game->board;
+	GameBoard& board = game->_board;
 
 	GameBoard::const_reverse_iterator rit = board.rbegin();
 

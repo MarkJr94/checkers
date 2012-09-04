@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <utility>
 
 class AI;
 
@@ -29,12 +30,8 @@ public:
 	/* Print game */
 	void print();
 
-	/* Piece Movement */
-	bool movePiece(const unsigned piece, const  Direction d);
-	/* Jumping */
-	bool jumpPiece(const unsigned jumper, const unsigned prey);
-	/* Make a move from a MoveRecord */
-	bool makeMove(const MoveRecord&);
+//	/* Piece Movement */
+	MoveCode makeMove(const Move&);
 	/* restore game to save */
 	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
@@ -49,11 +46,11 @@ public:
 	}
 	/* Get p1 score */
 	unsigned getP1score() {
-		return _p1.size();
+		return _p1Score;
 	}
 	/* Get p2 score */
 	unsigned getP2score() {
-		return _p2.size();
+		return _p2Score;
 	}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
@@ -62,33 +59,41 @@ public:
 	bool getTurn() const {
 		return _turn;
 	}
-	std::vector<Piece>& operator[](unsigned row) {
-		return board[row];
+	Cell* operator[](unsigned row) {
+		return _board[row];
 	}
-	const std::vector<Piece>& operator[](unsigned row) const {
-		return board[row];
+	const Cell* operator[](unsigned row) const {
+		return _board[row];
 	}
 
 	Hash::Zkey getHash() const;
 
 
 protected:
-	std::vector<std::vector<Piece> > board;
+	Cell** _board;
+//	std::vector<std::vector<Piece> > board;
 
 private:
-	std::map <int,Piece *> _p1;
-	std::map <int,Piece *> _p2;
+//	std::map <int,Piece *> _p1;
+//	std::map <int,Piece *> _p2;
 	/* Tracks if it's P1's turn or not */
 	bool _turn;
 	bool _debug;
 	Save _save;
 	bool _interact;
-	unsigned _mustJump;
+	unsigned char _mustJump;
+	unsigned char _p1Score;
+	unsigned char _p2Score;
 
 	static Save templateSave;
 
 	/* Update save game */
 	void updateSave();
+
+	MoveCode moveBlack(const Move&);
+	MoveCode moveRed(const Move&);
+	MoveCode moveKBlack(const Move&);
+	MoveCode moveKRed(const Move&);
 };
 
 #endif /* GAME_HPP_ */

@@ -16,41 +16,39 @@
 #include <string>
 #include <vector>
 
-struct CellRecord {
-	bool alive;
-	Piece::Color color;
-	short id;
-	bool isKing;
-};
 
 class Save {
 
 public:
-public:
 	bool turn;
 	unsigned mustJump;
+	unsigned char p1Score;
+	unsigned char p2Score;
 
 	Save();
-	Save(bool);
+	Save(const Save&);
 	~Save();
+
+	Save& operator=(Save);
+	friend void swap(Save&,Save&);
 
 	/* Equality test */
 	bool operator==(const Save& other);
 
 	/* Subscript operator */
-	std::vector<CellRecord>& operator[](const int row) {
-		return data[row];
+	Cell* operator[](const int row) {
+		return _data[row];
 	}
 
-	const std::vector<CellRecord>& operator[](const int row) const {
-		return data[row];
+	const Cell* operator[](const int row) const {
+		return _data[row];
 	}
 
-	void write(std::string);
+	void write(std::string) const;
 	void read(std::string);
 
 private:
-	std::vector<std::vector<CellRecord>> data;
+	Cell** _data;
 };
 
 #endif /* SAVE_HPP_ */

@@ -6,20 +6,24 @@
  */
 
 #include "Save.hpp"
+#include <algorithm>
 
 Save::Save() :
-		turn(true), mustJump(0), data(8, std::vector<CellRecord>(8)) {
+		turn(true), mustJump(0), _data(new Cell*[BOARD_SIZE]) {
 	using namespace std;
+
+	for (int i = 0; i < BOARD_SIZE; i++)
+		_data[i] = new Cell[BOARD_SIZE];
 
 	unsigned i = 0, j = 0, count = 0;
 
 	for (char k = 1; k <= 12; k++) {
-		data[j][i] = {true, Piece::BLACK, k, false};
+		_data[j][i] = P_BLACK;
 		j += 2;
 		if (j == BOARD_SIZE)
-		j = 1;
+			j = 1;
 		if (j == BOARD_SIZE + 1)
-		j = 0;
+			j = 0;
 		if (++count == 4) {
 			++i;
 			count = 0;
@@ -30,12 +34,12 @@ Save::Save() :
 	i = 7, j = 1;
 
 	for (char k = 1; k <= 12; k++) {
-		data[j][i] = {true, Piece::RED, k, false};
+		_data[j][i] = P_RED;
 		j += 2;
 		if (j == BOARD_SIZE)
-		j = 1;
+			j = 1;
 		if (j == BOARD_SIZE + 1)
-		j = 0;
+			j = 0;
 		if (++count == 4) {
 			--i;
 			count = 0;
@@ -43,61 +47,67 @@ Save::Save() :
 	}
 }
 
-Save::Save(bool turn) :
-		turn(turn), mustJump(0), data(8, std::vector<CellRecord>(8)) {
+Save::Save(const Save& other) :
+		turn(other.turn), mustJump(other.mustJump), _data(
+				new Cell*[BOARD_SIZE]) {
+	for (unsigned i = 0; i < BOARD_SIZE; i++) {
+		_data[i] = new Cell[BOARD_SIZE];
+		for (unsigned j = 0; j < BOARD_SIZE; j++) {
+			_data[i][j] = other._data[i][j];
+		}
+	}
 }
 
-//Save& Save::operator=(const Save& other) {
-//	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-//		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-//			data[i][j] = other.data[i][j];
-//		}
-//	}
-//	this->turn = other.turn;
-//	this->mustJump = other.mustJump;
-//	return *this;
-//}
+void swap(Save& first, Save& second) {
+	using std::swap;
+
+	swap(first.turn, second.turn);
+	swap(first.mustJump, second.mustJump);
+	swap(first._data, second._data);
+}
+
+Save& Save::operator=(Save other) {
+
+	swap(*this, other);
+
+	return *this;
+}
 
 Save::~Save() {
-
+	for (int i = 0; i < BOARD_SIZE; i++)
+		delete []_data[i] ;
+	delete [] _data;
 }
 
-void Save::write(std::string fname) {
-	using namespace std;
+void Save::write(std::string fname) const {
+	using std::endl;
+	using std::ofstream;
 
-	fstream savefile;
-	savefile.open(fname.c_str(), fstream::trunc | fstream::out);
+	ofstream savefile(fname.c_str());
 
 	savefile << turn << " " << mustJump << endl;
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			savefile << data[i][j].id << " " << data[i][j].alive << " "
-					<< data[i][j].color << " " << data[i][j].isKing << " ";
+			savefile << _data[i][j] << " ";
 		}
 		savefile << endl;
 	}
-	savefile.close();
 }
+
 void Save::read(std::string fname) {
 	using namespace std;
 
-	fstream savefile;
-	savefile.open(fname.c_str(), fstream::in);
-	bool turn, alive, isKing;
-	unsigned col, mj;
-	short id;
+	fstream savefile(fname.c_str(), fstream::in);
+	unsigned t, mj;
+	int c;
 
-	savefile >> turn >> mj;
-	this->turn = turn;
-	this->mustJump = mj;
+	savefile >> t >> mj;
+	turn = t;
+	mustJump = mj;
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			savefile >> id >> alive >> col >> isKing;
-			data[i][j].color = (Piece::Color) col;
-			data[i][j].alive = alive;
-			data[i][j].id = id;
-			data[i][j].isKing = isKing;
+			savefile >> c;
+			_data[i][j] = (Cell)c;
 		}
 	}
-	savefile.close();
 }

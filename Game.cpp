@@ -8,69 +8,48 @@
 Save Game::templateSave;
 
 Game::Game(const bool debug, const bool interact) :
-		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE, Piece())), _turn(true), _debug(
-				debug), _save(true), _interact(interact), _mustJump(0) {
+		_board(new Cell*[BOARD_SIZE]), _turn(true), _debug(debug), _save(), _interact(
+				interact), _mustJump(0), _p1Score(12), _p2Score(12) {
 	using namespace std;
+
+	for (int i = 0; i < BOARD_SIZE; i++)
+		_board[i] = new Cell[BOARD_SIZE];
 
 	restoreToSave(templateSave);
 }
 
 Game::Game(const Save& save, const bool debug, const bool interact) :
-		board(BOARD_SIZE, std::vector<Piece>(BOARD_SIZE)), _debug(debug), _save(
-				save), _interact(interact) {
+		_board(new Cell*[BOARD_SIZE]), _debug(debug), _save(save), _interact(
+				interact) {
+	for (int i = 0; i < BOARD_SIZE; i++)
+		_board[i] = new Cell[10];
+
 	restoreToSave(save);
 }
 
 Game::~Game() {
-
+	for (int i = 0; i < BOARD_SIZE; i++)
+		delete[] _board[i];
+	delete[] _board;
 }
 
-void Game::restoreToSave(const Save& record) {
+void Game::restoreToSave(const Save& save) {
 	using namespace std;
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			board[i][j].x = i;
-			board[i][j].y = j;
-			board[i][j].inPlay = false;
-			board[i][j].isKing = false;
+			_board[i][j] = save[i][j];
 		}
 	}
 
-	_turn = record.turn;
-	_mustJump = record.mustJump;
-
-	_p1.clear();
-	_p2.clear();
-
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			unsigned index = record[i][j].id;
-			if (record[i][j].alive) {
-				board[i][j].inPlay = (true);
-				board[i][j].id = index;
-				if (record[i][j].isKing)
-					board[i][j].isKing = (true);
-				if (record[i][j].color == Piece::BLACK) {
-					board[i][j].col = (Piece::BLACK);
-					_p1[index] = &board[i][j];
-				} else {
-					board[i][j].col = (Piece::RED);
-					_p2[index] = &board[i][j];
-				}
-			}
-		}
-	}
+	_turn = save.turn;
+	_mustJump = save.mustJump;
 }
 
 inline void Game::updateSave() {
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			auto & alias = board[i][j];
-			_save[i][j].id = alias.id;
-			_save[i][j].color = alias.col;
-			_save[i][j].alive = alias.inPlay;
-			_save[i][j].isKing = alias.isKing;
+			_save[i][j] = _board[i][j];
 		}
 	}
 	_save.turn = _turn;
@@ -83,26 +62,17 @@ Save Game::getSave() {
 }
 
 void Game::print() {
-	using namespace std;
+	using std::cout;
+	using std::endl;
 
 	if (_turn)
 		cout << "Player 1's turn.\n";
 	else
 		cout << "Player 2's turn.\n";
-	cout << "P1: " << _p1.size() << "\tP2: " << _p2.size() << endl;
+	cout << "P1: " << (int)_p1Score << "\tP2: " << (int)_p2Score << endl;
 	for (int j = (int) (BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
-			if (board[i][j].inPlay) {
-				unsigned thisid = board[i][j].id;
-				cout << (thisid < 10 ? "0" : "") << thisid;
-				if (board[i][j].isKing) {
-					cout << (board[i][j].col == Piece::RED ? "R" : "B") << "K";
-				} else {
-					cout << (board[i][j].col == Piece::RED ? "RE" : "BL");
-				}
-			} else {
-				cout << "----";
-			}
+			cout << _pptable[_board[i][j]];
 		}
 		cout << "\n";
 	}
@@ -110,297 +80,247 @@ void Game::print() {
 }
 
 /* Piece movement */
-bool Game::movePiece(unsigned piece, Direction d) {
-	using namespace std;
 
-	Piece * alias;
+MoveCode Game::makeMove(const Move& move) {
+	Coord src = move.src;
+	Coord dst = move.dst;
 
-	if (_mustJump) {
-		if (_interact)
-			cerr << "movePiece: You must jump" << endl;
-		return false;
+	if (src.x > 7 || src.y > 7)
+		return ILLEGAL;
+
+	if (_board[src.x][src.y] == EMPTY)
+		return WRONG_PIECE;
+
+	if (dst.x > 7 || dst.y > 7 || _board[dst.x][dst.y] != EMPTY)
+		return OBSTRUCTED;
+
+	switch (_board[src.x][src.y]) {
+	case P_BLACK:
+		return moveBlack(move);
+	case P_RED:
+		return moveRed(move);
+	case K_BLACK:
+		return moveKBlack(move);
+	case K_RED:
+		return moveKRed(move);
+	default:
+		return ILLEGAL;
 	}
+}
 
-	/* Testing if piece selection is valid */
-	if (piece > 12 || piece < 1) {
-		if (_interact)
-			cerr << "movePiece: Invalid piece number input" << endl;
-		return false;
-	}
+MoveCode Game::moveBlack(const Move& move) {
+	if (!_turn) return WRONG_PIECE;
 
-	/* Jumping */
-	map<int, Piece *>& pieces = (_turn ? _p1 : _p2);
+	Coord dst = move.dst;
+	Coord src = move.src;
 
-	if (pieces.find(piece) == pieces.end()) {
-		if (_interact)
-			cerr << "movePiece: Selected piece " << piece << " not in play\n";
-		return false;
-	}
+	int xdiff = dst.x - src.x;
+	if (xdiff == 1 || xdiff == -1) {
 
-	alias = pieces[piece];
+		int ydiff = dst.y - src.y;
+		if (ydiff != 1)
+			return ILLEGAL;
 
-	/* Directions BKLEFT and BKRIGHT are only valid for kings */
-	bool wasKing = alias->isKing;
-	if (!wasKing) {
-		if (d == BKLEFT || d == BKRIGHT) {
-			if (_interact)
-				cerr << "movePiece: Invalid direction for non-King piece.\n";
-			return false;
-		}
-	}
+		_board[dst.x][dst.y] = P_BLACK;
+		_board[src.x][src.y] = EMPTY;
 
-	if (_debug)
-		alias->print(cout);
+		_turn = !_turn;
+		return SUCCESS;
+	} else  if (xdiff == 2 || xdiff == -2) {
+		int ydiff = dst.y - src.y;
+		if (ydiff != 2)
+			return ILLEGAL;
 
-	/* Determine next coordinates for jump */
-	unsigned newx, newy;
+		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
 
-	if (_turn) {
-		if (d == BKLEFT || d == BKRIGHT)
-			newy = alias->y - 1;
-		else
-			newy = alias->y + 1;
+		if (_board[victim.x][victim.y] != P_RED && _board[victim.x][victim.y] != K_RED) return ILLEGAL;
+
+		_board[dst.x][dst.y] = P_BLACK;
+		_board[victim.x][victim.y] = EMPTY;
+		_board[src.x][src.y] = EMPTY;
+
+		--_p2Score;
+		_turn = !_turn;
+		return SUCCESS;
+
 	} else {
-		if (d == BKLEFT || d == BKRIGHT)
-			newy = alias->y + 1;
-		else
-			newy = alias->y - 1;
+		return ILLEGAL;
 	}
-
-	if (d == LEFT || d == BKLEFT)
-		newx = alias->x - 1;
-	else
-		newx = alias->x + 1;
-
-	/* Testing move validity */
-	if (newy > 7 || newx > 7) {
-		if (_interact)
-			cerr << "movePiece: Piece obstructed at border.\n";
-		return false;
-	}
-
-	if (board[newx][newy].inPlay) {
-		if (_interact)
-			cerr << "movePiece: Piece obstructed by piece\n";
-		return false;
-	}
-
-	/* Complete the move */
-	alias->inPlay = false;
-	pieces[piece] = alias = &board[newx][newy];
-
-	alias->inPlay = true;
-	if (_turn)
-		alias->col = Piece::BLACK;
-	else
-		alias->col = Piece::RED;
-	alias->id = piece;
-	if (wasKing || newy == 7 || newy == 0)
-		alias->isKing = true;
-
-	_turn = !_turn;
-	return true;
 }
 
-/* Jumping */
-bool Game::jumpPiece(unsigned jumper, unsigned prey) {
-	using namespace std;
+MoveCode Game::moveRed(const Move& move) {
+	if (_turn) return WRONG_PIECE;
 
-	Piece *j, *p;
-	if (_mustJump) {
-		if (jumper != _mustJump) {
-			if (_interact)
-				cerr << "movePiece: You must continue your jump"
-						<< " with the same piece." << endl;
-			return false;
-		}
-	}
+	Coord dst = move.dst;
+	Coord src = move.src;
 
-	map<int, Piece *>& pieces = (_turn ? _p1 : _p2);
-	map<int, Piece *>& other = (_turn ? _p2 : _p1);
+	int xdiff = dst.x - src.x;
+	if (xdiff == 1 || xdiff == -1) {
 
-	/* Testing if piece selection is valid */
-	if (jumper > 12 || prey > 12) {
-		if (_interact)
-			cerr << "pieceJump: Invalid piece number input" << endl;
-		return false;
-	}
-	if (jumper < 1 || prey < 1) {
-		if (_interact)
-			cerr << "pieceJump: Invalid piece number input" << endl;
-		return false;
-	}
+		int ydiff = dst.y - src.y;
+		if (ydiff != -1)
+			return ILLEGAL;
 
-	if (pieces.find(jumper) == pieces.end()
-			|| other.find(prey) == other.end()) {
-		if (_interact)
-			cerr << "pieceJump: Selected piece not on board\n";
-		return false;
-	}
+		_board[dst.x][dst.y] = P_RED;
+		_board[src.x][src.y] = EMPTY;
 
-	j = pieces[jumper];
-	p = other[prey];
+		_turn = !_turn;
+		return SUCCESS;
+	} else  if (xdiff == 2 || xdiff == -2) {
+		int ydiff = dst.y - src.y;
+		if (ydiff != -2)
+			return ILLEGAL;
 
-	if (!j->inPlay || !p->inPlay) {
-		if (_interact)
-			cerr << "pieceJump: Selected piece not in play\n";
-		return false;
-	}
-	if (_debug) {
-		j->print(cout);
-		cout << "Preying on: ";
-		p->print(cout);
-	}
+		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
 
-	/* Testing if valid targets */
-	bool wasKing = j->isKing;
-	if (!wasKing) {
-		if (!_turn) {
-			if (p->y > j->y) {
-				if (_interact)
-					cerr << "pieceJump: Invalid target in Y direction\n";
-				return false;
-			}
-		} else {
-			if (p->y < j->y) {
-				if (_interact)
-					cerr << "pieceJump: Invalid target in Y direction\n";
-				return false;
-			}
-		}
-	}
+		if (_board[victim.x][victim.y] != P_BLACK && _board[victim.x][victim.y] != K_BLACK) return ILLEGAL;
 
-	int ydiff = (int) p->y - (int) j->y;
-	if (ydiff != 1 && ydiff != -1) {
-		if (_interact)
-			cerr << "pieceJump: Target too far in Y direction\n";
-		return false;
-	}
-	int xdiff = (int) p->x - (int) j->x;
-	if (xdiff != 1 && xdiff != -1) {
-		if (_interact)
-			cerr << "pieceJump: Target too far in X direction\n";
-		return false;
-	}
+		_board[dst.x][dst.y] = P_RED;
+		_board[victim.x][victim.y] = EMPTY;
+		_board[src.x][src.y] = EMPTY;
 
-	/* Testing the validity of the jump */
-	unsigned newx = j->x + xdiff * 2;
-	unsigned newy = j->y + ydiff * 2;
+		--_p1Score;
+		_turn = !_turn;
+		return SUCCESS;
 
-	if (newx > 7 || newy > 7) {
-		if (_interact)
-			cerr << "pieceJump: Jump obstructed at border\n";
-		return false;
-	}
-	if (board[newx][newy].inPlay) {
-		if (_interact)
-			cerr << "pieceJump: Jump obstructed by piece\n";
-		return false;
-	}
-
-	/* Move the piece */
-
-	j->inPlay = false;
-	Piece::Color oldCol = j->col;
-
-	pieces[jumper] = j = &board[newx][newy];
-	j->inPlay = true;
-	j->col = oldCol;
-	j->id = jumper;
-	if (wasKing || newy == 7 || newy == 0)
-		j->isKing = true;
-
-	p->inPlay = false;
-	other.erase(prey);
-
-	_turn = !_turn;
-	_mustJump = jumper;
-	return true;
-}
-
-bool Game::makeMove(const MoveRecord& move) {
-	if (move.jump) {
-		return jumpPiece(move.piece, move.prey);
 	} else {
-		return movePiece(move.piece, move.dir);
+		return ILLEGAL;
 	}
 }
 
-Hash::Zkey Game::getHash() const {
-	using Hash::ZobristTable;
-	using Hash::Zkey;
+MoveCode Game::moveKBlack(const Move& move) {
+	if (!_turn) return WRONG_PIECE;
 
-	Zkey hash = 0;
-	const ZobristTable& zt = ZobristTable::instance();
+	Coord dst = move.dst;
+	Coord src = move.src;
 
-	for (auto& pair : _p1) {
-		const Piece* p = pair.second;
-		hash ^= zt[p->isKing][Piece::BLACK][p->x + 8 * p->y];
+	int xdiff = dst.x - src.x;
+	if (xdiff == 1 || xdiff == -1) {
+
+		int ydiff = dst.y - src.y;
+		if (ydiff != 1 && ydiff != -1)
+			return ILLEGAL;
+
+		_board[dst.x][dst.y] = K_BLACK;
+		_board[src.x][src.y] = EMPTY;
+
+		_turn = !_turn;
+		return SUCCESS;
+	} else  if (xdiff == 2 || xdiff == -2) {
+		int ydiff = dst.y - src.y;
+		if (ydiff != 2 && ydiff != -2)
+			return ILLEGAL;
+
+		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
+
+		if (_board[victim.x][victim.y] != P_RED && _board[victim.x][victim.y] != K_RED) return ILLEGAL;
+
+		_board[dst.x][dst.y] = K_BLACK;
+		_board[victim.x][victim.y] = EMPTY;
+		_board[src.x][src.y] = EMPTY;
+
+		--_p2Score;
+		_turn = !_turn;
+		return SUCCESS;
+
+	} else {
+		return ILLEGAL;
 	}
-	for (auto& pair : _p2) {
-		const Piece* p = pair.second;
-		hash ^= zt[p->isKing][Piece::RED][p->x + 8 * p->y];
-	}
-
-	return hash;
 }
 
+MoveCode Game::moveKRed(const Move& move) {
+	if (_turn) return WRONG_PIECE;
+
+	Coord dst = move.dst;
+	Coord src = move.src;
+
+	int xdiff = dst.x - src.x;
+	if (xdiff == 1 || xdiff == -1) {
+
+		int ydiff = dst.y - src.y;
+		if (ydiff != 1 && ydiff != -1)
+			return ILLEGAL;
+
+		_board[dst.x][dst.y] = K_RED;
+		_board[src.x][src.y] = EMPTY;
+
+		_turn = !_turn;
+		return SUCCESS;
+	} else  if (xdiff == 2 || xdiff == -2) {
+		int ydiff = dst.y - src.y;
+		if (ydiff != 2 && ydiff != -2)
+			return ILLEGAL;
+
+		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
+
+		if (_board[victim.x][victim.y] != P_BLACK && _board[victim.x][victim.y] != K_BLACK) return ILLEGAL;
+
+		_board[dst.x][dst.y] = K_RED;
+		_board[victim.x][victim.y] = EMPTY;
+		_board[src.x][src.y] = EMPTY;
+
+		--_p1Score;
+		_turn = !_turn;
+		return SUCCESS;
+
+	} else {
+		return ILLEGAL;
+	}
+}
+
+
+//Hash::Zkey Game::getHash() const {
+//	using Hash::ZobristTable;
+//	using Hash::Zkey;
+//
+//	Zkey hash = 0;
+//	const ZobristTable& zt = ZobristTable::instance();
+//
+//	for (auto& pair : _p1) {
+//		const Piece* p = pair.second;
+//		hash ^= zt[p->isKing][Piece::BLACK][p->x + 8 * p->y];
+//	}
+//	for (auto& pair : _p2) {
+//		const Piece* p = pair.second;
+//		hash ^= zt[p->isKing][Piece::RED][p->x + 8 * p->y];
+//	}
+//
+//	return hash;
+//}
+//
 int Game::receiveInput() {
 	using namespace std;
 
-	unsigned piece, prey;
-	Direction d;
+	Coord src;
 	string instring;
 
-	cout << "Enter piece id: ";
+	cout << "Enter 'q' at any time to quit\n";
+	cout << "Enter Starting Coordinates: ";
 	getline(cin, instring);
 	if (instring == "q")
 		return -1;
-	if (!(stringstream(instring) >> piece)) {
-		cerr << endl << piece << endl;
+	if (!(stringstream(instring) >> src.x >> src.y)) {
+		cerr << endl << src.x << src.y;
 		cerr << "Input Error; try again\n";
 		return 0;
 	}
-	cout << "('q' = quit)\tEnter Direction 'l' = left or 'r' = right or "
-			<< "'bl' = back left or 'br' = back right or 'j' = jump: ";
+
+	Coord dst;
+	cout << "Enter Ending Coordinates: ";
 	getline(cin, instring);
 	if (instring == "q")
 		return -1;
-	/* Jumping */
-	if (instring == "j") {
-		if (_debug)
-			cout << "Enter prey ID: ";
-		getline(cin, instring);
-		if (instring == "q")
-			return -1;
-		if (!(stringstream(instring) >> prey)) {
-			cerr << "Input Error; try again\n";
-			return 0;
-		}
-		if (!jumpPiece(piece, prey)) {
-			cerr << "Jumping error; try again\n";
-			return 0;
-		}
-		return 2;
-	}
-
-	/* Regular Movement */
-	if (instring == "l")
-		d = LEFT;
-	else if (instring == "r")
-		d = RIGHT;
-	else if (instring == "bl")
-		d = BKLEFT;
-	else if (instring == "br")
-		d = BKRIGHT;
-	else {
-		cout << "Input Error; try again\n";
+	if (!(stringstream(instring) >> dst.x >> dst.y)) {
+		cerr << endl << dst.x << dst.y;
+		cerr << "Input Error; try again\n";
 		return 0;
 	}
 
-	if (!movePiece(piece, d)) {
-		cerr << "Movement error; try again\n";
-		return 0;
+
+	MoveCode retval;
+	if ((retval = makeMove({src,dst})) != SUCCESS) {
+		cerr << "Movement Error:\n";
+		cerr << _errtable[retval];
 	}
 	return 1;
 }

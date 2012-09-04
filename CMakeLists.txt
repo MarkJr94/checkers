@@ -12,12 +12,15 @@ set(CORELIBS liboptparser.so)
 set(SFML_LIBS sfml-graphics sfml-window sfml-system)
 include_directories( ${GTKMM_INCLUDE_DIRS} ${GLIBMM_INCLUDE_DIRS} )
 
-add_executable(draughts Piece.cpp Save.cpp Game.cpp AI.cpp main.cpp)
-target_link_libraries(draughts ${CORELIBS})
+add_executable(game_test Game.cpp Game_test.cpp Save.cpp Hash.cpp TranspositionTable.cpp Piece.cpp)
+target_link_libraries(game_test ${CORELIBS})
+
+#add_executable(draughts Piece.cpp Save.cpp Game.cpp AI.cpp main.cpp)
+#target_link_libraries(draughts ${CORELIBS})
 
 #add_executable(visual Piece.cpp Game.cpp bst.cpp DrawGame.cpp GameWindow.cpp)
 #target_link_libraries(visual ${CORELIBS} ${GLIBMM_LIBRARIES} ${GTKMM_LIBRARIES} ${SFML_LIBS} )
 
-add_executable(gm_test Piece.cpp Save.cpp  Game.cpp AI.cpp 
-	Hash.cpp TranspositionTable.cpp GameMaster.cpp GameMaster_test.cpp)
-target_link_libraries(gm_test ${CORELIBS}  )
+#add_executable(gm_test Piece.cpp Save.cpp  Game.cpp AI.cpp 
+#	Hash.cpp TranspositionTable.cpp GameMaster.cpp GameMaster_test.cpp)
+#target_link_libraries(gm_test ${CORELIBS}  )
