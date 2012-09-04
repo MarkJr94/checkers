@@ -4,6 +4,7 @@
 
 #include "Piece.hpp"
 #include "Save.hpp"
+#include "Hash.hpp"
 
 #include <map>
 #include <string>
@@ -14,6 +15,7 @@ class AI;
 class Game {
 public:
 	friend class AI;
+	friend class GameMaster;
 
 	/* Constructor */
 	Game(const bool db, const bool interact);
@@ -31,6 +33,8 @@ public:
 	bool movePiece(const unsigned piece, const  Direction d);
 	/* Jumping */
 	bool jumpPiece(const unsigned jumper, const unsigned prey);
+	/* Make a move from a MoveRecord */
+	bool makeMove(const MoveRecord&);
 	/* restore game to save */
 	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
@@ -45,11 +49,11 @@ public:
 	}
 	/* Get p1 score */
 	unsigned getP1score() {
-		return p1.size();
+		return _p1.size();
 	}
 	/* Get p2 score */
 	unsigned getP2score() {
-		return p2.size();
+		return _p2.size();
 	}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
@@ -65,13 +69,15 @@ public:
 		return board[row];
 	}
 
+	Hash::Zkey getHash() const;
+
 
 protected:
 	std::vector<std::vector<Piece> > board;
 
 private:
-	std::map <int,Piece *> p1;
-	std::map <int,Piece *> p2;
+	std::map <int,Piece *> _p1;
+	std::map <int,Piece *> _p2;
 	/* Tracks if it's P1's turn or not */
 	bool _turn;
 	bool _debug;

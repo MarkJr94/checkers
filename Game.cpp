@@ -33,14 +33,15 @@ void Game::restoreToSave(const Save& record) {
 			board[i][j].x = i;
 			board[i][j].y = j;
 			board[i][j].inPlay = false;
+			board[i][j].isKing = false;
 		}
 	}
 
 	_turn = record.turn;
 	_mustJump = record.mustJump;
 
-//	unsigned p2numPieces = 0;
-//	unsigned p1numPieces = 0;
+	_p1.clear();
+	_p2.clear();
 
 	for (unsigned i = 0; i < BOARD_SIZE; i++) {
 		for (unsigned j = 0; j < BOARD_SIZE; j++) {
@@ -51,13 +52,11 @@ void Game::restoreToSave(const Save& record) {
 				if (record[i][j].isKing)
 					board[i][j].isKing = (true);
 				if (record[i][j].color == Piece::BLACK) {
-//					p1numPieces++;
 					board[i][j].col = (Piece::BLACK);
-					p1[index] = &board[i][j];
+					_p1[index] = &board[i][j];
 				} else {
-//					p2numPieces++;
 					board[i][j].col = (Piece::RED);
-					p2[index] = &board[i][j];
+					_p2[index] = &board[i][j];
 				}
 			}
 		}
@@ -90,7 +89,7 @@ void Game::print() {
 		cout << "Player 1's turn.\n";
 	else
 		cout << "Player 2's turn.\n";
-	cout << "P1: " << p1.size() << "\tP2: " << p2.size() << endl;
+	cout << "P1: " << _p1.size() << "\tP2: " << _p2.size() << endl;
 	for (int j = (int) (BOARD_SIZE - 1); j >= 0; j--) {
 		for (unsigned i = 0; i < BOARD_SIZE; i++) {
 			if (board[i][j].inPlay) {
@@ -116,11 +115,11 @@ bool Game::movePiece(unsigned piece, Direction d) {
 
 	Piece * alias;
 
-//	if (mustJump) {
-//		if (interact)
-//			cerr << "movePiece: You must jump" << endl;
-//		return false;
-//	}
+	if (_mustJump) {
+		if (_interact)
+			cerr << "movePiece: You must jump" << endl;
+		return false;
+	}
 
 	/* Testing if piece selection is valid */
 	if (piece > 12 || piece < 1) {
@@ -130,7 +129,7 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	}
 
 	/* Jumping */
-	map<int, Piece *>& pieces = (_turn ? p1 : p2);
+	map<int, Piece *>& pieces = (_turn ? _p1 : _p2);
 
 	if (pieces.find(piece) == pieces.end()) {
 		if (_interact)
@@ -154,33 +153,33 @@ bool Game::movePiece(unsigned piece, Direction d) {
 		alias->print(cout);
 
 	/* Determine next coordinates for jump */
-	unsigned nextx, nexty;
+	unsigned newx, newy;
 
 	if (_turn) {
 		if (d == BKLEFT || d == BKRIGHT)
-			nexty = alias->y - 1;
+			newy = alias->y - 1;
 		else
-			nexty = alias->y + 1;
+			newy = alias->y + 1;
 	} else {
 		if (d == BKLEFT || d == BKRIGHT)
-			nexty = alias->y + 1;
+			newy = alias->y + 1;
 		else
-			nexty = alias->y - 1;
+			newy = alias->y - 1;
 	}
 
 	if (d == LEFT || d == BKLEFT)
-		nextx = alias->x - 1;
+		newx = alias->x - 1;
 	else
-		nextx = alias->x + 1;
+		newx = alias->x + 1;
 
 	/* Testing move validity */
-	if (nexty > 7 || nextx > 7) {
+	if (newy > 7 || newx > 7) {
 		if (_interact)
 			cerr << "movePiece: Piece obstructed at border.\n";
 		return false;
 	}
 
-	if (board[nextx][nexty].inPlay) {
+	if (board[newx][newy].inPlay) {
 		if (_interact)
 			cerr << "movePiece: Piece obstructed by piece\n";
 		return false;
@@ -188,7 +187,7 @@ bool Game::movePiece(unsigned piece, Direction d) {
 
 	/* Complete the move */
 	alias->inPlay = false;
-	pieces[piece] = alias = &board[nextx][nexty];
+	pieces[piece] = alias = &board[newx][newy];
 
 	alias->inPlay = true;
 	if (_turn)
@@ -196,7 +195,7 @@ bool Game::movePiece(unsigned piece, Direction d) {
 	else
 		alias->col = Piece::RED;
 	alias->id = piece;
-	if (wasKing || nexty == 7 || nexty == 0)
+	if (wasKing || newy == 7 || newy == 0)
 		alias->isKing = true;
 
 	_turn = !_turn;
@@ -208,17 +207,17 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	using namespace std;
 
 	Piece *j, *p;
-//	if (mustJump) {
-//		if (jumper != mustJump) {
-//			if (interact)
-//				cerr << "movePiece: You must continue your jump"
-//						<< " with the same piece." << endl;
-//			return false;
-//		}
-//	}
+	if (_mustJump) {
+		if (jumper != _mustJump) {
+			if (_interact)
+				cerr << "movePiece: You must continue your jump"
+						<< " with the same piece." << endl;
+			return false;
+		}
+	}
 
-	map<int, Piece *>& pieces = (_turn ? p1 : p2);
-	map<int, Piece *>& other = (_turn ? p2 : p1);
+	map<int, Piece *>& pieces = (_turn ? _p1 : _p2);
+	map<int, Piece *>& other = (_turn ? _p2 : _p1);
 
 	/* Testing if piece selection is valid */
 	if (jumper > 12 || prey > 12) {
@@ -308,8 +307,8 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	j->inPlay = true;
 	j->col = oldCol;
 	j->id = jumper;
-	if (wasKing)
-		pieces[jumper]->isKing = true;
+	if (wasKing || newy == 7 || newy == 0)
+		j->isKing = true;
 
 	p->inPlay = false;
 	other.erase(prey);
@@ -317,6 +316,33 @@ bool Game::jumpPiece(unsigned jumper, unsigned prey) {
 	_turn = !_turn;
 	_mustJump = jumper;
 	return true;
+}
+
+bool Game::makeMove(const MoveRecord& move) {
+	if (move.jump) {
+		return jumpPiece(move.piece, move.prey);
+	} else {
+		return movePiece(move.piece, move.dir);
+	}
+}
+
+Hash::Zkey Game::getHash() const {
+	using Hash::ZobristTable;
+	using Hash::Zkey;
+
+	Zkey hash = 0;
+	const ZobristTable& zt = ZobristTable::instance();
+
+	for (auto& pair : _p1) {
+		const Piece* p = pair.second;
+		hash ^= zt[p->isKing][Piece::BLACK][p->x + 8 * p->y];
+	}
+	for (auto& pair : _p2) {
+		const Piece* p = pair.second;
+		hash ^= zt[p->isKing][Piece::RED][p->x + 8 * p->y];
+	}
+
+	return hash;
 }
 
 int Game::receiveInput() {

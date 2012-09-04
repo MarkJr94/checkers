@@ -17,16 +17,16 @@
 
 class AI {
 public:
-	AI(unsigned, const Save&, const MoveRecord& creator = MoveRecord(), const unsigned difficulty = 5);
-	~AI();
+	friend class GameMaster;
 
-//	void resetToSave(const Save&);
+	AI(const unsigned, const Save&, const MoveRecord& creator = MoveRecord(), const unsigned difficulty = 5);
+	~AI();
 
 	void printScene();
 
-//	void recursivePrint();
+	MoveRecord getRandomMove() const;
 
-	bool canMultiJump(unsigned piece);
+	bool canMultiJump(const Game&);
 
 	MoveRecord evaluateGame(Game&);
 
@@ -37,10 +37,10 @@ private:
 	unsigned _level;
 	unsigned _difficulty;
 	std::vector<AI *> _children;
-	float _p1Avg;
-	float _p2Avg;
 	MoveRecord _move;
 	Save _save;
+	float _p1Avg;
+	float _p2Avg;
 
 	static Game* _game;
 
