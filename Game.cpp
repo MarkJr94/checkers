@@ -61,7 +61,7 @@ Save Game::getSave() {
 	return _save;
 }
 
-void Game::print() {
+void Game::print() const {
 	using std::cout;
 	using std::endl;
 
@@ -268,6 +268,29 @@ MoveCode Game::moveKRed(const Move& move) {
 	}
 }
 
+inline bool onBoard(const Coord& co) {
+	if (co.x > 7 || co.x > 7) return false;
+	return true;
+}
+
+inline bool Game::canMove(const Coord& co) const {
+	Coord d1, d2;
+
+	if (!onBoard(co))
+		return false;
+
+	switch (_board[co.x][co.y]) {
+	case P_BLACK:
+		if (co.y == 7)
+			return false;
+		d1.y = d2.y = co.y + 1;
+		d1.x = co.x + 1;
+		d2.x = co.x - 1;
+		if (!onBoard(d1) || !onBoard(d2)) return false;
+		if (_board[d1.x][d1.y] == EMPTY && _board[d2.x][d2.y] == EMPTY) return true;
+
+	}
+}
 
 //Hash::Zkey Game::getHash() const {
 //	using Hash::ZobristTable;

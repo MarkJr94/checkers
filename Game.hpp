@@ -28,9 +28,9 @@ public:
 	/* return save game */
 	Save getSave();
 	/* Print game */
-	void print();
+	void print() const;
 
-//	/* Piece Movement */
+	/* Piece Movement */
 	MoveCode makeMove(const Move&);
 	/* restore game to save */
 	void restoreToSave(const Save& record);
@@ -45,11 +45,11 @@ public:
 		this->_mustJump = mustJump;
 	}
 	/* Get p1 score */
-	unsigned getP1score() {
+	unsigned getP1score() const {
 		return _p1Score;
 	}
 	/* Get p2 score */
-	unsigned getP2score() {
+	unsigned getP2score() const {
 		return _p2Score;
 	}
 	/* Setter and getter for turn */
@@ -59,19 +59,18 @@ public:
 	bool getTurn() const {
 		return _turn;
 	}
-	Cell* operator[](unsigned row) {
-		return _board[row];
-	}
-	const Cell* operator[](unsigned row) const {
-		return _board[row];
-	}
 
-	Hash::Zkey getHash() const;
+	inline bool canMove(const Coord&) const;
+
+//	Hash::Zkey getHash() const;
 
 
 protected:
-	Cell** _board;
+//	Cell** _board;
 //	std::vector<std::vector<Piece> > board;
+	BitBoard _wP;
+	BitBoard _bP;
+	BitBoard _K;
 
 private:
 //	std::map <int,Piece *> _p1;
