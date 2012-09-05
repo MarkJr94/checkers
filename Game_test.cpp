@@ -18,20 +18,10 @@ void tester1() {
 	swap(s, q);
 
 	g.print();
-
-	g.makeMove( { { 2, 2 }, { 3, 3 } });
-	g.print();
-
-	g.makeMove( { { 1, 5 }, { 2, 4 } });
-	g.print();
-
-	Game g2(g.getSave(), true, true);
-
-	g2.makeMove( { { 3, 3 }, { 1, 5 } });
-	g2.print();
 }
 
 void tester2() {
+	using std::cerr;
 	Game g(false, false);
 
 	Save s = g.getSave();
@@ -42,36 +32,20 @@ void tester2() {
 
 	g.print();
 
-	g.makeMove( { { 2, 2 }, { 3, 3 } });
+	cerr << _errtable[g.makeMove( { 9, 12 })] << std::endl;
+
 	g.print();
 
-	g.makeMove( { { 1, 5 }, { 2, 4 } });
+	cerr << _errtable[g.makeMove( { 21, 17 })] << std::endl;
+
 	g.print();
-	g.getSave().write("lol.cks");
 
-	q.read("lol.cks");
+	cerr << _errtable[g.makeMove( { 12, 17 })] << std::endl;
 
-	Game g2(q, true, true);
-
-	g2.makeMove( { { 3, 3 }, { 1, 5 } });
-	g2.print();
-
-	g2.makeMove( { { 0, 6 }, { 2, 4 } });
-	g2.print();
-
-	g2.receiveInput();
-	g2.print();
-
-	g2.receiveInput();
-	g2.print();
+	g.print();
 }
 
 int main() {
-	Coord co { 4, 5 };
-	Move m { co, co };
-
-	std::cout << (int) m.src.x << "," << (int) m.src.y << " =>" << (int) m.dst.x
-			<< "," << (int) m.dst.y << std::endl;
 
 //	tester1();
 

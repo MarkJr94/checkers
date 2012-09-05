@@ -2,56 +2,45 @@
 #include <vector>
 #include <sstream>
 
-#include "Piece.hpp"
 #include "Game.hpp"
 
-Save Game::templateSave;
+Save Game::_templateSave;
+
+const Masks& Game::_masks = Masks::inst();
 
 Game::Game(const bool debug, const bool interact) :
-		_board(new Cell*[BOARD_SIZE]), _turn(true), _debug(debug), _save(), _interact(
-				interact), _mustJump(0), _p1Score(12), _p2Score(12) {
+		_turn(true), _debug(debug), _save(), _interact(interact), _mustJump(0) {
 	using namespace std;
 
-	for (int i = 0; i < BOARD_SIZE; i++)
-		_board[i] = new Cell[BOARD_SIZE];
+	_WP = _masks.WP_INIT;
+	_BP = _masks.BP_INIT;
+	_K = 0;
 
-	restoreToSave(templateSave);
+	restoreToSave(_templateSave);
 }
 
 Game::Game(const Save& save, const bool debug, const bool interact) :
-		_board(new Cell*[BOARD_SIZE]), _debug(debug), _save(save), _interact(
-				interact) {
-	for (int i = 0; i < BOARD_SIZE; i++)
-		_board[i] = new Cell[10];
-
+		_debug(debug), _save(save), _interact(interact) {
 	restoreToSave(save);
 }
 
 Game::~Game() {
-	for (int i = 0; i < BOARD_SIZE; i++)
-		delete[] _board[i];
-	delete[] _board;
 }
 
 void Game::restoreToSave(const Save& save) {
 	using namespace std;
 
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			_board[i][j] = save[i][j];
-		}
-	}
-
+	_WP = save.WP;
+	_BP = save.BP;
+	_K = save.K;
 	_turn = save.turn;
 	_mustJump = save.mustJump;
 }
 
 inline void Game::updateSave() {
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			_save[i][j] = _board[i][j];
-		}
-	}
+	_save.WP = _WP;
+	_save.BP = _BP;
+	_save.K = _K;
 	_save.turn = _turn;
 	_save.mustJump = _mustJump;
 }
@@ -59,6 +48,44 @@ inline void Game::updateSave() {
 Save Game::getSave() {
 	updateSave();
 	return _save;
+}
+
+Cell* Game::toArr() const {
+	const BitBoard* s = _masks.S;
+
+	Cell* b = new Cell[64]();
+
+	for (unsigned i = 0; i < 32; i++) {
+		unsigned odd = (i / 4) & 1;
+		if (_WP & s[i])
+			b[i * 2 + odd] = P_W;
+	}
+
+	for (unsigned i = 0; i < 32; i++) {
+		unsigned odd = (i / 4) & 1;
+		if (_BP & s[i])
+			b[i * 2 + odd] = P_B;
+	}
+
+	BitBoard WK = _WP & _K;
+	if (WK) {
+		for (unsigned i = 0; i < 32; i++) {
+			unsigned odd = (i / 4) & 1;
+			if (WK & s[i])
+				b[i * 2 + odd] = K_W;
+		}
+	}
+
+	BitBoard BK = _BP & _K;
+	if (BK) {
+		for (unsigned i = 0; i < 32; i++) {
+			unsigned odd = (i / 4) & 1;
+			if (WK & s[i])
+				b[i * 2 + odd] = K_B;
+		}
+	}
+
+	return b;
 }
 
 void Game::print() const {
@@ -69,228 +96,250 @@ void Game::print() const {
 		cout << "Player 1's turn.\n";
 	else
 		cout << "Player 2's turn.\n";
-	cout << "P1: " << (int)_p1Score << "\tP2: " << (int)_p2Score << endl;
-	for (int j = (int) (BOARD_SIZE - 1); j >= 0; j--) {
-		for (unsigned i = 0; i < BOARD_SIZE; i++) {
-			cout << _pptable[_board[i][j]];
-		}
-		cout << "\n";
+	cout << "P1: " << getP1score() << "\tP2: " << getP2score() << endl;
+
+	Cell* b = toArr();
+
+	for (int j = 7; j >= 0; j--) {
+		for (int i = 0; i < 8; i++)
+			cout << _ctable[b[i + 8 * j]];
+		cout << endl;
 	}
-	cout << endl;
+
+	delete[] b;
 }
 
 /* Piece movement */
 
 MoveCode Game::makeMove(const Move& move) {
-	Coord src = move.src;
-	Coord dst = move.dst;
-
-	if (src.x > 7 || src.y > 7)
+	if (move.src > 32 || move.dst > 32)
 		return ILLEGAL;
 
-	if (_board[src.x][src.y] == EMPTY)
-		return WRONG_PIECE;
+	BitBoard src;
+	if (_turn)
+		src = _BP & _masks.S[move.src];
+	else
+		src = _WP & _masks.S[move.src];
 
-	if (dst.x > 7 || dst.y > 7 || _board[dst.x][dst.y] != EMPTY)
-		return OBSTRUCTED;
-
-	switch (_board[src.x][src.y]) {
-	case P_BLACK:
-		return moveBlack(move);
-	case P_RED:
-		return moveRed(move);
-	case K_BLACK:
-		return moveKBlack(move);
-	case K_RED:
-		return moveKRed(move);
-	default:
+	if (!src)
 		return ILLEGAL;
-	}
-}
 
-MoveCode Game::moveBlack(const Move& move) {
-	if (!_turn) return WRONG_PIECE;
+	BitBoard valMoves = 0;
+	BitBoard dst = _masks.S[move.dst];
 
-	Coord dst = move.dst;
-	Coord src = move.src;
-
-	int xdiff = dst.x - src.x;
-	if (xdiff == 1 || xdiff == -1) {
-
-		int ydiff = dst.y - src.y;
-		if (ydiff != 1)
-			return ILLEGAL;
-
-		_board[dst.x][dst.y] = P_BLACK;
-		_board[src.x][src.y] = EMPTY;
-
-		_turn = !_turn;
-		return SUCCESS;
-	} else  if (xdiff == 2 || xdiff == -2) {
-		int ydiff = dst.y - src.y;
-		if (ydiff != 2)
-			return ILLEGAL;
-
-		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
-
-		if (_board[victim.x][victim.y] != P_RED && _board[victim.x][victim.y] != K_RED) return ILLEGAL;
-
-		_board[dst.x][dst.y] = P_BLACK;
-		_board[victim.x][victim.y] = EMPTY;
-		_board[src.x][src.y] = EMPTY;
-
-		--_p2Score;
-		_turn = !_turn;
-		return SUCCESS;
-
+	BitBoard empty = ~(_WP | _BP);
+	if (_turn) {
+		valMoves = empty & (src << 4);
+		valMoves |= (empty & _masks.DEST_R5) & (src << 5);
+		valMoves |= (empty & _masks.DEST_R3) & (src << 3);
+		if (src & _K) {
+			valMoves |= empty & (src >> 4);
+			valMoves |= (empty & _masks.DEST_L5) & (src >> 5);
+			valMoves |= (empty & _masks.DEST_L3) & (src >> 3);
+		}
 	} else {
-		return ILLEGAL;
+		valMoves = empty & (src >> 4);
+		valMoves |= (empty & _masks.DEST_L5) & (src >> 5);
+		valMoves |= (empty & _masks.DEST_L3) & (src >> 3);
+		if (src & _K) {
+			valMoves |= empty & (src << 4);
+			valMoves |= (empty & _masks.DEST_R5) & (src << 5);
+			valMoves |= (empty & _masks.DEST_R3) & (src << 3);
+		}
 	}
-}
 
-MoveCode Game::moveRed(const Move& move) {
-	if (_turn) return WRONG_PIECE;
+	if (!(valMoves & dst))
+		return ILLEGAL;
 
-	Coord dst = move.dst;
-	Coord src = move.src;
-
-	int xdiff = dst.x - src.x;
-	if (xdiff == 1 || xdiff == -1) {
-
-		int ydiff = dst.y - src.y;
-		if (ydiff != -1)
-			return ILLEGAL;
-
-		_board[dst.x][dst.y] = P_RED;
-		_board[src.x][src.y] = EMPTY;
-
-		_turn = !_turn;
-		return SUCCESS;
-	} else  if (xdiff == 2 || xdiff == -2) {
-		int ydiff = dst.y - src.y;
-		if (ydiff != -2)
-			return ILLEGAL;
-
-		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
-
-		if (_board[victim.x][victim.y] != P_BLACK && _board[victim.x][victim.y] != K_BLACK) return ILLEGAL;
-
-		_board[dst.x][dst.y] = P_RED;
-		_board[victim.x][victim.y] = EMPTY;
-		_board[src.x][src.y] = EMPTY;
-
-		--_p1Score;
-		_turn = !_turn;
-		return SUCCESS;
-
+	if (_turn) {
+		_BP ^= src;
+		_BP |= dst;
 	} else {
-		return ILLEGAL;
+		_WP ^= src;
+		_WP |= dst;
 	}
+
+	_turn = !_turn;
+	return SUCCESS;
 }
-
-MoveCode Game::moveKBlack(const Move& move) {
-	if (!_turn) return WRONG_PIECE;
-
-	Coord dst = move.dst;
-	Coord src = move.src;
-
-	int xdiff = dst.x - src.x;
-	if (xdiff == 1 || xdiff == -1) {
-
-		int ydiff = dst.y - src.y;
-		if (ydiff != 1 && ydiff != -1)
-			return ILLEGAL;
-
-		_board[dst.x][dst.y] = K_BLACK;
-		_board[src.x][src.y] = EMPTY;
-
-		_turn = !_turn;
-		return SUCCESS;
-	} else  if (xdiff == 2 || xdiff == -2) {
-		int ydiff = dst.y - src.y;
-		if (ydiff != 2 && ydiff != -2)
-			return ILLEGAL;
-
-		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
-
-		if (_board[victim.x][victim.y] != P_RED && _board[victim.x][victim.y] != K_RED) return ILLEGAL;
-
-		_board[dst.x][dst.y] = K_BLACK;
-		_board[victim.x][victim.y] = EMPTY;
-		_board[src.x][src.y] = EMPTY;
-
-		--_p2Score;
-		_turn = !_turn;
-		return SUCCESS;
-
-	} else {
-		return ILLEGAL;
-	}
-}
-
-MoveCode Game::moveKRed(const Move& move) {
-	if (_turn) return WRONG_PIECE;
-
-	Coord dst = move.dst;
-	Coord src = move.src;
-
-	int xdiff = dst.x - src.x;
-	if (xdiff == 1 || xdiff == -1) {
-
-		int ydiff = dst.y - src.y;
-		if (ydiff != 1 && ydiff != -1)
-			return ILLEGAL;
-
-		_board[dst.x][dst.y] = K_RED;
-		_board[src.x][src.y] = EMPTY;
-
-		_turn = !_turn;
-		return SUCCESS;
-	} else  if (xdiff == 2 || xdiff == -2) {
-		int ydiff = dst.y - src.y;
-		if (ydiff != 2 && ydiff != -2)
-			return ILLEGAL;
-
-		Coord victim { src.x + xdiff /2,src.y + ydiff/2};
-
-		if (_board[victim.x][victim.y] != P_BLACK && _board[victim.x][victim.y] != K_BLACK) return ILLEGAL;
-
-		_board[dst.x][dst.y] = K_RED;
-		_board[victim.x][victim.y] = EMPTY;
-		_board[src.x][src.y] = EMPTY;
-
-		--_p1Score;
-		_turn = !_turn;
-		return SUCCESS;
-
-	} else {
-		return ILLEGAL;
-	}
-}
-
-inline bool onBoard(const Coord& co) {
-	if (co.x > 7 || co.x > 7) return false;
-	return true;
-}
-
-inline bool Game::canMove(const Coord& co) const {
-	Coord d1, d2;
-
-	if (!onBoard(co))
-		return false;
-
-	switch (_board[co.x][co.y]) {
-	case P_BLACK:
-		if (co.y == 7)
-			return false;
-		d1.y = d2.y = co.y + 1;
-		d1.x = co.x + 1;
-		d2.x = co.x - 1;
-		if (!onBoard(d1) || !onBoard(d2)) return false;
-		if (_board[d1.x][d1.y] == EMPTY && _board[d2.x][d2.y] == EMPTY) return true;
-
-	}
-}
+//
+//MoveCode Game::moveBlack(const Move& move) {
+//	if (!_turn)
+//		return WRONG_PIECE;
+//
+//	Coord dst = move.dst;
+//	Coord src = move.src;
+//
+//	int xdiff = dst.x - src.x;
+//	if (xdiff == 1 || xdiff == -1) {
+//
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != 1)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = P_BLACK;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		_turn = !_turn;
+//		return SUCCESS;
+//	} else if (xdiff == 2 || xdiff == -2) {
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != 2)
+//			return ILLEGAL;
+//
+//		Coord victim { src.x + xdiff / 2, src.y + ydiff / 2 };
+//
+//		if (_board[victim.x][victim.y] != P_RED
+//				&& _board[victim.x][victim.y] != K_RED)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = P_BLACK;
+//		_board[victim.x][victim.y] = EMPTY;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		--_p2Score;
+//		_turn = !_turn;
+//		return SUCCESS;
+//
+//	} else {
+//		return ILLEGAL;
+//	}
+//}
+//
+//MoveCode Game::moveRed(const Move& move) {
+//	if (_turn)
+//		return WRONG_PIECE;
+//
+//	Coord dst = move.dst;
+//	Coord src = move.src;
+//
+//	int xdiff = dst.x - src.x;
+//	if (xdiff == 1 || xdiff == -1) {
+//
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != -1)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = P_RED;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		_turn = !_turn;
+//		return SUCCESS;
+//	} else if (xdiff == 2 || xdiff == -2) {
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != -2)
+//			return ILLEGAL;
+//
+//		Coord victim { src.x + xdiff / 2, src.y + ydiff / 2 };
+//
+//		if (_board[victim.x][victim.y] != P_BLACK
+//				&& _board[victim.x][victim.y] != K_BLACK)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = P_RED;
+//		_board[victim.x][victim.y] = EMPTY;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		--_p1Score;
+//		_turn = !_turn;
+//		return SUCCESS;
+//
+//	} else {
+//		return ILLEGAL;
+//	}
+//}
+//
+//MoveCode Game::moveKBlack(const Move& move) {
+//	if (!_turn)
+//		return WRONG_PIECE;
+//
+//	Coord dst = move.dst;
+//	Coord src = move.src;
+//
+//	int xdiff = dst.x - src.x;
+//	if (xdiff == 1 || xdiff == -1) {
+//
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != 1 && ydiff != -1)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = K_BLACK;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		_turn = !_turn;
+//		return SUCCESS;
+//	} else if (xdiff == 2 || xdiff == -2) {
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != 2 && ydiff != -2)
+//			return ILLEGAL;
+//
+//		Coord victim { src.x + xdiff / 2, src.y + ydiff / 2 };
+//
+//		if (_board[victim.x][victim.y] != P_RED
+//				&& _board[victim.x][victim.y] != K_RED)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = K_BLACK;
+//		_board[victim.x][victim.y] = EMPTY;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		--_p2Score;
+//		_turn = !_turn;
+//		return SUCCESS;
+//
+//	} else {
+//		return ILLEGAL;
+//	}
+//}
+//
+//MoveCode Game::moveKRed(const Move& move) {
+//	if (_turn)
+//		return WRONG_PIECE;
+//
+//	Coord dst = move.dst;
+//	Coord src = move.src;
+//
+//	int xdiff = dst.x - src.x;
+//	if (xdiff == 1 || xdiff == -1) {
+//
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != 1 && ydiff != -1)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = K_RED;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		_turn = !_turn;
+//		return SUCCESS;
+//	} else if (xdiff == 2 || xdiff == -2) {
+//		int ydiff = dst.y - src.y;
+//		if (ydiff != 2 && ydiff != -2)
+//			return ILLEGAL;
+//
+//		Coord victim { src.x + xdiff / 2, src.y + ydiff / 2 };
+//
+//		if (_board[victim.x][victim.y] != P_BLACK
+//				&& _board[victim.x][victim.y] != K_BLACK)
+//			return ILLEGAL;
+//
+//		_board[dst.x][dst.y] = K_RED;
+//		_board[victim.x][victim.y] = EMPTY;
+//		_board[src.x][src.y] = EMPTY;
+//
+//		--_p1Score;
+//		_turn = !_turn;
+//		return SUCCESS;
+//
+//	} else {
+//		return ILLEGAL;
+//	}
+//}
+//
+//inline bool onBoard(const Coord& co) {
+//	if (co.x > 7 || co.x > 7)
+//		return false;
+//	return true;
+//}
 
 //Hash::Zkey Game::getHash() const {
 //	using Hash::ZobristTable;
@@ -311,39 +360,38 @@ inline bool Game::canMove(const Coord& co) const {
 //	return hash;
 //}
 //
-int Game::receiveInput() {
-	using namespace std;
-
-	Coord src;
-	string instring;
-
-	cout << "Enter 'q' at any time to quit\n";
-	cout << "Enter Starting Coordinates: ";
-	getline(cin, instring);
-	if (instring == "q")
-		return -1;
-	if (!(stringstream(instring) >> src.x >> src.y)) {
-		cerr << endl << src.x << src.y;
-		cerr << "Input Error; try again\n";
-		return 0;
-	}
-
-	Coord dst;
-	cout << "Enter Ending Coordinates: ";
-	getline(cin, instring);
-	if (instring == "q")
-		return -1;
-	if (!(stringstream(instring) >> dst.x >> dst.y)) {
-		cerr << endl << dst.x << dst.y;
-		cerr << "Input Error; try again\n";
-		return 0;
-	}
-
-
-	MoveCode retval;
-	if ((retval = makeMove({src,dst})) != SUCCESS) {
-		cerr << "Movement Error:\n";
-		cerr << _errtable[retval];
-	}
-	return 1;
-}
+//int Game::receiveInput() {
+//	using namespace std;
+//
+//	Coord src;
+//	string instring;
+//
+//	cout << "Enter 'q' at any time to quit\n";
+//	cout << "Enter Starting Coordinates: ";
+//	getline(cin, instring);
+//	if (instring == "q")
+//		return -1;
+//	if (!(stringstream(instring) >> src.x >> src.y)) {
+//		cerr << endl << src.x << src.y;
+//		cerr << "Input Error; try again\n";
+//		return 0;
+//	}
+//
+//	Coord dst;
+//	cout << "Enter Ending Coordinates: ";
+//	getline(cin, instring);
+//	if (instring == "q")
+//		return -1;
+//	if (!(stringstream(instring) >> dst.x >> dst.y)) {
+//		cerr << endl << dst.x << dst.y;
+//		cerr << "Input Error; try again\n";
+//		return 0;
+//	}
+//
+//	MoveCode retval;
+//	if ((retval = makeMove( { src, dst })) != SUCCESS) {
+//		cerr << "Movement Error:\n";
+//		cerr << _errtable[retval];
+//	}
+//	return 1;
+//}

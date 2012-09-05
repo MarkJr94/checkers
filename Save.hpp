@@ -8,7 +8,7 @@
 #ifndef SAVE_HPP_
 #define SAVE_HPP_
 
-#include "Piece.hpp"
+#include "BitBoard.hpp"
 
 
 #include <fstream>
@@ -17,38 +17,24 @@
 #include <vector>
 
 
-class Save {
+struct Save {
 
-public:
 	bool turn;
 	unsigned mustJump;
-	unsigned char p1Score;
-	unsigned char p2Score;
+	BitBoard WP;
+	BitBoard BP;
+	BitBoard K;
 
 	Save();
-	Save(const Save&);
 	~Save();
-
-	Save& operator=(Save);
 	friend void swap(Save&,Save&);
 
 	/* Equality test */
-	bool operator==(const Save& other);
+	friend bool operator==(const Save&, const Save&);
 
-	/* Subscript operator */
-	Cell* operator[](const int row) {
-		return _data[row];
-	}
-
-	const Cell* operator[](const int row) const {
-		return _data[row];
-	}
-
+	/* Read and write to file */
 	void write(std::string) const;
 	void read(std::string);
-
-private:
-	Cell** _data;
 };
 
 #endif /* SAVE_HPP_ */

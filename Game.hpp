@@ -2,7 +2,7 @@
 #ifndef GAME_HPP_
 #define GAME_HPP_
 
-#include "Piece.hpp"
+#include "BitBoard.hpp"
 #include "Save.hpp"
 #include "Hash.hpp"
 
@@ -46,11 +46,11 @@ public:
 	}
 	/* Get p1 score */
 	unsigned getP1score() const {
-		return _p1Score;
+		return Masks::bitCount(_BP) + 2 * Masks::bitCount(_BP & _K);
 	}
 	/* Get p2 score */
 	unsigned getP2score() const {
-		return _p2Score;
+		return Masks::bitCount(_WP) + 2 * Masks::bitCount(_WP & _K);
 	}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
@@ -60,7 +60,9 @@ public:
 		return _turn;
 	}
 
-	inline bool canMove(const Coord&) const;
+	Cell* toArr() const;
+
+//	inline bool canMove(const Coord&) const;
 
 //	Hash::Zkey getHash() const;
 
@@ -68,8 +70,8 @@ public:
 protected:
 //	Cell** _board;
 //	std::vector<std::vector<Piece> > board;
-	BitBoard _wP;
-	BitBoard _bP;
+	BitBoard _WP;
+	BitBoard _BP;
 	BitBoard _K;
 
 private:
@@ -81,10 +83,9 @@ private:
 	Save _save;
 	bool _interact;
 	unsigned char _mustJump;
-	unsigned char _p1Score;
-	unsigned char _p2Score;
 
-	static Save templateSave;
+	static Save _templateSave;
+	static const Masks& _masks;
 
 	/* Update save game */
 	void updateSave();
