@@ -1,38 +1,31 @@
 #pragma once
-#ifndef CHECKERS_HPP_
-#define CHECKERS_HPP_
+#ifndef BITBOARD_HPP_
+#define BITBOARD_HPP_
 
-#include <iosfwd>
 #include <string>
 
 const unsigned BOARD_SIZE = 8;
 
 typedef unsigned BitBoard;
 
-struct Masks {
+namespace Mask {
 
-	BitBoard DEST_L3, DEST_L5, DEST_R3, DEST_R5;
-	BitBoard WP_INIT, BP_INIT;
+extern BitBoard DEST_L3, DEST_L5, DEST_R3, DEST_R5;
+extern BitBoard WP_INIT, BP_INIT;
+extern BitBoard ROW_2, ROW_7;
+extern BitBoard ROW_1, ROW_8;
 
-	BitBoard S[32];
+extern BitBoard S[32];
 
-	static const Masks& inst() {
-		static Masks b;
-		return b;
+int bitCount(BitBoard v);
+
+struct MaskInit {
+	friend const MaskInit& inst();
+
+	~MaskInit() {
 	}
-
-	static const inline int bitCount(BitBoard v) {
-		BitBoard c;
-		v = v - ((v >> 1) & 0x55555555);                    // reuse input as temporary
-		v = (v & 0x33333333) + ((v >> 2) & 0x33333333);     // temp
-		c = ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
-		return c;
-	}
-
-	~Masks() {}
-
 private:
-	Masks() {
+	MaskInit() {
 		for (int i = 0; i < 32; i++) {
 			S[i] = 1 << i;
 		}
@@ -48,11 +41,19 @@ private:
 
 		BP_INIT = 0x00000fff;
 		WP_INIT = 0xfff00000;
+
+		ROW_1 = S[0] | S[1] | S[2] | S[3];
+		ROW_2 = S[4] | S[5] | S[6]| S[7];
+		ROW_7 = S[24] | S[25] | S[26] | S[27];
+		ROW_8 = S[28] | S[29] | S[30] | S[31];
 	}
 
-	Masks(const Masks&);
-	Masks& operator=(const Masks&);
+	MaskInit(const MaskInit&);
+	MaskInit& operator=(const MaskInit&);
 };
+
+const MaskInit& inst();
+}
 
 
 struct Move {
@@ -60,20 +61,21 @@ struct Move {
 	unsigned short dst;
 };
 
-enum Cell { EMPTY, P_W, P_B, K_W, K_B};
-
-const std::string _ctable[] { "---", "WHI", "BLK", "KWH", "KBK"
+enum Cell {
+	EMPTY, P_W, P_B, K_W, K_B
 };
 
+const std::string _ctable[] { "---", "WHI", "BLK", "KWH", "KBK" };
+
 enum MoveCode {
-	SUCCESS, OBSTRUCTED, ILLEGAL, WRONG_PIECE
+	SUCCESS, OBSTRUCTED, ILLEGAL, WRONG_PIECE, QUIT, INPUT_FAIL
 };
 
 const std::string _errtable[] { "SUCCESS", "OBSTRUCTED", "ILLEGAL",
-		"WRONG_PIECE" };
+		"WRONG_PIECE", "QUIT", "INPUT_FAIL" };
 
 enum Col {
 	A, B, C, D, E, F, G, H
 };
 
-#endif /* CHECKERS_HPP_ */
+#endif /* BITBOARD_HPP_ */

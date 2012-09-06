@@ -4,16 +4,14 @@
 
 #include "Game.hpp"
 
-Save Game::_templateSave;
-
-const Masks& Game::_masks = Masks::inst();
+const Mask::MaskInit& Game::_masks_ = Mask::inst();
 
 Game::Game(const bool debug, const bool interact) :
 		_turn(true), _debug(debug), _save(), _interact(interact), _mustJump(0) {
 	using namespace std;
 
-	_WP = _masks.WP_INIT;
-	_BP = _masks.BP_INIT;
+	_WP = Mask::WP_INIT;
+	_BP = Mask::BP_INIT;
 	_K = 0;
 
 }
@@ -50,7 +48,7 @@ Save Game::getSave() {
 }
 
 Cell* Game::toArr() const {
-	const BitBoard* s = _masks.S;
+	const BitBoard* s = Mask::S;
 
 	Cell* b = new Cell[64]();
 
@@ -108,44 +106,123 @@ void Game::print() const {
 	delete[] b;
 }
 
-/* Piece movement */
+BitBoard Game::getJumpers() const {
+	using namespace Mask;
+	BitBoard empty = ~(_WP | _BP);
+	BitBoard Temp;
+	BitBoard Movers = 0;
+	if (_turn) {
+		BitBoard BK = _BP & _K;
+		Temp = (empty >> 4) & _WP;
+		if (Temp)
+			Movers |= (((Temp & DEST_R3) >> 3) | ((Temp & DEST_R5) >> 5)) & _BP;
 
+		Temp = (((empty & DEST_R3) >> 3) | ((empty & DEST_R5) >> 5)) & _WP;
+		Movers |= (Temp >> 4) & _BP;
+		if (BK) {
+			Temp = (empty << 4) & _WP;
+			if (Temp)
+				Movers |= (((Temp & DEST_L3) << 3) | ((Temp & DEST_L5) << 5))
+						& BK;
+
+			Temp = (((empty & DEST_L3) << 3) | ((empty & DEST_L5) << 5)) & _WP;
+			if (Temp)
+				Movers |= (Temp << 4) & BK;
+		}
+	} else {
+		BitBoard WK = _WP & _K;
+		Temp = (empty << 4) & _BP;
+		if (Temp)
+			Movers |= (((Temp & DEST_L3) << 3) | ((Temp & DEST_L5) << 5)) & _WP;
+
+		Temp = (((empty & DEST_L3) << 3) | ((empty & DEST_L5) << 5)) & _BP;
+		Movers |= (Temp << 4) & _WP;
+		if (WK) {
+			Temp = (empty >> 4) & _BP;
+			if (Temp)
+				Movers |= (((Temp & DEST_R3) >> 3) | ((Temp & DEST_R5) >> 5))
+						& WK;
+
+			Temp = (((empty & DEST_R3) >> 3) | ((empty & DEST_R5) >> 5)) & _BP;
+			if (Temp)
+				Movers |= (Temp >> 4) & WK;
+		}
+	}
+
+	return Movers;
+}
+
+BitBoard Game::getMovers() const {
+	using namespace Mask;
+
+	const BB empty = ~(_WP | _BP);
+	BB Movers;
+
+	if (_turn) {
+		const BB BK = _BP & _K;
+		Movers = (empty >> 4) & _BP;
+		Movers |= ((empty & DEST_R3) >> 3) & _BP;
+		Movers |= ((empty & DEST_R5) >> 5) & _BP;
+		if (BK) {
+			Movers |= (empty << 4) & _BP;
+			Movers |= ((empty & DEST_L3) << 4) & _BP;
+			Movers |= ((empty & DEST_R3) << 4) & _BP;
+		}
+	} else {
+		const BB WK = _WP & _K; // Kings
+		BB Movers = (empty << 4) & _WP;
+		Movers |= ((empty & DEST_L3) << 3) & _WP;
+		Movers |= ((empty & DEST_L5) << 5) & _WP;
+		if (WK) {
+			Movers |= (empty >> 4) & WK;
+			Movers |= ((empty & DEST_R3) >> 3) & WK;
+			Movers |= ((empty & DEST_R5) >> 5) & WK;
+		}
+	}
+
+	return Movers;
+}
+
+/* Piece movement */
 MoveCode Game::makeMove(const Move& move) {
+	using namespace Mask;
+
 	if (move.src > 32 || move.dst > 32)
 		return ILLEGAL;
 
-	BitBoard src;
-	if (_turn)
-		src = _BP & _masks.S[move.src];
-	else
-		src = _WP & _masks.S[move.src];
+	if (_mustJump)
+		if (move.src != _mustJump)
+			return ILLEGAL;
+
+	const BitBoard src = (_turn ? _BP & S[move.src] : _WP & S[move.src]);
 
 	if (!src)
 		return ILLEGAL;
 
-	BitBoard valMoves = 0;
-	BitBoard dst = _masks.S[move.dst];
+	const BitBoard empty = ~(_WP | _BP);
 
-	BitBoard empty = ~(_WP | _BP);
+	BitBoard valMoves = 0;
 	if (_turn) {
 		valMoves = empty & (src << 4);
-		valMoves |= (empty & _masks.DEST_R5) & (src << 5);
-		valMoves |= (empty & _masks.DEST_R3) & (src << 3);
+		valMoves |= (empty & DEST_R5) & (src << 5);
+		valMoves |= (empty & DEST_R3) & (src << 3);
 		if (src & _K) {
 			valMoves |= empty & (src >> 4);
-			valMoves |= (empty & _masks.DEST_L5) & (src >> 5);
-			valMoves |= (empty & _masks.DEST_L3) & (src >> 3);
+			valMoves |= (empty & DEST_L5) & (src >> 5);
+			valMoves |= (empty & DEST_L3) & (src >> 3);
 		}
 	} else {
 		valMoves = empty & (src >> 4);
-		valMoves |= (empty & _masks.DEST_L5) & (src >> 5);
-		valMoves |= (empty & _masks.DEST_L3) & (src >> 3);
+		valMoves |= (empty & DEST_L5) & (src >> 5);
+		valMoves |= (empty & DEST_L3) & (src >> 3);
 		if (src & _K) {
 			valMoves |= empty & (src << 4);
-			valMoves |= (empty & _masks.DEST_R5) & (src << 5);
-			valMoves |= (empty & _masks.DEST_R3) & (src << 3);
+			valMoves |= (empty & DEST_R5) & (src << 5);
+			valMoves |= (empty & DEST_R3) & (src << 3);
 		}
 	}
+
+	const BitBoard dst = S[move.dst];
 
 	if (!(valMoves & dst))
 		return ILLEGAL;
@@ -158,124 +235,120 @@ MoveCode Game::makeMove(const Move& move) {
 		_WP |= dst;
 	}
 
-	if (src & _K) _K |= dst;
+	if (src & _K) {
+		_K ^= src;
+		_K ^= dst;
+	}
 
+	if ((src & ROW_2) || (src & ROW_7))
+		_K ^= dst;
+
+	_mustJump = 0;
 	_turn = !_turn;
 	return SUCCESS;
 }
 
 MoveCode Game::jump(const Move& move) {
+	using namespace Mask;
 	if (move.src > 32 || move.dst > 32)
 		return ILLEGAL;
 
-	BitBoard dst, src;;
-	if (_turn)
-		dst = _BP & _masks.S[move.src];
-	else
-		dst = _WP & _masks.S[move.src];
+	if (_mustJump)
+		if (move.src != _mustJump)
+			return ILLEGAL;
 
-	if (!dst)
+	const BitBoard src = (_turn ? _BP & S[move.src] : _WP & S[move.src]);
+	const BitBoard vict = (_turn ? _WP & S[move.dst] : _BP & S[move.dst]);
+
+	if (!vict || !src)
 		return ILLEGAL;
 
-	BitBoard withRoom = 0;
-	BitBoard dest = _masks.S[move.dst];
-
-	BitBoard empty = ~(_WP | _BP);
-	if (_turn) {
-		withRoom = empty & (dst << 4);
-		withRoom |= (empty & _masks.DEST_R5) & (dst << 5);
-		withRoom |= (empty & _masks.DEST_R3) & (dst << 3);
-		if (dst & _K) {
-			withRoom |= empty & (dst >> 4);
-			withRoom |= (empty & _masks.DEST_L5) & (dst >> 5);
-			withRoom |= (empty & _masks.DEST_L3) & (dst >> 3);
-		}
-	} else {
-		withRoom = empty & (dst >> 4);
-		withRoom |= (empty & _masks.DEST_L5) & (dst >> 5);
-		withRoom |= (empty & _masks.DEST_L3) & (dst >> 3);
-		if (dst & _K) {
-			withRoom |= empty & (dst << 4);
-			withRoom |= (empty & _masks.DEST_R5) & (dst << 5);
-			withRoom |= (empty & _masks.DEST_R3) & (dst << 3);
-		}
-	}
-
-	if (!(withRoom & dest))
+	BitBoard jumpers = getJumpers();
+	if (!(jumpers & src))
 		return ILLEGAL;
 
-	if (_turn) {
-		_BP ^= dst;
-		_BP |= dest;
+	int dist = move.dst - move.src;
+	unsigned abs = (
+			move.dst > move.src ? move.dst - move.src : move.src - move.dst);
+	if (abs != 4 && abs != 3 && abs != 5)
+		return ILLEGAL;
+
+	int next;
+	if (dist < 0) {
+		if (abs == 3 || abs == 5)
+			next = move.dst - 4;
+		else
+			next = move.dst - 5;
 	} else {
-		_WP ^= dst;
-		_WP |= dest;
+		if (abs == 3 || abs == 5)
+			next = move.dst + 4;
+		else
+			next = move.dst + 3;
+	}
+	const BitBoard nextLoc = S[next];
+	std::cout << " THis is dist" << (unsigned) (dist) << std::endl;
+
+	if (_turn) {
+		_BP ^= src;
+		_WP ^= vict;
+		_BP ^= nextLoc;
+
+	} else {
+		_WP ^= src;
+		_BP ^= vict;
+		_WP ^= nextLoc;
 	}
 
-	if (dst & _K) _K |= dest;
+	if (_K & src) {
+		_K ^= src;
+		_K ^= nextLoc;
+	}
 
-	_turn = !_turn;
+	if ((nextLoc & ROW_8) || (nextLoc & ROW_1))
+		_K ^= nextLoc;
+
+	if (nextLoc & getJumpers()) {
+		_mustJump = next;
+
+	} else {
+		_mustJump = 0;
+		_turn = !_turn;
+	}
+
 	return SUCCESS;
 }
 
-//
-//inline bool onBoard(const Coord& co) {
-//	if (co.x > 7 || co.x > 7)
-//		return false;
-//	return true;
-//}
+MoveCode Game::receiveInput() {
+	using namespace std;
 
-//Hash::Zkey Game::getHash() const {
-//	using Hash::ZobristTable;
-//	using Hash::Zkey;
-//
-//	Zkey hash = 0;
-//	const ZobristTable& zt = ZobristTable::instance();
-//
-//	for (auto& pair : _p1) {
-//		const Piece* p = pair.second;
-//		hash ^= zt[p->isKing][Piece::BLACK][p->x + 8 * p->y];
-//	}
-//	for (auto& pair : _p2) {
-//		const Piece* p = pair.second;
-//		hash ^= zt[p->isKing][Piece::RED][p->x + 8 * p->y];
-//	}
-//
-//	return hash;
-//}
-//
-//int Game::receiveInput() {
-//	using namespace std;
-//
-//	Coord src;
-//	string instring;
-//
-//	cout << "Enter 'q' at any time to quit\n";
-//	cout << "Enter Starting Coordinates: ";
-//	getline(cin, instring);
-//	if (instring == "q")
-//		return -1;
-//	if (!(stringstream(instring) >> src.x >> src.y)) {
-//		cerr << endl << src.x << src.y;
-//		cerr << "Input Error; try again\n";
-//		return 0;
-//	}
-//
-//	Coord dst;
-//	cout << "Enter Ending Coordinates: ";
-//	getline(cin, instring);
-//	if (instring == "q")
-//		return -1;
-//	if (!(stringstream(instring) >> dst.x >> dst.y)) {
-//		cerr << endl << dst.x << dst.y;
-//		cerr << "Input Error; try again\n";
-//		return 0;
-//	}
-//
-//	MoveCode retval;
-//	if ((retval = makeMove( { src, dst })) != SUCCESS) {
-//		cerr << "Movement Error:\n";
-//		cerr << _errtable[retval];
-//	}
-//	return 1;
-//}
+	Move move;
+	string instring;
+
+	cout << "Enter 'q' at any time to quit\n";
+	cout << "Enter Starting Location: ";
+	getline(cin, instring);
+	if (instring == "q")
+		return QUIT;
+	if (!(stringstream(instring) >> move.src)) {
+		cerr << endl << move.src << ": ";
+		cerr << "Input Error; try again\n";
+		return INPUT_FAIL;
+	}
+
+	cout << "Enter Ending Location: ";
+	getline(cin, instring);
+	if (instring == "q")
+		return QUIT;
+	if (!(stringstream(instring) >> move.dst)) {
+		cerr << endl << move.dst << ": ";
+		cerr << "Input Error; try again\n";
+		return INPUT_FAIL;
+	}
+
+	MoveCode retval;
+	if ((retval = makeMove(move)) != SUCCESS) {
+		cerr << "Movement Error:\n";
+		cerr << _errtable[retval];
+	}
+	return retval;
+}

@@ -35,6 +35,9 @@ struct Save {
 	/* Read and write to file */
 	void write(std::string) const;
 	void read(std::string);
+
+private:
+	static const Mask::MaskInit& _masks_;
 };
 
 #endif /* SAVE_HPP_ */

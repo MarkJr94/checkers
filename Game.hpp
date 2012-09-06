@@ -38,22 +38,15 @@ public:
 	/* restore game to save */
 	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
-	int receiveInput();
+	MoveCode receiveInput();
 
-	int getMustJump() const {
-		return _mustJump;
-	}
-
-	void setMustJump(const int mustJump) {
-		this->_mustJump = mustJump;
-	}
 	/* Get p1 score */
 	unsigned getP1score() const {
-		return Masks::bitCount(_BP) + 2 * Masks::bitCount(_BP & _K);
+		return Mask::bitCount(_BP) + 2 * Mask::bitCount(_BP & _K);
 	}
 	/* Get p2 score */
 	unsigned getP2score() const {
-		return Masks::bitCount(_WP) + 2 * Masks::bitCount(_WP & _K);
+		return Mask::bitCount(_WP) + 2 * Mask::bitCount(_WP & _K);
 	}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
@@ -65,21 +58,13 @@ public:
 
 	Cell* toArr() const;
 
-//	inline bool canMove(const Coord&) const;
-
-//	Hash::Zkey getHash() const;
-
-
 protected:
-//	Cell** _board;
-//	std::vector<std::vector<Piece> > board;
 	BitBoard _WP;
 	BitBoard _BP;
 	BitBoard _K;
 
 private:
-//	std::map <int,Piece *> _p1;
-//	std::map <int,Piece *> _p2;
+	typedef BitBoard BB;
 	/* Tracks if it's P1's turn or not */
 	bool _turn;
 	bool _debug;
@@ -87,16 +72,14 @@ private:
 	bool _interact;
 	unsigned char _mustJump;
 
-	static Save _templateSave;
-	static const Masks& _masks;
+	static const Mask::MaskInit& _masks_;
 
 	/* Update save game */
 	void updateSave();
 
-	MoveCode moveBlack(const Move&);
-	MoveCode moveRed(const Move&);
-	MoveCode moveKBlack(const Move&);
-	MoveCode moveKRed(const Move&);
+
+	BitBoard getJumpers() const;
+	BitBoard getMovers() const;
 };
 
 #endif /* GAME_HPP_ */

@@ -8,14 +8,14 @@
 #include "Save.hpp"
 #include <algorithm>
 
+const Mask::MaskInit& Save::_masks_ = Mask::inst();
+
 Save::Save() :
 		turn(true), mustJump(0) {
 	using namespace std;
 
-	const Masks& ms = Masks::inst();
-
-	WP = ms.WP_INIT;
-	BP = ms.BP_INIT;
+	WP = Mask::WP_INIT;
+	BP = Mask::BP_INIT;
 	K = 0;
 }
 

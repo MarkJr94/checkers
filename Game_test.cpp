@@ -33,19 +33,21 @@ void tester2() {
 	g.print();
 
 	cerr << _errtable[g.makeMove( { 9, 12 })] << std::endl;
-
 	g.print();
 
 	cerr << _errtable[g.makeMove( { 21, 17 })] << std::endl;
-
 	g.print();
 
-	cerr << _errtable[g.makeMove( { 12, 16 })] << std::endl;
-
+	cerr << _errtable[g.jump( { 12, 17 })] << std::endl;
 	g.print();
 
-	cerr << _errtable[g.makeMove( { 17, 21 })] << std::endl;
+	cerr << _errtable[g.jump( { 26, 21 })] << std::endl;
+	g.print();
 
+	cerr << _errtable[g.receiveInput()] << std::endl;
+	g.print();
+
+	cerr << _errtable[g.receiveInput()] << std::endl;
 	g.print();
 }
 
