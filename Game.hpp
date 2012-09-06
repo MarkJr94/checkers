@@ -32,6 +32,9 @@ public:
 
 	/* Piece Movement */
 	MoveCode makeMove(const Move&);
+
+	/* Jumping */
+	MoveCode jump(const Move&);
 	/* restore game to save */
 	void restoreToSave(const Save& record);
 	/* Receive input for CLI */

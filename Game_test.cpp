@@ -40,7 +40,11 @@ void tester2() {
 
 	g.print();
 
-	cerr << _errtable[g.makeMove( { 12, 17 })] << std::endl;
+	cerr << _errtable[g.makeMove( { 12, 16 })] << std::endl;
+
+	g.print();
+
+	cerr << _errtable[g.makeMove( { 17, 21 })] << std::endl;
 
 	g.print();
 }

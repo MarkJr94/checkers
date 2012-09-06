@@ -16,7 +16,6 @@ Game::Game(const bool debug, const bool interact) :
 	_BP = _masks.BP_INIT;
 	_K = 0;
 
-	restoreToSave(_templateSave);
 }
 
 Game::Game(const Save& save, const bool debug, const bool interact) :
@@ -157,14 +156,67 @@ MoveCode Game::makeMove(const Move& move) {
 	} else {
 		_WP ^= src;
 		_WP |= dst;
-		_K ^= src;
-		_K |= dst;
 	}
+
+	if (src & _K) _K |= dst;
 
 	_turn = !_turn;
 	return SUCCESS;
 }
 
+MoveCode Game::jump(const Move& move) {
+	if (move.src > 32 || move.dst > 32)
+		return ILLEGAL;
+
+	BitBoard dst, src;;
+	if (_turn)
+		dst = _BP & _masks.S[move.src];
+	else
+		dst = _WP & _masks.S[move.src];
+
+	if (!dst)
+		return ILLEGAL;
+
+	BitBoard withRoom = 0;
+	BitBoard dest = _masks.S[move.dst];
+
+	BitBoard empty = ~(_WP | _BP);
+	if (_turn) {
+		withRoom = empty & (dst << 4);
+		withRoom |= (empty & _masks.DEST_R5) & (dst << 5);
+		withRoom |= (empty & _masks.DEST_R3) & (dst << 3);
+		if (dst & _K) {
+			withRoom |= empty & (dst >> 4);
+			withRoom |= (empty & _masks.DEST_L5) & (dst >> 5);
+			withRoom |= (empty & _masks.DEST_L3) & (dst >> 3);
+		}
+	} else {
+		withRoom = empty & (dst >> 4);
+		withRoom |= (empty & _masks.DEST_L5) & (dst >> 5);
+		withRoom |= (empty & _masks.DEST_L3) & (dst >> 3);
+		if (dst & _K) {
+			withRoom |= empty & (dst << 4);
+			withRoom |= (empty & _masks.DEST_R5) & (dst << 5);
+			withRoom |= (empty & _masks.DEST_R3) & (dst << 3);
+		}
+	}
+
+	if (!(withRoom & dest))
+		return ILLEGAL;
+
+	if (_turn) {
+		_BP ^= dst;
+		_BP |= dest;
+	} else {
+		_WP ^= dst;
+		_WP |= dest;
+	}
+
+	if (dst & _K) _K |= dest;
+
+	_turn = !_turn;
+	return SUCCESS;
+}
 
 //
 //inline bool onBoard(const Coord& co) {
