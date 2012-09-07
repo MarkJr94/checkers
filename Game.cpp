@@ -4,8 +4,6 @@
 
 #include "Game.hpp"
 
-const Mask::MaskInit& Game::_masks_ = Mask::inst();
-
 Game::Game(const bool debug, const bool interact) :
 		_turn(true), _debug(debug), _save(), _interact(interact), _mustJump(0) {
 	using namespace std;
@@ -170,7 +168,7 @@ BitBoard Game::getMovers() const {
 		}
 	} else {
 		const BB WK = _WP & _K; // Kings
-		BB Movers = (empty << 4) & _WP;
+		Movers = (empty << 4) & _WP;
 		Movers |= ((empty & DEST_L3) << 3) & _WP;
 		Movers |= ((empty & DEST_L5) << 5) & _WP;
 		if (WK) {
@@ -187,12 +185,11 @@ BitBoard Game::getMovers() const {
 MoveCode Game::makeMove(const Move& move) {
 	using namespace Mask;
 
-	if (move.src > 32 || move.dst > 32)
+	if (move.src > 31 || move.dst > 31)
 		return ILLEGAL;
 
 	if (_mustJump)
-		if (move.src != _mustJump)
-			return ILLEGAL;
+		return WRONG_PIECE;
 
 	const BitBoard src = (_turn ? _BP & S[move.src] : _WP & S[move.src]);
 
@@ -250,12 +247,12 @@ MoveCode Game::makeMove(const Move& move) {
 
 MoveCode Game::jump(const Move& move) {
 	using namespace Mask;
-	if (move.src > 32 || move.dst > 32)
+	if (move.src > 31 || move.dst > 31)
 		return ILLEGAL;
 
 	if (_mustJump)
 		if (move.src != _mustJump)
-			return ILLEGAL;
+			return WRONG_PIECE;
 
 	const BitBoard src = (_turn ? _BP & S[move.src] : _WP & S[move.src]);
 	const BitBoard vict = (_turn ? _WP & S[move.dst] : _BP & S[move.dst]);
@@ -286,7 +283,6 @@ MoveCode Game::jump(const Move& move) {
 			next = move.dst + 3;
 	}
 	const BitBoard nextLoc = S[next];
-	std::cout << " THis is dist" << (unsigned) (dist) << std::endl;
 
 	if (_turn) {
 		_BP ^= src;
@@ -302,6 +298,10 @@ MoveCode Game::jump(const Move& move) {
 	if (_K & src) {
 		_K ^= src;
 		_K ^= nextLoc;
+	}
+
+	if (_K & vict) {
+		_K ^= vict;
 	}
 
 	if ((nextLoc & ROW_8) || (nextLoc & ROW_1))

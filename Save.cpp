@@ -8,8 +8,6 @@
 #include "Save.hpp"
 #include <algorithm>
 
-const Mask::MaskInit& Save::_masks_ = Mask::inst();
-
 Save::Save() :
 		turn(true), mustJump(0) {
 	using namespace std;

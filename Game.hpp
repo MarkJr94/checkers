@@ -72,14 +72,15 @@ private:
 	bool _interact;
 	unsigned char _mustJump;
 
-	static const Mask::MaskInit& _masks_;
-
 	/* Update save game */
 	void updateSave();
 
 
 	BitBoard getJumpers() const;
 	BitBoard getMovers() const;
+	BitBoard getEmpty() const {
+		return ~(_WP | _BP);
+	}
 };
 
 #endif /* GAME_HPP_ */

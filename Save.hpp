@@ -37,7 +37,6 @@ struct Save {
 	void read(std::string);
 
 private:
-	static const Mask::MaskInit& _masks_;
 };
 
 #endif /* SAVE_HPP_ */

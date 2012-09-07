@@ -3,10 +3,14 @@
 #define BITBOARD_HPP_
 
 #include <string>
+#include <map>
+#include <iostream>
 
 const unsigned BOARD_SIZE = 8;
 
 typedef unsigned BitBoard;
+
+typedef BitBoard BB;
 
 namespace Mask {
 
@@ -14,45 +18,25 @@ extern BitBoard DEST_L3, DEST_L5, DEST_R3, DEST_R5;
 extern BitBoard WP_INIT, BP_INIT;
 extern BitBoard ROW_2, ROW_7;
 extern BitBoard ROW_1, ROW_8;
+extern BitBoard ROW_ODD, ROW_EVEN;
 
 extern BitBoard S[32];
 
+extern std::map<BitBoard,unsigned short> bbUMap;
+
 int bitCount(BitBoard v);
 
-struct MaskInit {
-	friend const MaskInit& inst();
+inline BB numToBB(unsigned n) { return S[n]; }
 
-	~MaskInit() {
-	}
-private:
-	MaskInit() {
-		for (int i = 0; i < 32; i++) {
-			S[i] = 1 << i;
-		}
+inline BB highBit(BB board) {
+	board |= (board >> 1);
+	board |= (board >> 2);
+	board |= (board >> 4);
+	board |= (board >> 8);
+	board |= (board >> 16);
+	return board - (board >> 1);
+}
 
-		DEST_L3 = S[1] | S[2] | S[3] | S[9] | S[10] | S[11] | S[17] | S[18]
-				| S[19] | S[25] | S[26] | S[27];
-		DEST_L5 = S[4] | S[5] | S[6] | S[12] | S[13] | S[14] | S[20] | S[21]
-				| S[22];
-		DEST_R3 = S[28] | S[29] | S[30] | S[20] | S[21] | S[22] | S[12] | S[13]
-				| S[14] | S[4] | S[5] | S[6];
-		DEST_R5 = S[25] | S[26] | S[27] | S[17] | S[18] | S[19] | S[9] | S[10]
-				| S[11];
-
-		BP_INIT = 0x00000fff;
-		WP_INIT = 0xfff00000;
-
-		ROW_1 = S[0] | S[1] | S[2] | S[3];
-		ROW_2 = S[4] | S[5] | S[6]| S[7];
-		ROW_7 = S[24] | S[25] | S[26] | S[27];
-		ROW_8 = S[28] | S[29] | S[30] | S[31];
-	}
-
-	MaskInit(const MaskInit&);
-	MaskInit& operator=(const MaskInit&);
-};
-
-const MaskInit& inst();
 }
 
 

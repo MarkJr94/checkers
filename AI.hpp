@@ -8,6 +8,7 @@
 #ifndef AI_HPP_
 #define AI_HPP_
 
+#include <utility>
 #include <vector>
 
 #include "BitBoard.hpp"
@@ -19,7 +20,7 @@ class AI {
 public:
 	friend class GameMaster;
 
-	AI(const unsigned, const Save&, const Move& creator = {0,0}, const unsigned difficulty = 5);
+	AI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 7);
 	~AI();
 
 	void printScene();
@@ -28,7 +29,7 @@ public:
 
 	bool canMultiJump(const Game&);
 
-	Move evaluateGame(Game&);
+	std::pair<Move,bool> evaluateGame(Game&);
 
 private:
 	AI(const AI&);
@@ -37,23 +38,39 @@ private:
 	unsigned _level;
 	unsigned _difficulty;
 	std::vector<AI *> _children;
-	Move _move;
+	std::vector<Move> _moves;
 	Save _save;
 	float _p1Avg;
 	float _p2Avg;
 
 	static Game* _game;
 
-	unsigned testMoves();
+	void generateMovesBlack();
+	void generateMovesWhite();
+	void generateMoves() {
+		if (_game->_turn)
+			generateMovesBlack();
+		else
+			generateMovesWhite();
+	}
 
-	unsigned generateOutcomes();
+
+	void generateJumpsBlack();
+	void generateJumpsWhite();
+	void generateJumps() {
+		if (_game->_turn)
+			generateJumpsBlack();
+		else
+			generateJumpsWhite();
+	}
+
+	std::pair<bool,unsigned> generateOutcomes();
 
 	Move evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
 
 	void updateScores();
 
-	void resetToSave(const Save&);
+	void initialize(const Save&);
 };
-
 
 #endif /* AI_HPP_ */
