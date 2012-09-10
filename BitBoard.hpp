@@ -13,15 +13,22 @@ typedef unsigned BitBoard;
 
 typedef BitBoard BB;
 
-namespace Mask {
+namespace Bit {
+
+namespace Masks {
 
 extern const BitBoard WP_INIT, BP_INIT;
 extern const BitBoard ROW_2, ROW_7;
 extern const BitBoard ROW_1, ROW_8;
+//extern const BitBoard CAN_UP, CAN_DOWN;
+//extern const BitBoard CAN_LEFT, CAN_RIGHT;
+extern const BitBoard CAN_UPLEFT, CAN_UPRIGHT;
+extern const BitBoard CAN_DOWNLEFT, CAN_DOWNRIGHT;
 
 extern const BitBoard S[32];
 
 extern std::map<BitBoard,unsigned short> bbUMap;
+}
 
 inline int bitCount(BitBoard v) {
  	BitBoard c;

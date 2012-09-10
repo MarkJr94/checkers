@@ -9,7 +9,7 @@
 #include <algorithm>
 
 Save::Save() :
-		turn(true), mustJump(0), WP(Mask::WP_INIT), BP(Mask::BP_INIT), K(0) {
+		turn(true), mustJump(0), WP(Bit::Masks::WP_INIT), BP(Bit::Masks::BP_INIT), K(0) {
 
 }
 

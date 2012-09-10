@@ -7,9 +7,10 @@
 
 #include "BitBoard.hpp"
 
-namespace Mask {
+namespace Bit {
 
- const BitBoard S[32] = {
+namespace Masks {
+const BitBoard S[32] = {
 		 1u << 18, 1u << 12, 1u << 6, 1u << 0,
 		 1u << 19, 1u << 13, 1u << 7, 1u << 1,
 		 1u << 26, 1u << 20, 1u << 14, 1u << 8,
@@ -21,13 +22,23 @@ namespace Mask {
 
 const BitBoard BP_INIT = S[0] | S[1] | S[2] | S[3] | S[4] | S[5] | S[6] | S[7]
 		| S[8] | S[9] | S[10] | S[11];
-const BitBoard WP_INIT = S[20] | S[21] | S[22] | S[23] | S[24] | S[25] | S[26] | S[27]
-		| S[28] | S[29] | S[30] | S[31];
+const BitBoard WP_INIT = S[20] | S[21] | S[22] | S[23] | S[24] | S[25] | S[26]
+		| S[27] | S[28] | S[29] | S[30] | S[31];
 
- const BitBoard	ROW_1 = S[0] | S[1] | S[2] | S[3];
- const BitBoard	ROW_2 = S[4] | S[5] | S[6]| S[7];
- const BitBoard	ROW_7 = S[24] | S[25] | S[26] | S[27];
- const BitBoard	ROW_8 = S[28] | S[29] | S[30] | S[31];
+const BitBoard ROW_1 = S[0] | S[1] | S[2] | S[3];
+const BitBoard ROW_2 = S[4] | S[5] | S[6] | S[7];
+const BitBoard ROW_7 = S[24] | S[25] | S[26] | S[27];
+const BitBoard ROW_8 = S[28] | S[29] | S[30] | S[31];
+
+const BitBoard CAN_UPLEFT = ~(S[0] | S[8] | S[16] | S[24] | ROW_8);
+const BitBoard CAN_UPRIGHT = ~(S[7] | S[15] | S[23] | S[31] | ROW_8);
+const BitBoard CAN_DOWNLEFT = ~(S[0] | S[8] | S[16] | S[24] | ROW_1);
+const BitBoard CAN_DOWNRIGHT = ~(S[7] | S[15] | S[23] | S[31] | ROW_1);
+
+//const BitBoard CAN_UP = ~ROW_8;
+//const BitBoard CAN_DOWN =  ~ROW_1;
+//const BitBoard CAN_LEFT = ~(S[0] | S[8] | S[16] | S[24]);
+//const BitBoard CAN_RIGHT = ~(S[7] | S[15] | S[23] | S[31]);
 
 
  std::map<BitBoard,unsigned short> bbUMap  = {
@@ -64,6 +75,7 @@ const BitBoard WP_INIT = S[20] | S[21] | S[22] | S[23] | S[24] | S[25] | S[26] |
 		{S[30],30},
 		{S[31],31}
  };
+}
 
 }
 

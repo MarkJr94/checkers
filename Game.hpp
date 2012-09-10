@@ -42,22 +42,17 @@ public:
 
 	/* Get p1 score */
 	unsigned getP1score() const {
-		return Mask::bitCount(_BP & ~_K) + 2 * Mask::bitCount(_BP & _K);
+		return Bit::bitCount(_BP & ~_K) + 2 * Bit::bitCount(_BP & _K);
 	}
 	/* Get p2 score */
 	unsigned getP2score() const {
-		return Mask::bitCount(_WP & ~_K) + 2 * Mask::bitCount(_WP & _K);
+		return Bit::bitCount(_WP & ~_K) + 2 * Bit::bitCount(_WP & _K);
 	}
 
-	unsigned p1NumPieces() const {return Mask::bitCount(_BP);}
-	unsigned p2NumPieces() const {return Mask::bitCount(_WP);}
-	/* Setter and getter for turn */
-	void setTurn(bool newval) {
-		_turn = newval;
-	}
-	bool getTurn() const {
-		return _turn;
-	}
+	unsigned p1NumPieces() const {return Bit::bitCount(_BP);}
+	unsigned p2NumPieces() const {return Bit::bitCount(_WP);}
+
+	bool isLive () const { return _WP && _BP;}
 
 	std::vector<Cell> toArr() const;
 

@@ -10,7 +10,6 @@
 
 #include <utility>
 #include <vector>
-#include <sqlite3.h>
 
 #include "BitBoard.hpp"
 #include "Save.hpp"
@@ -20,7 +19,7 @@ class AI {
 public:
 	friend class GameMaster;
 
-	AI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 5);
+	AI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 6);
 	~AI();
 
 	void printScene();

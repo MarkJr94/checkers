@@ -5,12 +5,12 @@
 #include "Game.hpp"
 
 Game::Game(const bool debug, const bool interact) :
-		_WP(Mask::WP_INIT), _BP(Mask::BP_INIT), _K(0), _turn(true), _debug(
+		_WP(Bit::Masks::WP_INIT), _BP(Bit::Masks::BP_INIT), _K(0), _turn(true), _debug(
 				debug), _save(), _interact(interact), _mustJump(0) {
 }
 
 Game::Game(const Save& save, const bool debug, const bool interact) :
-		_debug(debug),  _interact(interact) {
+		_debug(debug), _interact(interact) {
 	restoreToSave(save);
 }
 
@@ -42,7 +42,7 @@ Save Game::getSave() {
 }
 
 std::vector<Cell> Game::toArr() const {
-	using Mask::S;
+	using Bit::Masks::S;
 
 	std::vector<Cell> b(64);
 
@@ -87,7 +87,7 @@ void Game::print() const {
 		cout << "Player 1's turn.\n";
 	else
 		cout << "Player 2's turn.\n";
-	cout << "P1: " << Mask::bitCount(_BP) << "\tP2: " << Mask::bitCount(_WP)
+	cout << "P1: " << Bit::bitCount(_BP) << "\tP2: " << Bit::bitCount(_WP)
 			<< endl;
 
 	std::vector<Cell> b = toArr();
@@ -101,55 +101,60 @@ void Game::print() const {
 }
 
 BitBoard Game::getJumpers() const {
-	using namespace Mask;
+	using namespace Bit::Masks;
+	using Bit::ror;
+	using Bit::rol;
+
 	BitBoard empty = ~(_WP | _BP);
 	BitBoard Temp;
 	BitBoard jumpers = 0;
 	if (_turn) {
 		BitBoard BK = _BP & _K;
-		Temp = ror(empty, 7) & _WP;
-		jumpers |= ror(Temp, 7) & _BP;
-		Temp = ror(empty, 1) & _WP;
-		jumpers |= ror(Temp, 1) & _BP;
+		Temp = ror(empty, 7) & _WP & CAN_UPLEFT;
+		jumpers |= ror(Temp, 7) & _BP & CAN_UPLEFT;
+		Temp = ror(empty, 1) & _WP & CAN_UPRIGHT;
+		jumpers |= ror(Temp, 1) & _BP & CAN_UPRIGHT;
 
-		Temp = rol(empty, 7) & _WP;
-		jumpers |= rol(Temp, 7) & BK;
-		Temp = rol(empty, 1) & _WP;
-		jumpers |= rol(Temp, 1) & BK;
+		Temp = rol(empty, 7) & _WP & CAN_DOWNRIGHT;
+		jumpers |= rol(Temp, 7) & BK & CAN_DOWNRIGHT;
+		Temp = rol(empty, 1) & _WP & CAN_DOWNLEFT;
+		jumpers |= rol(Temp, 1) & BK & CAN_DOWNLEFT;
 	} else {
 		BitBoard WK = _WP & _K;
-		Temp = rol(empty, 7) & _BP;
-		jumpers |= rol(Temp, 7) & _WP;
-		Temp = rol(empty, 1) & _BP;
-		jumpers |= rol(Temp, 1) & _WP;
+		Temp = rol(empty, 7) & _BP & CAN_DOWNRIGHT;
+		jumpers |= rol(Temp, 7) & _WP & CAN_DOWNRIGHT;
+		Temp = rol(empty, 1) & _BP & CAN_DOWNLEFT;
+		jumpers |= rol(Temp, 1) & _WP & CAN_DOWNLEFT;
 
-		Temp = ror(empty, 7) & _BP;
-		jumpers |= ror(Temp, 7) & WK;
-		Temp = ror(empty, 1) & _BP;
-		jumpers |= ror(Temp, 1) & WK;
+		Temp = ror(empty, 7) & _BP & CAN_UPLEFT;
+		jumpers |= ror(Temp, 7) & WK & CAN_UPLEFT;
+		Temp = ror(empty, 1) & _BP & CAN_UPRIGHT;
+		jumpers |= ror(Temp, 1) & WK & CAN_UPRIGHT;
 	}
 
 	return jumpers;
 }
 
 BitBoard Game::getMovers() const {
-	using namespace Mask;
+	using namespace Bit::Masks;
+	using Bit::ror;
+	using Bit::rol;
 
 	const BB empty = ~(_WP | _BP);
 	BB Movers;
 
 	if (_turn) {
 		const BB BK = _BP & _K;
-		Movers = ror(empty, 7) & _BP;
-		Movers |= ror(empty, 1) & _BP;
-		Movers |= rol(empty, 7) & BK;
-		Movers |= rol(empty, 1) & BK;
+		Movers = ror(empty, 7) & _BP & CAN_UPLEFT;
+		Movers |= ror(empty, 1) & _BP & CAN_UPRIGHT;
+		Movers |= rol(empty, 7) & BK & CAN_DOWNRIGHT;
+		Movers |= rol(empty, 1) & BK & CAN_DOWNLEFT;
 	} else {
 		const BB WK = _WP & _K; // Kings
-		Movers = rol(empty, 7) & _WP;
-		Movers |= rol(empty, 1) & _WP;
-		Movers |= ror(empty, 7) & WK;
-		Movers |= ror(empty, 1) & WK;
+		Movers = rol(empty, 7) & _WP & CAN_DOWNRIGHT;
+		Movers |= rol(empty, 1) & _WP & CAN_DOWNLEFT;
+		Movers |= ror(empty, 7) & WK & CAN_UPLEFT;
+		Movers |= ror(empty, 1) & WK & CAN_UPRIGHT;
 	}
 
 	return Movers;
@@ -157,7 +162,10 @@ BitBoard Game::getMovers() const {
 
 /* Piece movement */
 MoveCode Game::makeMove(const Move& move) {
-	using namespace Mask;
+	using namespace Bit::Masks;
+	using Bit::rol;
+	using Bit::ror;
+	using Bit::Masks::S;
 
 	if (move.src > 31 || move.dst > 31)
 		return ILLEGAL_MOVE;
@@ -176,16 +184,16 @@ MoveCode Game::makeMove(const Move& move) {
 	BB SK;
 	if (_turn) {
 		SK = src & _K;
-		valMoves = empty & rol(src, 7);
-		valMoves |= empty & rol(src, 1);
-		valMoves |= empty & ror(SK, 7);
-		valMoves |= empty & ror(SK, 1);
+		valMoves = empty & rol(src & CAN_UPLEFT, 7);
+		valMoves |= empty & rol(src & CAN_UPRIGHT, 1);
+		valMoves |= empty & ror(SK & CAN_DOWNRIGHT, 7);
+		valMoves |= empty & ror(SK & CAN_DOWNLEFT, 1);
 	} else {
 		SK = src & _K;
-		valMoves = empty & ror(src, 7);
-		valMoves |= empty & ror(src, 1);
-		valMoves |= empty & rol(SK, 7);
-		valMoves |= empty & rol(SK, 1);
+		valMoves = empty & ror(src & CAN_DOWNRIGHT, 7);
+		valMoves |= empty & ror(src & CAN_DOWNLEFT, 1);
+		valMoves |= empty & rol(SK & CAN_UPLEFT, 7);
+		valMoves |= empty & rol(SK & CAN_UPRIGHT, 1);
 	}
 
 	const BitBoard dst = S[move.dst];
@@ -215,8 +223,9 @@ MoveCode Game::makeMove(const Move& move) {
 }
 
 BB Game::canJump(const BB src, const BB vict) {
-	using Mask::rol;
-	using Mask::ror;
+	using Bit::rol;
+	using Bit::ror;
+	using namespace Bit::Masks;
 
 	if (_mustJump)
 		if (src != _mustJump)
@@ -228,44 +237,44 @@ BB Game::canJump(const BB src, const BB vict) {
 	if (_turn) {
 		SK = src & _K;
 
-		Temp = rol(src, 7) & vict;
+		Temp = rol(src & CAN_UPLEFT, 7) & vict;
 		if (Temp)
-			return rol(src, 14) & empty;
-		Temp = rol(src, 1) & vict;
+			return rol(Temp & CAN_UPLEFT, 7) & empty;
+		Temp = rol(src & CAN_UPRIGHT, 1) & vict;
 		if (Temp)
-			return rol(src, 2) & empty;
+			return rol(Temp & CAN_UPRIGHT, 1) & empty;
 
-		Temp = ror(SK, 7) & vict;
+		Temp = ror(SK & CAN_DOWNRIGHT, 7) & vict;
 		if (Temp)
-			return ror(SK, 14) & empty;
-		Temp = ror(SK, 1) & vict;
+			return ror(Temp & CAN_DOWNRIGHT, 7) & empty;
+		Temp = ror(SK & CAN_DOWNLEFT, 1) & vict;
 		if (Temp)
-			return ror(SK, 2) & empty;
+			return ror(Temp & CAN_DOWNLEFT, 1) & empty;
 	} else {
 		SK = src & _K;
 
-		Temp = ror(src, 7) & vict;
+		Temp = ror(src & CAN_DOWNRIGHT, 7) & vict;
 		if (Temp)
-			return ror(src, 14) & empty;
-		Temp = ror(src, 1) & vict;
+			return ror(Temp & CAN_DOWNRIGHT, 7) & empty;
+		Temp = ror(src & CAN_DOWNLEFT, 1) & vict;
 		if (Temp)
-			return ror(src, 2) & empty;
+			return ror(Temp & CAN_DOWNLEFT, 1) & empty;
 
-		Temp = rol(SK, 7) & vict;
+		Temp = rol(SK & CAN_UPLEFT, 7) & vict;
 		if (Temp)
-			return rol(SK, 14) & empty;
-		Temp = rol(SK, 1) & vict;
+			return rol(Temp & CAN_UPLEFT, 7) & empty;
+		Temp = rol(SK & CAN_UPRIGHT, 1) & vict;
 		if (Temp)
-			return rol(SK, 2) & empty;
+			return rol(Temp & CAN_UPRIGHT, 1) & empty;
 	}
 
 	return 0u;
 }
 
 MoveCode Game::jump(const Move& move) {
-	using Mask::S;
-	using Mask::rol;
-	using Mask::ror;
+	using namespace Bit::Masks;
+	using Bit::rol;
+	using Bit::ror;
 	if (move.src > 31 || move.dst > 31)
 		return ILLEGAL_MOVE;
 
@@ -301,14 +310,12 @@ MoveCode Game::jump(const Move& move) {
 	if (_K & src) {
 		_K ^= src;
 		_K ^= nextLoc;
-	}
+	} else if ((nextLoc & ROW_8) || (nextLoc & ROW_1))
+		_K ^= nextLoc;
 
 	if (_K & vict) {
 		_K ^= vict;
 	}
-
-	if ((nextLoc & Mask::ROW_8) || (nextLoc & Mask::ROW_1))
-		_K ^= nextLoc;
 
 	if (nextLoc & getJumpers()) {
 		_mustJump = nextLoc;

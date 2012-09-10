@@ -14,6 +14,7 @@ Game* AI::_game = new Game(false, false);
 
 //const bool db = true;
 const bool db = false;
+const bool dbg = true;
 
 void printMove(const Move& move) {
 	std::cout << "SRC: " << move.src << " DST: " << move.dst << "\t";
@@ -51,11 +52,11 @@ void AI::printScene() {
 }
 
 void AI::generateMovesBlack() {
-	using namespace std;
-	using Mask::bbUMap;
-using Mask::rol;
-using Mask::ror;
-	using Mask::highBit;
+//	using namespace std;
+	using namespace Bit::Masks;
+	using Bit::rol;
+	using Bit::ror;
+	using Bit::highBit;
 
 	BB Movers = _game->getMovers();
 //	std::cout << "++++++++++++" << hex << Movers << dec <<std::endl;
@@ -66,15 +67,15 @@ using Mask::ror;
 		const BB mover = highBit(Movers);
 //		std::cout << "++++++++++++mover = :" << hex << mover << dec <<std::endl;
 		Movers ^= mover;
-		if ((target = ((rol(mover,7) & empty))))
+		if ((target = ((rol(mover & CAN_UPLEFT,7) & empty))))
 			_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		if ((target = ((rol(mover,1) & empty))))
+		if ((target = ((rol(mover & CAN_UPRIGHT,1) & empty))))
 					_moves.push_back( { bbUMap[mover], bbUMap[target] });
 
 		if (mover & _game->_K) {
-			if ((target = ((ror(mover,7) & empty))))
+			if ((target = ((ror(mover & CAN_DOWNRIGHT,7) & empty))))
 				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			if ((target = ((ror(mover,1) & empty))))
+			if ((target = ((ror(mover & CAN_DOWNLEFT,1) & empty))))
 						_moves.push_back( { bbUMap[mover], bbUMap[target] });
 		}
 	}
@@ -82,10 +83,10 @@ using Mask::ror;
 
 void AI::generateMovesWhite() {
 	using namespace std;
-	using Mask::bbUMap;
-	using Mask::ror;
-	using Mask::rol;
-	using Mask::highBit;
+	using namespace Bit::Masks;
+	using Bit::ror;
+	using Bit::rol;
+	using Bit::highBit;
 
 	BB Movers = _game->getMovers();
 //	std::cout << "++++++++++++" << hex << Movers << dec <<std::endl;
@@ -97,15 +98,15 @@ void AI::generateMovesWhite() {
 //		std::cout << "++++++++++++mover = :" << hex << mover << dec <<std::endl;
 		Movers ^= mover;
 
-		if ((target = ((ror(mover,7) & empty))))
+		if ((target = ((ror(mover & CAN_DOWNRIGHT,7) & empty))))
 			_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		if ((target = ((ror(mover,1) & empty))))
+		if ((target = ((ror(mover & CAN_DOWNLEFT,1) & empty))))
 					_moves.push_back( { bbUMap[mover], bbUMap[target] });
 
 		if (mover & _game->_K) {
-			if ((target = ((rol(mover,7) & empty))))
+			if ((target = ((rol(mover & CAN_UPLEFT,7) & empty))))
 				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			if ((target = ((rol(mover,1) & empty))))
+			if ((target = ((rol(mover & CAN_UPRIGHT,1) & empty))))
 						_moves.push_back( { bbUMap[mover], bbUMap[target] });
 		}
 	}
@@ -113,10 +114,10 @@ void AI::generateMovesWhite() {
 
 void AI::generateJumpsBlack() {
 	using namespace std;
-	using Mask::bbUMap;
-	using Mask::rol;
-	using Mask::ror;
-	using Mask::highBit;
+	using Bit::Masks::bbUMap;
+	using Bit::rol;
+	using Bit::ror;
+	using Bit::highBit;
 
 	BB jumpers = _game->getJumpers();
 //	_game->print();
@@ -152,10 +153,10 @@ void AI::generateJumpsBlack() {
 
 void AI::generateJumpsWhite() {
 	using namespace std;
-	using Mask::bbUMap;
-	using Mask::rol;
-	using Mask::ror;
-	using Mask::highBit;
+	using Bit::Masks::bbUMap;
+	using Bit::rol;
+	using Bit::ror;
+	using Bit::highBit;
 
 	BB jumpers = _game->getJumpers();
 //	std::cout << "++++++++++++" << hex << jumpers << dec <<std::endl;
@@ -207,7 +208,7 @@ std::pair<bool, unsigned> AI::generateOutcomes() {
 	}
 
 	unsigned numOutcomes = _moves.size();
-//	if (db) std::cout << "Number of OutComes: " << numOutcomes << std::endl;
+//	if (dbg && _level == 0) std::cout << "Number of OutComes: " << numOutcomes << std::endl;
 	if (numOutcomes < 1)
 		return {0,0};
 
@@ -273,8 +274,6 @@ std::pair<Move, bool> AI::evaluateMoves(bool aggro) {
 		return { {0, 0},0};
 	}
 
-	aggro = false;
-
 	unsigned favoredSon = 0;
 	float bestAvg;
 	if (aggro) {
@@ -319,7 +318,6 @@ std::pair<Move, bool> AI::evaluateMoves(bool aggro) {
 }
 
 std::pair<Move, bool> AI::evaluateGame(Game& game) {
-//	initialize(game.getSave());
 	_save = game.getSave();
 
 	return evaluateMoves(true);

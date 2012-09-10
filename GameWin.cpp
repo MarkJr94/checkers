@@ -25,7 +25,6 @@ GameWin::~GameWin() {
 void GameWin::sfHandleEvents() {
 	using sf::Event;
 	using sf::Vector2;
-	const sf::Input &input = GetInput();
 
 	Event Event;
 	while (GetEvent(Event)) {
@@ -147,6 +146,12 @@ std::ostream& operator<<(std::ostream& os, const sf::Vector2<float> vec) {
 	return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const Move m) {
+	os << m.src << " => " << m.dst;
+
+	return os;
+}
+
 void GameWin::drawGame() {
 	using namespace std;
 	using namespace sf;
@@ -216,10 +221,12 @@ MoveCode GameWin::evalSelections() {
 	}
 
 	_board = _game->toArr();
+	Move m = { src, dst };
+	std::cout << "Player Move: " << m << std::endl;
 	if (_board[x + y * 8] == EMPTY) {
-		return _game->makeMove( { src, dst });
+		return _game->makeMove(m);
 	} else {
-		return _game->jump( { src, dst });
+		return _game->jump(m);
 	}
 }
 
@@ -227,20 +234,38 @@ void GameWin::loop() {
 	using std::cout;
 	using std::endl;
 
-	while (IsOpened()) {
+	while (IsOpened() && _game->isLive()) {
 		if (_state == EVALUATING) {
-			MoveCode err = evalSelections();
+			MoveCode err;
+
+			err = evalSelections();
 			std::cout << _errtable[err] << std::endl;
-			if (err == SUCCESS) {
-				std::pair<Move, bool> moveinfo = _ai.evaluateGame(*_game);
-				if (moveinfo.second) {
-					cout << _errtable[_game->jump(moveinfo.first)] << endl;
-				} else
-					cout << _errtable[_game->makeMove(moveinfo.first)] << endl;
+			if (_game->_turn) {
+				_state = NORMAL;
+				continue;
 			}
-			_state = NORMAL;
+//		} while ((_game->_turn) && err != SUCCESS);
+//			if (err == SUCCESS) {
+			std::pair<Move, bool> moveinfo = _ai.evaluateGame(*_game);
+			cout << "AI Move: " << moveinfo.first << endl;
+			if (moveinfo.first.dst == 0 && moveinfo.first.src == 0) break;
+			if (moveinfo.second) {
+				cout << _errtable[_game->jump(moveinfo.first)] << endl;
+			} else
+				cout << _errtable[_game->makeMove(moveinfo.first)] << endl;
+//			}
+			if (_game->_turn)
+				_state = NORMAL;
 		}
+//		std::pair<Move, bool> moveinfo = _ai.evaluateGame(*_game);
+//		cout << "Turn: " << _game->_turn << " AI Move: " << moveinfo.first << endl;
+//		if (moveinfo.second) {
+//			cout << _errtable[_game->jump(moveinfo.first)] << endl;
+//		} else
+//			cout << _errtable[_game->makeMove(moveinfo.first)] << endl;
 		sfHandleEvents();
 		drawGame();
 	}
+
+	if (IsOpened()) Close();
 }
