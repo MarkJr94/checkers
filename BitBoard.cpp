@@ -9,33 +9,25 @@
 
 namespace Mask {
 
- BitBoard S[32] = { 0x1, 0x2, 0x4, 0x8,
-		 0x10, 0x20, 0x40, 0x80,
-		 0x100, 0x200, 0x400, 0x800,
-		 0x1000,0x2000,0x4000,0x8000,
- 	 	 0x10000,0x20000,0x40000,0x80000,
- 	 	 0x100000,0x200000,0x400000,0x800000,
- 	 	 0x1000000,0x2000000,0x4000000,0x8000000,
- 	 	 0x10000000,0x20000000,0x40000000,0x80000000};
+ const BitBoard S[32] = {
+		 1u << 18, 1u << 12, 1u << 6, 1u << 0,
+		 1u << 19, 1u << 13, 1u << 7, 1u << 1,
+		 1u << 26, 1u << 20, 1u << 14, 1u << 8,
+		 1u << 27, 1u << 21, 1u << 15, 1u << 9,
+		 1u << 2, 1u << 28, 1u << 22, 1u << 16,
+		 1u << 3, 1u << 29, 1u << 23, 1u << 17,
+		 1u << 10, 1u << 4, 1u << 30, 1u << 24,
+		 1u << 11, 1u << 05, 1u << 31, 1u << 25};
 
- BitBoard	DEST_L3 = S[1] | S[2] | S[3] | S[9] | S[10] | S[11] | S[17] | S[18]
-			| S[19] | S[25] | S[26] | S[27];
- BitBoard	DEST_L5 = S[4] | S[5] | S[6] | S[12] | S[13] | S[14] | S[20] | S[21]
-			| S[22];
- BitBoard	DEST_R3 = S[28] | S[29] | S[30] | S[20] | S[21] | S[22] | S[12] | S[13]
-			| S[14] | S[4] | S[5] | S[6];
- BitBoard	DEST_R5 = S[25] | S[26] | S[27] | S[17] | S[18] | S[19] | S[9] | S[10]
-			| S[11];
+const BitBoard BP_INIT = S[0] | S[1] | S[2] | S[3] | S[4] | S[5] | S[6] | S[7]
+		| S[8] | S[9] | S[10] | S[11];
+const BitBoard WP_INIT = S[20] | S[21] | S[22] | S[23] | S[24] | S[25] | S[26] | S[27]
+		| S[28] | S[29] | S[30] | S[31];
 
- BitBoard	BP_INIT = 0x00000fff;
- BitBoard	WP_INIT = 0xfff00000;
-
- BitBoard	ROW_1 = S[0] | S[1] | S[2] | S[3];
- BitBoard	ROW_2 = S[4] | S[5] | S[6]| S[7];
- BitBoard	ROW_7 = S[24] | S[25] | S[26] | S[27];
- BitBoard	ROW_8 = S[28] | S[29] | S[30] | S[31];
- BitBoard	ROW_EVEN = 0x0f0f0f0f;
- BitBoard	ROW_ODD = 0xf0f0f0f0;
+ const BitBoard	ROW_1 = S[0] | S[1] | S[2] | S[3];
+ const BitBoard	ROW_2 = S[4] | S[5] | S[6]| S[7];
+ const BitBoard	ROW_7 = S[24] | S[25] | S[26] | S[27];
+ const BitBoard	ROW_8 = S[28] | S[29] | S[30] | S[31];
 
 
  std::map<BitBoard,unsigned short> bbUMap  = {
@@ -72,14 +64,6 @@ namespace Mask {
 		{S[30],30},
 		{S[31],31}
  };
-
- int bitCount(BitBoard v) {
- 	BitBoard c;
- 	v = v - ((v >> 1) & 0x55555555); // reuse input as temporary
- 	v = (v & 0x33333333) + ((v >> 2) & 0x33333333); // temp
- 	c = ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
- 	return c;
- }
 
 }
 

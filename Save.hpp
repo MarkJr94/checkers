@@ -20,7 +20,7 @@
 struct Save {
 
 	bool turn;
-	unsigned mustJump;
+	BitBoard mustJump;
 	BitBoard WP;
 	BitBoard BP;
 	BitBoard K;

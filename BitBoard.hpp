@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <iostream>
+#include <limits>
 
 const unsigned BOARD_SIZE = 8;
 
@@ -14,19 +15,21 @@ typedef BitBoard BB;
 
 namespace Mask {
 
-extern BitBoard DEST_L3, DEST_L5, DEST_R3, DEST_R5;
-extern BitBoard WP_INIT, BP_INIT;
-extern BitBoard ROW_2, ROW_7;
-extern BitBoard ROW_1, ROW_8;
-extern BitBoard ROW_ODD, ROW_EVEN;
+extern const BitBoard WP_INIT, BP_INIT;
+extern const BitBoard ROW_2, ROW_7;
+extern const BitBoard ROW_1, ROW_8;
 
-extern BitBoard S[32];
+extern const BitBoard S[32];
 
 extern std::map<BitBoard,unsigned short> bbUMap;
 
-int bitCount(BitBoard v);
-
-inline BB numToBB(unsigned n) { return S[n]; }
+inline int bitCount(BitBoard v) {
+ 	BitBoard c;
+ 	v = v - ((v >> 1) & 0x55555555); // reuse input as temporary
+ 	v = (v & 0x33333333) + ((v >> 2) & 0x33333333); // temp
+ 	c = ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
+ 	return c;
+}
 
 inline BB highBit(BB board) {
 	board |= (board >> 1);
@@ -35,6 +38,16 @@ inline BB highBit(BB board) {
 	board |= (board >> 8);
 	board |= (board >> 16);
 	return board - (board >> 1);
+}
+
+template <typename T>
+T inline rol(T v, unsigned n) {
+	return (v << n) | (v >> (std::numeric_limits<T>::digits - n) );
+}
+
+template <typename T>
+T inline ror(T v, unsigned n) {
+	return (v >> n) | (v << (std::numeric_limits<T>::digits - n) );
 }
 
 }
@@ -52,14 +65,10 @@ enum Cell {
 const std::string _ctable[] { "---", "WHI", "BLK", "KWH", "KBK" };
 
 enum MoveCode {
-	SUCCESS, OBSTRUCTED, ILLEGAL, WRONG_PIECE, QUIT, INPUT_FAIL
+	SUCCESS, VOID_PIECE, ILLEGAL_MOVE, WRONG_PIECE, QUIT, INPUT_FAIL
 };
 
-const std::string _errtable[] { "SUCCESS", "OBSTRUCTED", "ILLEGAL",
+const std::string _errtable[] { "SUCCESS", "VOID_PIECE", "ILLEGAL_MOVE",
 		"WRONG_PIECE", "QUIT", "INPUT_FAIL" };
-
-enum Col {
-	A, B, C, D, E, F, G, H
-};
 
 #endif /* BITBOARD_HPP_ */

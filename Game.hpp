@@ -4,7 +4,6 @@
 
 #include "BitBoard.hpp"
 #include "Save.hpp"
-#include "Hash.hpp"
 
 #include <map>
 #include <string>
@@ -17,6 +16,7 @@ class Game {
 public:
 	friend class AI;
 	friend class GameMaster;
+	friend class GameWin;
 
 	/* Constructor */
 	Game(const bool db, const bool interact);
@@ -42,12 +42,15 @@ public:
 
 	/* Get p1 score */
 	unsigned getP1score() const {
-		return Mask::bitCount(_BP) + 2 * Mask::bitCount(_BP & _K);
+		return Mask::bitCount(_BP & ~_K) + 2 * Mask::bitCount(_BP & _K);
 	}
 	/* Get p2 score */
 	unsigned getP2score() const {
-		return Mask::bitCount(_WP) + 2 * Mask::bitCount(_WP & _K);
+		return Mask::bitCount(_WP & ~_K) + 2 * Mask::bitCount(_WP & _K);
 	}
+
+	unsigned p1NumPieces() const {return Mask::bitCount(_BP);}
+	unsigned p2NumPieces() const {return Mask::bitCount(_WP);}
 	/* Setter and getter for turn */
 	void setTurn(bool newval) {
 		_turn = newval;
@@ -56,7 +59,7 @@ public:
 		return _turn;
 	}
 
-	Cell* toArr() const;
+	std::vector<Cell> toArr() const;
 
 protected:
 	BitBoard _WP;
@@ -70,7 +73,7 @@ private:
 	bool _debug;
 	Save _save;
 	bool _interact;
-	unsigned char _mustJump;
+	BB _mustJump;
 
 	/* Update save game */
 	void updateSave();
@@ -81,6 +84,7 @@ private:
 	BitBoard getEmpty() const {
 		return ~(_WP | _BP);
 	}
+	inline BB canJump(const BB src, const BB vict);
 };
 
 #endif /* GAME_HPP_ */

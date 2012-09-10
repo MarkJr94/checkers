@@ -12,15 +12,17 @@
 
 Game* AI::_game = new Game(false, false);
 
+//const bool db = true;
+const bool db = false;
+
 void printMove(const Move& move) {
-	std::cout << "SRC: " << move.src << " DST: " << move.dst << std::endl;
+	std::cout << "SRC: " << move.src << " DST: " << move.dst << "\t";
 }
 
 AI::AI(const unsigned degree, const Save& save, const unsigned difficulty) :
 		_level(degree), _difficulty(difficulty), _children(), _moves(), _save(
 				save), _p1Avg(0), _p2Avg(0) {
 	srand(time(NULL));
-
 }
 
 AI::~AI() {
@@ -30,9 +32,9 @@ AI::~AI() {
 
 void AI::initialize(const Save& save) {
 	_save = save;
+	_game->restoreToSave(save);
 	_p1Avg = _game->getP1score();
 	_p2Avg = _game->getP2score();
-	_game->restoreToSave(save);
 
 	for (auto child : _children)
 		delete child;
@@ -51,8 +53,8 @@ void AI::printScene() {
 void AI::generateMovesBlack() {
 	using namespace std;
 	using Mask::bbUMap;
-	using Mask::ROW_EVEN;
-	using Mask::ROW_ODD;
+using Mask::rol;
+using Mask::ror;
 	using Mask::highBit;
 
 	BB Movers = _game->getMovers();
@@ -61,29 +63,19 @@ void AI::generateMovesBlack() {
 	BB empty = _game->getEmpty();
 	BB target;
 	while (Movers) {
-		BB mover = highBit(Movers);
+		const BB mover = highBit(Movers);
 //		std::cout << "++++++++++++mover = :" << hex << mover << dec <<std::endl;
 		Movers ^= mover;
-		if ((target = ((mover << 4) & empty)))
+		if ((target = ((rol(mover,7) & empty))))
 			_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		if (mover & ROW_ODD) {
-			if ((target = ((mover << 5) & empty)))
-				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		} else {
-			if ((target = ((mover << 3) & empty)))
-				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		}
+		if ((target = ((rol(mover,1) & empty))))
+					_moves.push_back( { bbUMap[mover], bbUMap[target] });
 
 		if (mover & _game->_K) {
-			if ((target = ((mover >> 4) & empty)))
+			if ((target = ((ror(mover,7) & empty))))
 				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			if (mover & ROW_ODD) {
-				if ((target = ((mover >> 3) & empty)))
-					_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			} else {
-				if ((target = ((mover >> 5) & empty)))
-					_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			}
+			if ((target = ((ror(mover,1) & empty))))
+						_moves.push_back( { bbUMap[mover], bbUMap[target] });
 		}
 	}
 }
@@ -91,8 +83,8 @@ void AI::generateMovesBlack() {
 void AI::generateMovesWhite() {
 	using namespace std;
 	using Mask::bbUMap;
-	using Mask::ROW_EVEN;
-	using Mask::ROW_ODD;
+	using Mask::ror;
+	using Mask::rol;
 	using Mask::highBit;
 
 	BB Movers = _game->getMovers();
@@ -105,26 +97,16 @@ void AI::generateMovesWhite() {
 //		std::cout << "++++++++++++mover = :" << hex << mover << dec <<std::endl;
 		Movers ^= mover;
 
-		if ((target = ((mover >> 4) & empty)))
+		if ((target = ((ror(mover,7) & empty))))
 			_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		if (mover & ROW_ODD) {
-			if ((target = ((mover >> 3) & empty)))
-				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		} else {
-			if ((target = ((mover >> 5) & empty)))
-				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		}
+		if ((target = ((ror(mover,1) & empty))))
+					_moves.push_back( { bbUMap[mover], bbUMap[target] });
 
 		if (mover & _game->_K) {
-			if ((target = ((mover << 4) & empty)))
+			if ((target = ((rol(mover,7) & empty))))
 				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			if (mover & ROW_ODD) {
-				if ((target = ((mover << 5) & empty)))
-					_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			} else {
-				if ((target = ((mover << 3) & empty)))
-					_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			}
+			if ((target = ((rol(mover,1) & empty))))
+						_moves.push_back( { bbUMap[mover], bbUMap[target] });
 		}
 	}
 }
@@ -132,56 +114,37 @@ void AI::generateMovesWhite() {
 void AI::generateJumpsBlack() {
 	using namespace std;
 	using Mask::bbUMap;
-	using Mask::ROW_EVEN;
-	using Mask::ROW_ODD;
+	using Mask::rol;
+	using Mask::ror;
 	using Mask::highBit;
 
 	BB jumpers = _game->getJumpers();
+//	_game->print();
 //	std::cout << "++++++++++++" << hex << jumpers << dec << std::endl;
 
-	BB empty = _game->getEmpty();
 	while (jumpers) {
 		BB j = highBit(jumpers);
-		jumpers ^= j;
 //		std::cout << "++++++++++++jumper = :" << hex << j << dec <<std::endl;
+		jumpers ^= j;
 		BB victims = _game->_WP;
 		BB vict;
-		bool odd = j & ROW_ODD;
-		if (odd) {
-			vict = (j << 4) & victims;
-			if ((vict << 3) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-			vict = (j << 5) & victims;
-			if ((vict << 4) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
-		} else {
-			vict = (j << 4) & victims;
-			if ((vict << 5) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-			vict = (j << 3) & victims;
-			if ((vict << 4) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
+		vict = rol(j,7) & victims;
+		if (_game->canJump(j,vict)) {
+			_moves.push_back( { bbUMap[j], bbUMap[vict] });
+		}
+		vict = rol(j,1) & victims;
+		if (_game->canJump(j,vict)) {
+			_moves.push_back( { bbUMap[j], bbUMap[vict] });
 		}
 
 		if (j & _game->_K) {
-			if (odd) {
-				vict = (j >> 4) & victims;
-				if ((vict >> 5) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-				vict = (j >> 3) & victims;
-				if ((vict >> 4) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
-			} else {
-				vict = (j >> 4) & victims;
-				if ((vict >> 3) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-				vict = (j >> 5) & victims;
-				if ((vict >> 4) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
+			vict = ror(j,7) & victims;
+			if (_game->canJump(j,vict)) {
+				_moves.push_back( { bbUMap[j], bbUMap[vict] });
+			}
+			vict = ror(j,1) & victims;
+			if (_game->canJump(j,vict)) {
+				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 			}
 		}
 	}
@@ -190,92 +153,86 @@ void AI::generateJumpsBlack() {
 void AI::generateJumpsWhite() {
 	using namespace std;
 	using Mask::bbUMap;
-	using Mask::ROW_EVEN;
-	using Mask::ROW_ODD;
+	using Mask::rol;
+	using Mask::ror;
 	using Mask::highBit;
 
 	BB jumpers = _game->getJumpers();
 //	std::cout << "++++++++++++" << hex << jumpers << dec <<std::endl;
 
-	BB empty = _game->getEmpty();
 	while (jumpers) {
 		BB j = highBit(jumpers);
-		jumpers ^= j;
 //		std::cout << "++++++++++++jumper = :" << hex << j << dec <<std::endl;
+		jumpers ^= j;
 		BB victims = _game->_BP;
-		BB vict;
-		bool odd = j & ROW_ODD;
-		if (odd) {
-			vict = (j >> 4) & victims;
-			if ((vict >> 5) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 
-			vict = (j >> 3) & victims;
-			if ((vict >> 4) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
-		} else {
-			vict = (j >> 4) & victims;
-			if ((vict >> 3) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-			vict = (j >> 5) & victims;
-			if ((vict >> 4) & empty)
-				_moves.push_back( { bbUMap[j], bbUMap[vict] });
+		BB vict = ror(j,7) & victims;
+		if (_game->canJump(j,vict)) {
+			_moves.push_back( { bbUMap[j], bbUMap[vict] });
+		}
+		vict = ror(j,1) & victims;
+		if (_game->canJump(j,vict)) {
+			_moves.push_back( { bbUMap[j], bbUMap[vict] });
 		}
 
 		if (j & _game->_K) {
-			if (odd) {
-				vict = (j << 4) & victims;
-				if ((vict << 3) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-				vict = (j << 5) & victims;
-				if ((vict << 4) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
-			} else {
-				vict = (j << 4) & victims;
-				if ((vict << 5) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
-
-				vict = (j << 3) & victims;
-				if ((vict << 4) & empty)
-					_moves.push_back( { bbUMap[j], bbUMap[vict] });
+			vict = rol(j,7) & victims;
+			if (_game->canJump(j,vict)) {
+				_moves.push_back( { bbUMap[j], bbUMap[vict] });
+			}
+			vict = rol(j,1) & victims;
+			if (_game->canJump(j,vict)) {
+				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 			}
 		}
 	}
 }
-std::pair<bool,unsigned> AI::generateOutcomes() {
-	using std::cout; using std::endl;
 
-	if (_level == _difficulty - 1)
+std::pair<bool, unsigned> AI::generateOutcomes() {
+	using std::cout;
+	using std::endl;
+
+	initialize(_save);
+
+//	printScene();
+
+	if (_level == _difficulty)
 		return {0,0};
 
-	bool jumps = true;
-	generateJumps();
-	if (_moves.empty()) {
+	bool jumps = _game->getJumpers();
+	if (jumps) {
+		generateJumps();
+	} else {
 		generateMoves();
-		jumps = false;
 	}
+
 	unsigned numOutcomes = _moves.size();
-//	std::cout << "Number of OutComes: " << numOutcomes << std::endl;
+//	if (db) std::cout << "Number of OutComes: " << numOutcomes << std::endl;
 	if (numOutcomes < 1)
 		return {0,0};
 
 	if (jumps) {
-//		_children.resize(numOutcomes);
 		for (unsigned i = 0; i < numOutcomes; i++) {
-//			printMove(_moves[i]);
-			cout << _game->_turn << " " << "Jump: " << _errtable[_game->jump(_moves[i])] << endl;
+			if (db) {
+				printMove(_moves[i]);
+				cout << "Turn: " << _game->_turn << " " << "Jump: "
+						<< _errtable[_game->jump(_moves[i])] << endl;
+			}
 //			_game->jump(_moves[i]);
-			_children.push_back(new AI(_level + 1,_game->getSave(),_difficulty));
+			_children.push_back(
+					new AI(_level + 1, _game->getSave(), _difficulty));
 			_game->restoreToSave(_save);
 		}
 	} else {
 		for (unsigned i = 0; i < numOutcomes; i++) {
-//			printMove(_moves[i]);
-			cout << _game->_turn << " "  << "Move: " << _errtable[_game->makeMove(_moves[i])] << endl;
+			if (db) {
+				printMove(_moves[i]);
+				cout << "Turn: " << _game->_turn << " " << "Move: "
+						<< _errtable[_game->makeMove(_moves[i])] << endl;
+			}
 //			_game->makeMove(_moves[i]);
-			_children.push_back(new AI(_level + 1,_game->getSave(),_difficulty));
+			_children.push_back(
+					new AI(_level + 1, _game->getSave(), _difficulty));
 			_game->restoreToSave(_save);
 		}
 	}
@@ -303,78 +260,20 @@ void AI::updateScores() {
 	_p2Avg = temp2 / _children.size();
 }
 
-Move AI::evaluateMoves(bool optimizeForP1, bool aggro) {
+std::pair<Move, bool> AI::evaluateMoves(bool aggro) {
 
-	std::pair<bool,unsigned> info = generateOutcomes();
-	updateScores();
-
-	unsigned nKids = info.second;
-
-	if (nKids == 0) {
-		std::cerr << "NO MOVES.\n";
-		return {0, 0};
-	}
-
-	aggro = rand();
-
-	unsigned favoredSon = 0;
-	float bestAvg;
-	if (aggro) {
-		bestAvg = 999999999;
-		if (optimizeForP1) {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (_children[i]->_p2Avg < bestAvg) {
-					bestAvg = _children[i]->_p2Avg;
-					favoredSon = i;
-
-				}
-			}
-		} else {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (_children[i]->_p1Avg < bestAvg) {
-					bestAvg = _children[i]->_p1Avg;
-					favoredSon = i;
-				}
-			}
-		}
-
-	} else {
-		bestAvg = 0.0;
-		if (optimizeForP1) {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (_children[i]->_p1Avg > bestAvg) {
-					bestAvg = _children[i]->_p1Avg;
-					favoredSon = i;
-				}
-			}
-		} else {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (_children[i]->_p2Avg > bestAvg) {
-					bestAvg = _children[i]->_p2Avg;
-					favoredSon = i;
-				}
-			}
-		}
-	}
-
-	return _moves[favoredSon];
-}
-
-std::pair<Move,bool> AI::evaluateGame(Game& game) {
-	initialize(_game->getSave());
 	bool optimizeForP1 = _game->_turn;
-
-	std::pair<bool,unsigned> info = generateOutcomes();
+	std::pair<bool, unsigned> info = generateOutcomes();
 	updateScores();
 
 	unsigned nKids = info.second;
 
 	if (nKids == 0) {
 		std::cerr << "NO MOVES.\n";
-		return {{0, 0}, false};
+		return { {0, 0},0};
 	}
 
-	bool aggro = rand();
+	aggro = false;
 
 	unsigned favoredSon = 0;
 	float bestAvg;
@@ -417,6 +316,13 @@ std::pair<Move,bool> AI::evaluateGame(Game& game) {
 	}
 
 	return {_moves[favoredSon],info.first};
+}
+
+std::pair<Move, bool> AI::evaluateGame(Game& game) {
+//	initialize(game.getSave());
+	_save = game.getSave();
+
+	return evaluateMoves(true);
 }
 
 Move AI::getRandomMove() const {

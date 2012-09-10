@@ -10,40 +10,28 @@
 
 #include <utility>
 #include <vector>
+#include <sqlite3.h>
 
 #include "BitBoard.hpp"
 #include "Save.hpp"
 #include "Game.hpp"
-//#include "DrawGame.hpp"
 
 class AI {
 public:
 	friend class GameMaster;
 
-	AI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 7);
+	AI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 5);
 	~AI();
 
 	void printScene();
 
 	Move getRandomMove() const;
 
-	bool canMultiJump(const Game&);
-
 	std::pair<Move,bool> evaluateGame(Game&);
 
 private:
 	AI(const AI&);
 	AI& operator=(const AI&);
-
-	unsigned _level;
-	unsigned _difficulty;
-	std::vector<AI *> _children;
-	std::vector<Move> _moves;
-	Save _save;
-	float _p1Avg;
-	float _p2Avg;
-
-	static Game* _game;
 
 	void generateMovesBlack();
 	void generateMovesWhite();
@@ -66,11 +54,21 @@ private:
 
 	std::pair<bool,unsigned> generateOutcomes();
 
-	Move evaluateMoves(bool optimizeForP1 = true, bool aggro = false);
+	std::pair<Move,bool> evaluateMoves(bool aggro = false);
 
 	void updateScores();
 
 	void initialize(const Save&);
+
+	unsigned _level;
+	unsigned _difficulty;
+	std::vector<AI *> _children;
+	std::vector<Move> _moves;
+	Save _save;
+	float _p1Avg;
+	float _p2Avg;
+
+	static Game* _game;
 };
 
 #endif /* AI_HPP_ */

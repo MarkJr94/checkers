@@ -9,12 +9,8 @@
 #include <algorithm>
 
 Save::Save() :
-		turn(true), mustJump(0) {
-	using namespace std;
+		turn(true), mustJump(0), WP(Mask::WP_INIT), BP(Mask::BP_INIT), K(0) {
 
-	WP = Mask::WP_INIT;
-	BP = Mask::BP_INIT;
-	K = 0;
 }
 
 void swap(Save& first, Save& second) {

@@ -8,34 +8,32 @@
 #include <iostream>
 #include "AI.hpp"
 
-int main() {
-	using std::cerr;
+void testmJump() {
+	using std::cout;
 	using std::endl;
-	Game g(false,false);
+
+	Game g(false, false);
+
 	AI a;
 
-	g.print();
+	std::pair<Move, bool> moveinfo;
 
-	cerr << _errtable[g.makeMove( { 9, 12 })] << std::endl;
-	g.print();
+	do {
+		cout << "P1: " << g.getP1score() <<"P2: " << g.getP2score() << endl;
+		g.print();
+		moveinfo = a.evaluateGame(g);
 
-	cerr << _errtable[g.makeMove( { 21, 17 })] << std::endl;
-	g.print();
+		if (moveinfo.second) {
+			cout << _errtable[g.jump(moveinfo.first)] << endl;
+		} else
+			cout << _errtable[g.makeMove(moveinfo.first)] << endl;
+	} while (g.getP1score() > 0 &&  g.getP2score() > 0);
 
-	auto moveinfo = a.evaluateGame(g);
-
-	if (moveinfo.second) {
-		cerr << _errtable[g.jump(moveinfo.first)] << endl;
-	} else
-		cerr << _errtable[g.makeMove(moveinfo.first)] << endl;;
-
-//	for (auto & pair : bbUMap) {
-//		cerr << pair.first << std::endl << pair.second <<std::endl;
-//	}
-
-	g.print();
-	return 0;
 }
 
+int main() {
+	testmJump();
 
+	return 0;
+}
 
