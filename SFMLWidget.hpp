@@ -35,7 +35,9 @@
 #include <gdkmm/general.h>
 #include <gtkmm.h>
 
-class SFMLWidget : public Gtk::Widget, public sf::RenderWindow
+#include "GameWin.hpp"
+
+class SFMLWidget : public Gtk::Widget//, public sf::RenderWindow
 {
     private:
         sf::VideoMode m_vMode;
@@ -54,9 +56,17 @@ class SFMLWidget : public Gtk::Widget, public sf::RenderWindow
 
         sf::Image m_tempImage;
         sf::Sprite m_tempSprite;
+
+        BaseWin* m_renWin;
     public:
         SFMLWidget(sf::VideoMode Mode);
         virtual ~SFMLWidget();
+
+        void bindWin(BaseWin* win) {
+        	delete m_renWin;
+
+        	m_renWin = win;
+        }
 };
 
 #endif /* SFMLWIDGET_HPP_ */

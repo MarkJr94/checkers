@@ -19,7 +19,8 @@
 
 void SFMLWidget::DrawObjects()
 {
-    this->Draw(m_tempSprite);
+//    m_renWin->Draw(m_tempSprite);
+    m_renWin->draw();
 }
 
 bool SFMLWidget::on_idle()
@@ -27,14 +28,14 @@ bool SFMLWidget::on_idle()
     if(m_refGdkWindow)
     {
         DrawObjects();
-        this->Display();
+        m_renWin->Display();
     }
 
     return true;
 }
 
 SFMLWidget::SFMLWidget(sf::VideoMode Mode)
-    : sf::RenderWindow(Mode, "")
+    : m_renWin(NULL)
 {
 //    set_flags(Gtk::NO_WINDOW);
 	set_has_window(false) ;
@@ -47,14 +48,15 @@ SFMLWidget::SFMLWidget(sf::VideoMode Mode)
 
 SFMLWidget::~SFMLWidget()
 {
+	delete m_renWin;
 }
 
 void SFMLWidget::on_size_request(Gtk::Requisition* requisition)
 {
     *requisition = Gtk::Requisition();
 
-    requisition->width = this->GetWidth();
-    requisition->height = this->GetHeight();
+    requisition->width = m_renWin->GetWidth();
+    requisition->height = m_renWin->GetHeight();
 }
 
 void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
@@ -68,7 +70,7 @@ void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
     if(m_refGdkWindow)
     {
         m_refGdkWindow->move_resize(allocation.get_x(), allocation.get_y(), allocation.get_width(), allocation.get_height() );
-        this->SetSize(allocation.get_width(), allocation.get_height());
+        m_renWin->SetSize(allocation.get_width(), allocation.get_height());
     }
 }
 
@@ -121,7 +123,7 @@ void SFMLWidget::on_realize()
         ///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
         ///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
 //        this->sf::RenderWindow::Create(reinterpret_cast<HWND>(GDK_WINDOW_HWND(m_refGdkWindow->gobj())));
-        this->sf::RenderWindow::Create(GDK_WINDOW_XID(m_refGdkWindow->gobj()));
+        m_renWin->sf::RenderWindow::Create(GDK_WINDOW_XID(m_refGdkWindow->gobj()));
 //        this->sf::RenderWindow::Create(GDK_DRAWABLE_ID(m_refGdkWindow->gobj()));
     }
 }
@@ -139,7 +141,7 @@ bool SFMLWidget::on_expose_event(GdkEventExpose* event)
     if(m_refGdkWindow)
     {
         DrawObjects();
-        this->Display();
+        m_renWin->Display();
     }
     return true;
 }

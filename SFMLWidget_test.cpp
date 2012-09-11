@@ -16,6 +16,9 @@ public:
 		set_default_size(800, 800);
 
 		add(m_VBox);
+		auto msd = new GameWin(800,800);
+		msd->bindGame(new Game(false,false));
+		m_MyWidget.bindWin(msd);
 		m_VBox.pack_start(m_MyWidget, Gtk::PACK_EXPAND_WIDGET);
 		m_MyWidget.show();
 

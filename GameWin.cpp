@@ -152,7 +152,7 @@ std::ostream& operator<<(std::ostream& os, const Move m) {
 	return os;
 }
 
-void GameWin::drawGame() {
+void GameWin::draw() {
 	using namespace std;
 	using namespace sf;
 	using sf::Shape;
@@ -181,8 +181,6 @@ void GameWin::drawGame() {
 	default:
 		break;
 	}
-
-	Display();
 //	std::cout << _mDown1 << " " << _state << std::endl;
 }
 
@@ -264,7 +262,8 @@ void GameWin::loop() {
 //		} else
 //			cout << _errtable[_game->makeMove(moveinfo.first)] << endl;
 		sfHandleEvents();
-		drawGame();
+		draw();
+		Display();
 	}
 
 	if (IsOpened()) Close();

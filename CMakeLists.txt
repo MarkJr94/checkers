@@ -3,6 +3,12 @@ project(CHECKERS)
 
 find_package(PkgConfig)
 
+pkg_check_modules(GTKMM gtkmm-3.0)
+pkg_check_modules(GLIBMM glibmm-2.4)
+pkg_check_modules(GDKMM gdkmm-3.0)
+
+
+
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_FLAGS "-g -Wall -std=c++0x")
 set(CORELIBS liboptparser.so)
@@ -16,3 +22,10 @@ target_link_libraries(game_test ${CORELIBS}) #Hash.cpp TranspositionTable.cpp
 
 add_executable(win_test BitBoard.cpp Game.cpp Save.cpp AI.cpp GameWin.cpp GameWin_test.cpp)
 target_link_libraries(win_test ${CORELIBS} ${SFML_LIBS})
+
+include_directories(
+    ${GTKMM_INCLUDE_DIRS}  ${GLIBMM_INCLUDE_DIRS} ${GDKMM_INCLUDE_DIRS} )
+
+add_executable(gt_test BitBoard.cpp Game.cpp Save.cpp AI.cpp GameWin.cpp SFMLWidget.cpp SFMLWidget_test.cpp)
+target_link_libraries(gt_test 
+    ${GTKMM_LIBRARIES}  ${GDKMM_LIBRARIES} ${GLIBMM_LIBRARIES} ${SFML_LIBS})
