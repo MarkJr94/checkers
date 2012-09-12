@@ -9,7 +9,7 @@
 
 int main() {
 
-	SFMLGame G(800,800);
+	SFMLGame G(900,1000);
 
 	G.bindGame(new Game(false,false));
 

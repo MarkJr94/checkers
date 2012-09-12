@@ -23,8 +23,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 
-const int circRad = 40;
-const int cellSz = 100;
+//const int circRad = 40;
+//const int cellSz = 100;
 
 class SFMLGame : public sf::RenderWindow {
 public:
@@ -57,7 +57,10 @@ private:
 	sf::Vector2<int> _mDown2;
 	State _state;
 
-	sf::Vector2<int> resolveMouse(sf::Vector2<float>) const;
+	int circRad = 40;
+	int cellSz = 100;
+
+	sf::Vector2<int> resolveMouse(sf::Vector2<int>) const;
 	MoveCode evalSelections();
 };
 

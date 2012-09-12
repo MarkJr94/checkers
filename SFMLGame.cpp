@@ -5,6 +5,7 @@
  *      Author: markjr
  */
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -13,8 +14,8 @@
 #include "SFMLGame.hpp"
 
 SFMLGame::SFMLGame(const int wide, const int high) :
-		super(sf::VideoMode(wide, high, 32), "Game Window"), _game(NULL), _ai(), _board(
-				64), _state(NORMAL) {
+		super(sf::VideoMode(wide, high, 32), "Game Window", sf::Style::Titlebar | sf::Style::Close), _game(NULL), _ai(), _board(
+				64), _state(NORMAL), circRad(40), cellSz(100) {
 
 }
 
@@ -47,13 +48,13 @@ void SFMLGame::sfHandleEvents() {
 				switch (_state) {
 				case NORMAL:
 					_mDown1 = resolveMouse(
-							Vector2<float>(Event.MouseButton.X,
+							Vector2<int>(Event.MouseButton.X,
 									Event.MouseButton.Y));
 					_state = HLIGHT_1;
 					break;
 				case HLIGHT_1:
 					_mDown2 = resolveMouse(
-							Vector2<float>(Event.MouseButton.X,
+							Vector2<int>(Event.MouseButton.X,
 									Event.MouseButton.Y));
 					_state = EVALUATING;
 					break;
@@ -68,11 +69,11 @@ void SFMLGame::sfHandleEvents() {
 	}
 }
 
-sf::Vector2<int> SFMLGame::resolveMouse(sf::Vector2<float> downVec) const {
-	int x = floor(downVec.x);
-	int y = floor(downVec.y);
-	x -= x % 100;
-	y -= y % 100;
+sf::Vector2<int> SFMLGame::resolveMouse(sf::Vector2<int> downVec) const {
+	int x = downVec.x;
+	int y = downVec.y;
+	x -= x % cellSz;
+	y -= y % cellSz;
 	return {x,y};
 }
 
@@ -116,22 +117,23 @@ void SFMLGame::drawCell(Cell c, int i, int j) {
 		return;
 
 	Shape piece;
+	const int hCellSz = cellSz /2;
 	switch (c) {
 	case P_B:
-		piece = Shape::Circle(x * cellSz + 50, y * cellSz + 50, circRad, black);
+		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz, circRad, black);
 		Draw(piece);
 		break;
 	case P_W:
-		piece = Shape::Circle(x * cellSz + 50, y * cellSz + 50, circRad, white);
+		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz, circRad, white);
 		Draw(piece);
 		break;
 	case K_B:
-		piece = Shape::Circle(x * cellSz + 50, y * cellSz + 50, circRad, black,
+		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz, circRad, black,
 				-5.f, Color::Cyan);
 		Draw(piece);
 		break;
 	case K_W:
-		piece = Shape::Circle(x * cellSz + 50, y * cellSz + 50, circRad, white,
+		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz, circRad, white,
 				-5.f, Color::Cyan);
 		Draw(piece);
 		break;
@@ -153,11 +155,23 @@ std::ostream& operator<<(std::ostream& os, const Move m) {
 }
 
 void SFMLGame::draw() {
-	using namespace std;
-	using namespace sf;
 	using sf::Shape;
+	using sf::Color;
+	using std::min;
+	using std::max;
+	using std::cout;
 
 	Clear();
+	int m = min(GetWidth(),GetHeight());
+//	SetSize(m,m);
+	cellSz = m / 8;
+	circRad = cellSz * 2 /5;
+
+
+//	static int counter = 0;
+//	if (counter++ % 30 == 0)
+//	cout << cellSz << ": :" << circRad <<  "\t";
+//	cout.flush();
 
 	_board = _game->toArr();
 
@@ -170,12 +184,12 @@ void SFMLGame::draw() {
 	Shape cell;
 	switch (_state) {
 	case EVALUATING:
-		cell = Shape::Rectangle(_mDown2.x, _mDown2.y, (_mDown2.x + 100),
-				(_mDown2.y + 100), Color(0, 0, 0, 0), -4.f, sf::Color::Yellow);
+		cell = Shape::Rectangle(_mDown2.x, _mDown2.y, (_mDown2.x + cellSz),
+				(_mDown2.y + cellSz), Color(0, 0, 0, 0), -4.f, sf::Color::Yellow);
 		Draw(cell);
 	case HLIGHT_1:
-		cell = Shape::Rectangle(_mDown1.x, _mDown1.y, (_mDown1.x + 100),
-				(_mDown1.y + 100), Color(0, 0, 0, 0), -4.f, sf::Color::Yellow);
+		cell = Shape::Rectangle(_mDown1.x, _mDown1.y, (_mDown1.x + cellSz),
+				(_mDown1.y + cellSz), Color(0, 0, 0, 0), -4.f, sf::Color::Yellow);
 		Draw(cell);
 		break;
 	default:
@@ -187,7 +201,7 @@ void SFMLGame::draw() {
 MoveCode SFMLGame::evalSelections() {
 	using sf::Vector2i;
 
-	int x = _mDown1.x / 100, y = 7 - _mDown1.y / 100;
+	int x = _mDown1.x / cellSz, y = 7 - _mDown1.y / cellSz;
 	unsigned short src;
 
 	int odd = y & 1;
@@ -202,8 +216,8 @@ MoveCode SFMLGame::evalSelections() {
 		src = src / 2;
 	}
 
-	x = _mDown2.x / 100;
-	y = 7 - _mDown2.y / 100;
+	x = _mDown2.x / cellSz;
+	y = 7 - _mDown2.y / cellSz;
 	unsigned short dst;
 
 	odd = y & 1;

@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
 			"org.gtkmm.example");
 
 	GameWindow window;
+	Gtk::Settings::get_default()->property_gtk_button_images() = true;
 
 	//Shows the window and returns when it is closed.
 	return app->run(window);

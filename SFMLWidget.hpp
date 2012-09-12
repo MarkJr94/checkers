@@ -40,8 +40,8 @@ public:
 	virtual ~SFMLWidget();
 
 	void bindWin(SFMLGame* win) {
-		delete m_renWin;
-		m_renWin = win;
+		delete _sfRenWin;
+		_sfRenWin = win;
 	}
 
 private:
@@ -57,9 +57,9 @@ private:
 	virtual bool on_expose_event(GdkEventExpose* event);
 	void DrawObjects();
 
-	Glib::RefPtr<Gdk::Window> m_refGdkWindow;
+	Glib::RefPtr<Gdk::Window> _gdkWindow;
 
-	SFMLGame* m_renWin;
+	SFMLGame* _sfRenWin;
 
 };
 

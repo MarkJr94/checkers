@@ -18,22 +18,22 @@
 
 void SFMLWidget::DrawObjects()
 {
-    m_renWin->draw();
+    _sfRenWin->draw();
 }
 
 bool SFMLWidget::on_idle()
 {
-    if(m_refGdkWindow)
+    if(_gdkWindow)
     {
         DrawObjects();
-        m_renWin->Display();
+        _sfRenWin->Display();
     }
 
     return true;
 }
 
 SFMLWidget::SFMLWidget(sf::VideoMode Mode)
-    : m_renWin(NULL)
+    : _sfRenWin(NULL)
 {
 	set_has_window(false) ;
 
@@ -42,15 +42,15 @@ SFMLWidget::SFMLWidget(sf::VideoMode Mode)
 
 SFMLWidget::~SFMLWidget()
 {
-	delete m_renWin;
+	delete _sfRenWin;
 }
 
 void SFMLWidget::on_size_request(Gtk::Requisition* requisition)
 {
     *requisition = Gtk::Requisition();
 
-    requisition->width = m_renWin->GetWidth();
-    requisition->height = m_renWin->GetHeight();
+    requisition->width = _sfRenWin->GetWidth();
+    requisition->height = _sfRenWin->GetHeight();
 }
 
 void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
@@ -61,10 +61,12 @@ void SFMLWidget::on_size_allocate(Gtk::Allocation& allocation)
 
     this->set_allocation(allocation);
 
-    if(m_refGdkWindow)
+    if(_gdkWindow)
     {
-        m_refGdkWindow->move_resize(allocation.get_x(), allocation.get_y(), allocation.get_width(), allocation.get_height() );
-        m_renWin->SetSize(allocation.get_width(), allocation.get_height());
+//        _gdkWindow->move_resize(allocation.get_x(), allocation.get_y(), allocation.get_width(), allocation.get_height() );
+    	_gdkWindow->move(allocation.get_x(), allocation.get_y());
+//        _sfRenWin->SetSize(allocation.get_width(), allocation.get_height());
+//        _sfRenWin->SetPosition(allocation.get_x(),allocation.gset_y());
     }
 }
 
@@ -82,7 +84,7 @@ void SFMLWidget::on_realize()
 {
     Gtk::Widget::on_realize();
 
-    if(!m_refGdkWindow)
+    if(!_gdkWindow)
     {
         //Create the GdkWindow:
         GdkWindowAttr attributes;
@@ -101,26 +103,26 @@ void SFMLWidget::on_realize()
         attributes.wclass = GDK_INPUT_OUTPUT;
 
 
-        m_refGdkWindow = Gdk::Window::create(get_window() /* parent */, &attributes,
+        _gdkWindow = Gdk::Window::create(get_window() /* parent */, &attributes,
                 GDK_WA_X | GDK_WA_Y);
 //        unset_flags(Gtk::NO_WINDOW);
         set_has_window(true);
-        set_window(m_refGdkWindow);
+        set_window(_gdkWindow);
 
         //set colors
 
         //make the widget receive expose events
-        m_refGdkWindow->set_user_data(gobj());
+        _gdkWindow->set_user_data(gobj());
 
         ///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
         ///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
-        m_renWin->sf::RenderWindow::Create(GDK_WINDOW_XID(m_refGdkWindow->gobj()));
+        _sfRenWin->sf::RenderWindow::Create(GDK_WINDOW_XID(_gdkWindow->gobj()));
     }
 }
 
 void SFMLWidget::on_unrealize()
 {
-  m_refGdkWindow.clear();
+  _gdkWindow.clear();
 
   //Call base class:
   Gtk::Widget::on_unrealize();
@@ -128,10 +130,10 @@ void SFMLWidget::on_unrealize()
 
 bool SFMLWidget::on_expose_event(GdkEventExpose* event)
 {
-    if(m_refGdkWindow)
+    if(_gdkWindow)
     {
         DrawObjects();
-        m_renWin->Display();
+        _sfRenWin->Display();
     }
     return true;
 }

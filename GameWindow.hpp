@@ -32,18 +32,24 @@ public:
 
 protected:
 	//Signal handlers:
-	void on_button_quit();
+	void onQuitClick();
 
-	void on_canvas_click();
+	void onSaveGameClick();
+
+	void onLoadGameClick();
+
+	void onCanvasClick(Gdk::Event* e);
 
 	// Layout containers
 	Gtk::Box _hBox; // TopLevel
 	Gtk::Grid _grid0;
 
 	//Child widgets:
-	SFMLWidget m_MyWidget;
+	SFMLWidget _gameWidget;
 	Gtk::ButtonBox m_ButtonBox;
-	Gtk::Button m_Button_Quit;
+	Gtk::Button _buttonSaveGame;
+	Gtk::Button _buttonLoadGame;
+	Gtk::Button _buttonQuit;
 };
 
 #endif /* GAMEWINDOW_HPP_ */
