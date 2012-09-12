@@ -14,59 +14,53 @@
 #include <SFML/System.hpp>
 
 // Gtk Includes
-//#include <gtkmm/widget.h>
 #include <gtkmm.h>
 
 // GLib Includes
-//#include <glibmm/objectbase.h>
 #include <glibmm.h>
 
 // GDK Includes
 #include <gdkmm.h>
-//#include <gdkmm/window.h>
-//#include <gdkmm/event.h>
 #include <gdk/gdkx.h>
 
+// SFML Includes
 
-
-#include <SFML/Graphics.hpp>
-//#include <gdk/gdkwin32.h>
 #include <gdk/gdk.h>
 #include <gdkmm/general.h>
 #include <gtkmm.h>
 
-#include "GameWin.hpp"
+#include "SFMLGame.hpp"
 
-class SFMLWidget : public Gtk::Widget//, public sf::RenderWindow
+class SFMLWidget: public Gtk::Widget //, public sf::RenderWindow
 {
-    private:
-        sf::VideoMode m_vMode;
+public:
+	friend class GameWindow;
 
-        virtual void on_size_request(Gtk::Requisition* requisition);
-        virtual void on_size_allocate(Gtk::Allocation& allocation);
-        virtual void on_map();
-        virtual void on_unmap();
-        virtual void on_realize();
-        virtual void on_unrealize();
-        virtual bool on_idle();
-        virtual bool on_expose_event(GdkEventExpose* event);
-        void DrawObjects();
+	SFMLWidget(sf::VideoMode Mode);
+	virtual ~SFMLWidget();
 
-        Glib::RefPtr<Gdk::Window> m_refGdkWindow;
+	void bindWin(SFMLGame* win) {
+		delete m_renWin;
+		m_renWin = win;
+	}
 
-        sf::Image m_tempImage;
-        sf::Sprite m_tempSprite;
+private:
+	sf::VideoMode m_vMode;
 
-        BaseWin* m_renWin;
-    public:
-        SFMLWidget(sf::VideoMode Mode);
-        virtual ~SFMLWidget();
+	virtual void on_size_request(Gtk::Requisition* requisition);
+	virtual void on_size_allocate(Gtk::Allocation& allocation);
+	virtual void on_map();
+	virtual void on_unmap();
+	virtual void on_realize();
+	virtual void on_unrealize();
+	virtual bool on_idle();
+	virtual bool on_expose_event(GdkEventExpose* event);
+	void DrawObjects();
 
-        void bindWin(BaseWin* win) {
-        	delete m_renWin;
+	Glib::RefPtr<Gdk::Window> m_refGdkWindow;
 
-        	m_renWin = win;
-        }
+	SFMLGame* m_renWin;
+
 };
 
 #endif /* SFMLWIDGET_HPP_ */

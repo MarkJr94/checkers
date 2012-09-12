@@ -26,18 +26,13 @@
 const int circRad = 40;
 const int cellSz = 100;
 
-class BaseWin : public sf::RenderWindow {
+class SFMLGame : public sf::RenderWindow {
 public:
-	BaseWin(const sf::VideoMode& m, const std::string& title) : sf::RenderWindow(m,title) {}
-	virtual ~BaseWin() {}
+	friend class GameWindow;
+	friend class SFMLGame;
 
-	virtual void draw() = 0;
-};
-
-class GameWin : public BaseWin {
-public:
-	GameWin(const int wide = 800, const int high = 800);
-	~GameWin();
+	SFMLGame(const int wide = 800, const int high = 800);
+	~SFMLGame();
 	void draw();
 	void sfHandleEvents();
 
@@ -53,7 +48,7 @@ public:
 	enum State {NORMAL, HLIGHT_1, EVALUATING};
 
 private:
-	typedef BaseWin super;
+	typedef sf::RenderWindow super;
 	typedef std::vector<Cell> Board;
 	Game* _game;
 	AI _ai;

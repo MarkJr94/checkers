@@ -6,22 +6,15 @@
  */
 
 #include <iostream>
-#include <glibmm/refptr.h>
-#include <gtkmm/dialog.h>
-#include <gtkmm/stock.h>
-#include <gtkmm/stockid.h>
-#include <gtkmm/image.h>
+#include <glibmm.h>
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "bst.hpp"
-#include "checkers.hpp"
-#include "game.hpp"
-#include "DrawGame.hpp"
 #include "GameWindow.hpp"
 
-Gtk::Button* set_but(const char *label, const Gtk::StockID& stock) {
+Gtk::Button* set_but(const char *label, const Gtk::StockID& stock)
+{
 	using namespace Gtk;
 	Button *button = manage(new Button(label));
 	Image *img = manage(new Gtk::Image(stock, Gtk::ICON_SIZE_BUTTON));
@@ -31,7 +24,8 @@ Gtk::Button* set_but(const char *label, const Gtk::StockID& stock) {
 	return button;
 }
 
-LoadGameDialog::LoadGameDialog() {
+LoadGameDialog::LoadGameDialog()
+{
 	using namespace Gtk;
 
 	ButtonBox* actionArea = get_action_area();
@@ -48,120 +42,62 @@ LoadGameDialog::LoadGameDialog() {
 	show_all_children();
 }
 
-LoadGameDialog::~LoadGameDialog() {
-	;
+LoadGameDialog::~LoadGameDialog()
+{
+
 }
 
-void LoadGameDialog::onYesButtonClicked() {
-	DrawGame *theGame = new DrawGame();
-	playAIvsAI(theGame, true);
-	delete theGame;
+void LoadGameDialog::onYesButtonClicked()
+{
+
 }
 
-void LoadGameDialog::onNoButtonClicked() {
+void LoadGameDialog::onNoButtonClicked()
+{
 	hide();
 }
 
-GameWindow::GameWindow() {
-	// TODO Auto-generated constructor stub
-	goButton = set_but("GO!!", Gtk::Stock::APPLY);
-	goButton->signal_clicked().connect(
-			sigc::mem_fun(*this, &GameWindow::onGoButtonClicked));
+GameWindow::GameWindow() :
+				_hBox(Gtk::ORIENTATION_HORIZONTAL),
+				_grid0(),
+				m_MyWidget(sf::VideoMode(800, 800, 32)),
+				m_ButtonBox(Gtk::ORIENTATION_HORIZONTAL),
+				m_Button_Quit("Quit")
+{
+	set_title("Custom Widget example");
+	set_border_width(6);
+	set_default_size(900, 800);
 
-	add(*goButton);
+	add(_hBox);
+	_hBox.pack_start(_grid0, Gtk::PACK_SHRINK);
+
+	_grid0.attach(m_ButtonBox,0,0,1,1);
+	_grid0.set_hexpand(true);
+//	_hBox.pack_start(m_ButtonBox, Gtk::PACK_SHRINK);
+
+	m_ButtonBox.pack_start(m_Button_Quit, Gtk::PACK_SHRINK);
+	m_ButtonBox.set_border_width(6);
+	m_ButtonBox.set_layout(Gtk::BUTTONBOX_END);
+	m_Button_Quit.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::on_button_quit));
+
+	SFMLGame* msd = new SFMLGame(800, 800);
+	msd->bindGame(new Game(false, false));
+	m_MyWidget.bindWin(msd);
+	_hBox.pack_start(m_MyWidget, Gtk::PACK_EXPAND_WIDGET);
+	m_MyWidget.set_hexpand(false);
+	m_MyWidget.set_vexpand(false);
+	m_MyWidget.show();
+	m_MyWidget.set_size_request(800,800);
+
 	show_all_children();
 }
 
-GameWindow::~GameWindow() {
-	// TODO Auto-generated destructor stub
+GameWindow::~GameWindow()
+{
 }
 
-void GameWindow::onGoButtonClicked() {
-//	LoadGameDialog lg;
-//	lg.run();
-	DrawGame *theGame = new DrawGame();
-	playAIvsAI(theGame, true);
-	delete theGame;
-}
-
-void playAI(Game *theGame, bool interact) {
-	using namespace std;
-
-	MoveRecord blank;
-	string instring;
-	GameTree *predictor = NULL;
-	bool turn;
-
-	theGame->print();
-
-	while (1) {
-		if (interact)
-			cout << theGame->getP1score() << " Player 1\n"
-					<< theGame->getP2score() << " Player 2\n\n";
-
-		if ((turn = theGame->getTurn())) {
-			if (theGame->getP1score() < 1)
-				return;
-
-			if (aiInteract(theGame, interact, blank, predictor, turn))
-				return;
-//			delay(500);
-		} else {
-			if (theGame->getP2score() < 1)
-				return;
-
-			if (aiInteract(theGame, interact, blank, predictor, turn))
-				return;
-//			delay(500);
-		}
-	}
-
-}
-
-bool sfHandleEvents(sf::RenderWindow& App) {
-	sf::Event Event;
-	bool ret = false;
-	while (App.GetEvent(Event)) {
-		// Window closed
-		if (Event.Type == sf::Event::Closed) {
-			App.Close();
-			ret = true;
-		}
-		// Escape key pressed
-		if ((Event.Type == sf::Event::KeyPressed)
-				&& (Event.Key.Code == sf::Key::Escape)) {
-			App.Close();
-			ret = true;
-		}
-	}
-	return ret;
-}
-
-void sfDrawThings(sf::RenderWindow& App) {
-	using namespace sf;
-	using namespace std;
-
-	Shape rect1 = Shape::Rectangle(0,0,50,50,Color(0xff,0,0));
-	App.Draw(rect1);
-}
-int main(int argc, char *argv[]) {
-//	Glib::RefPtr<Gtk::Application> app =
-//			Gtk::Application::create(argc, argv,
-//					"org.gtkmm.examples.base");
-//	Gtk::Settings::get_default()->property_gtk_button_images() = true;
-//
-//	GameWindow window;
-//	return app->run(window);
-	using namespace std;
-
-	sf::RenderWindow App(sf::VideoMode(800, 600, 32), "SFML Window");
-	bool Running = true;
-	while (Running) {
-		if (sfHandleEvents(App)) break;
-		sfDrawThings(App);
-		App.Display();
-	}
-
-	return EXIT_SUCCESS;
-
+void GameWindow::on_button_quit()
+{
+	hide();
 }

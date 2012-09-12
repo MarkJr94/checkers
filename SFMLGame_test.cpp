@@ -5,11 +5,11 @@
  *      Author: markjr
  */
 
-#include "GameWin.hpp"
+#include "SFMLGame.hpp"
 
 int main() {
 
-	GameWin G(800,800);
+	SFMLGame G(800,800);
 
 	G.bindGame(new Game(false,false));
 

@@ -11,7 +11,6 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
-//#include <gdk/gdkx.h>
 #include <gtk-3.0/gdk/gdkx.h>
 
 
@@ -19,7 +18,6 @@
 
 void SFMLWidget::DrawObjects()
 {
-//    m_renWin->Draw(m_tempSprite);
     m_renWin->draw();
 }
 
@@ -37,11 +35,7 @@ bool SFMLWidget::on_idle()
 SFMLWidget::SFMLWidget(sf::VideoMode Mode)
     : m_renWin(NULL)
 {
-//    set_flags(Gtk::NO_WINDOW);
 	set_has_window(false) ;
-    m_tempImage.LoadFromFile("img.jpg");
-    m_tempSprite.SetImage(m_tempImage);
-    m_tempSprite.SetPosition(50, 50);
 
     Glib::signal_idle().connect( sigc::mem_fun(*this, &SFMLWidget::on_idle) );
 }
@@ -114,17 +108,13 @@ void SFMLWidget::on_realize()
         set_window(m_refGdkWindow);
 
         //set colors
-//        modify_bg(Gtk::STATE_NORMAL , Gdk::Color("red"));
-//        modify_fg(Gtk::STATE_NORMAL , Gdk::Color("blue"));
 
         //make the widget receive expose events
         m_refGdkWindow->set_user_data(gobj());
 
         ///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
         ///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
-//        this->sf::RenderWindow::Create(reinterpret_cast<HWND>(GDK_WINDOW_HWND(m_refGdkWindow->gobj())));
         m_renWin->sf::RenderWindow::Create(GDK_WINDOW_XID(m_refGdkWindow->gobj()));
-//        this->sf::RenderWindow::Create(GDK_DRAWABLE_ID(m_refGdkWindow->gobj()));
     }
 }
 

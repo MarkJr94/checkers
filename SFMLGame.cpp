@@ -10,19 +10,19 @@
 #include <sstream>
 #include <vector>
 
-#include "GameWin.hpp"
+#include "SFMLGame.hpp"
 
-GameWin::GameWin(const int wide, const int high) :
+SFMLGame::SFMLGame(const int wide, const int high) :
 		super(sf::VideoMode(wide, high, 32), "Game Window"), _game(NULL), _ai(), _board(
 				64), _state(NORMAL) {
 
 }
 
-GameWin::~GameWin() {
+SFMLGame::~SFMLGame() {
 	delete _game;
 }
 
-void GameWin::sfHandleEvents() {
+void SFMLGame::sfHandleEvents() {
 	using sf::Event;
 	using sf::Vector2;
 
@@ -68,7 +68,7 @@ void GameWin::sfHandleEvents() {
 	}
 }
 
-sf::Vector2<int> GameWin::resolveMouse(sf::Vector2<float> downVec) const {
+sf::Vector2<int> SFMLGame::resolveMouse(sf::Vector2<float> downVec) const {
 	int x = floor(downVec.x);
 	int y = floor(downVec.y);
 	x -= x % 100;
@@ -76,7 +76,7 @@ sf::Vector2<int> GameWin::resolveMouse(sf::Vector2<float> downVec) const {
 	return {x,y};
 }
 
-void GameWin::drawCell(Cell c, int i, int j) {
+void SFMLGame::drawCell(Cell c, int i, int j) {
 	using sf::Shape;
 	using sf::Color;
 
@@ -152,7 +152,7 @@ std::ostream& operator<<(std::ostream& os, const Move m) {
 	return os;
 }
 
-void GameWin::draw() {
+void SFMLGame::draw() {
 	using namespace std;
 	using namespace sf;
 	using sf::Shape;
@@ -184,7 +184,7 @@ void GameWin::draw() {
 //	std::cout << _mDown1 << " " << _state << std::endl;
 }
 
-MoveCode GameWin::evalSelections() {
+MoveCode SFMLGame::evalSelections() {
 	using sf::Vector2i;
 
 	int x = _mDown1.x / 100, y = 7 - _mDown1.y / 100;
@@ -228,7 +228,7 @@ MoveCode GameWin::evalSelections() {
 	}
 }
 
-void GameWin::loop() {
+void SFMLGame::loop() {
 	using std::cout;
 	using std::endl;
 

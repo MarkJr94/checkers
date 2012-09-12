@@ -16,7 +16,7 @@ class Game {
 public:
 	friend class AI;
 	friend class GameMaster;
-	friend class GameWin;
+	friend class SFMLGame;
 
 	/* Constructor */
 	Game(const bool db, const bool interact);

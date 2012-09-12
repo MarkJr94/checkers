@@ -8,19 +8,8 @@
 #ifndef GAMEWINDOW_HPP_
 #define GAMEWINDOW_HPP_
 
-#include <gtkmm/window.h>
-#include <gtkmm/button.h>
-#include <gtkmm/buttonbox.h>
-#include <gtkmm/checkbutton.h>
-#include <gtkmm/box.h>
-#include <gtkmm/grid.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/entry.h>
-#include <gtkmm/settings.h>
-#include <gtkmm/filechooserdialog.h>
-#include <gtkmm/stock.h>
-#include <gtkmm/stockid.h>
-#include <gtkmm/image.h>
+#include "SFMLWidget.hpp"
+#include <gtkmm.h>
 
 
 class LoadGameDialog : public Gtk::Dialog {
@@ -36,15 +25,25 @@ protected:
 	void onNoButtonClicked();
 };
 
-class GameWindow : public Gtk::Window {
+class GameWindow: public Gtk::Window {
 public:
 	GameWindow();
 	virtual ~GameWindow();
 
 protected:
-	Gtk::Button* goButton;
+	//Signal handlers:
+	void on_button_quit();
 
-	void onGoButtonClicked();
+	void on_canvas_click();
+
+	// Layout containers
+	Gtk::Box _hBox; // TopLevel
+	Gtk::Grid _grid0;
+
+	//Child widgets:
+	SFMLWidget m_MyWidget;
+	Gtk::ButtonBox m_ButtonBox;
+	Gtk::Button m_Button_Quit;
 };
 
 #endif /* GAMEWINDOW_HPP_ */
