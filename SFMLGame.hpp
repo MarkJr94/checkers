@@ -104,6 +104,8 @@ private:
 
 	virtual bool on_button_press_event(GdkEventButton* event);
 
+	virtual bool on_key_press_event(GdkEventKey* event);
+
 	Glib::RefPtr<Gdk::Window> _gdkWindow;
 };
 

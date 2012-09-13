@@ -441,3 +441,12 @@ bool SFMLGame::on_button_press_event(GdkEventButton* event) {
 
 	return true;
 }
+
+bool SFMLGame::on_key_press_event(GdkEventKey* event) {
+	using std::cout;
+	using std::endl;
+
+	switch (event->keyval) {
+	case
+	}
+}
