@@ -19,27 +19,44 @@
 #include <string>
 #include <vector>
 
+
+// SFML Includes
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 
+// Gtk Includes
+#include <gtkmm.h>
+
+// GLib Includes
+#include <glibmm.h>
+
+// GDK Includes
+#include <gdkmm.h>
+#include <gdk/gdkx.h>
+
+// SFML Includes
+
+#include <gdk/gdk.h>
+#include <gdkmm/general.h>
+#include <gtkmm.h>
+
 //const int circRad = 40;
 //const int cellSz = 100;
 
-class SFMLGame : public sf::RenderWindow {
+class SFMLGame : public sf::RenderWindow, public Gtk::Widget {
 public:
+
+
 	friend class GameWindow;
-	friend class SFMLGame;
+	friend class SFMLWidget;
 
 	SFMLGame(const int wide = 800, const int high = 800);
-	~SFMLGame();
-	void draw();
-	void sfHandleEvents();
+	SFMLGame(const sf::VideoMode& mode = sf::VideoMode(800,800,32));
+	virtual ~SFMLGame();
 
-	void bindGame(Game * game = new Game(false,false)) {
-		delete _game;
-		_game = game;
-	}
+	/* ===================== SFML Interface ============= */
+	void update();
 
 	void drawCell(Cell c,int x, int y);
 
@@ -47,10 +64,13 @@ public:
 
 	enum State {NORMAL, HLIGHT_1, EVALUATING};
 
+	/* ===================== Gtkmm Interface =================== */
+
 private:
+	/* ===================== SFML Implementation ============= */
 	typedef sf::RenderWindow super;
 	typedef std::vector<Cell> Board;
-	Game* _game;
+	Game _game;
 	AI _ai;
 	Board _board;
 	sf::Vector2<int> _mDown1;
@@ -61,7 +81,30 @@ private:
 	int cellSz = 100;
 
 	sf::Vector2<int> resolveMouse(sf::Vector2<int>) const;
+
 	MoveCode evalSelections();
+
+	/* ===================== Gtkmm Implementation =================== */
+
+	virtual void on_size_request(Gtk::Requisition* requisition);
+
+	virtual void on_size_allocate(Gtk::Allocation& allocation);
+
+	virtual void on_map();
+
+	virtual void on_unmap();
+
+	virtual void on_realize();
+
+	virtual void on_unrealize();
+
+	virtual bool on_idle();
+
+	virtual bool on_expose_event(GdkEventExpose* event);
+
+	virtual bool on_button_press_event(GdkEventButton* event);
+
+	Glib::RefPtr<Gdk::Window> _gdkWindow;
 };
 
 #endif /* GAME_HPP_ */

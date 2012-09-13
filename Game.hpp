@@ -56,12 +56,12 @@ public:
 
 	std::vector<Cell> toArr() const;
 
-protected:
+private:
 	BitBoard _WP;
 	BitBoard _BP;
 	BitBoard _K;
 
-private:
+
 	typedef BitBoard BB;
 	/* Tracks if it's P1's turn or not */
 	bool _turn;

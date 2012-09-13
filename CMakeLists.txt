@@ -20,12 +20,9 @@ target_link_libraries(game_test ${CORELIBS}) #Hash.cpp TranspositionTable.cpp
 add_executable(ai_test Game.cpp Save.cpp BitBoard.cpp AI.cpp AI_test.cpp)
 target_link_libraries(game_test ${CORELIBS}) #Hash.cpp TranspositionTable.cpp
 
-add_executable(win_test BitBoard.cpp Game.cpp Save.cpp AI.cpp SFMLGame.cpp SFMLGame_test.cpp)
-target_link_libraries(win_test ${CORELIBS} ${SFML_LIBS})
-
 include_directories(
     ${GTKMM_INCLUDE_DIRS}  ${GLIBMM_INCLUDE_DIRS} ${GDKMM_INCLUDE_DIRS} )
 
-add_executable(app_test BitBoard.cpp Game.cpp Save.cpp AI.cpp SFMLGame.cpp SFMLWidget.cpp GameWindow.cpp GameWindow_test.cpp)
+add_executable(app_test BitBoard.cpp Game.cpp Save.cpp AI.cpp SFMLGame.cpp GameWindow.cpp GameWindow_test.cpp)
 target_link_libraries(app_test 
     ${GTKMM_LIBRARIES}  ${GDKMM_LIBRARIES} ${GLIBMM_LIBRARIES} ${SFML_LIBS})

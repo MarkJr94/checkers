@@ -30,38 +30,6 @@ void setStock(Gtk::Button& button, std::string label, const Gtk::StockID stock) 
 	button.set_label(label);
 }
 
-LoadGameDialog::LoadGameDialog()
-{
-	using namespace Gtk;
-
-	ButtonBox* actionArea = get_action_area();
-	yesButton = set_but("Yes", Gtk::Stock::DIRECTORY);
-	yesButton->signal_clicked().connect(
-			sigc::mem_fun(*this, &LoadGameDialog::onYesButtonClicked));
-	noButton = set_but("No", Stock::NO);
-	noButton->signal_clicked().connect(
-			sigc::mem_fun(*this, &LoadGameDialog::onNoButtonClicked));
-
-	actionArea->pack_start(*noButton, false, false);
-	actionArea->pack_start(*yesButton, false, false);
-
-	show_all_children();
-}
-
-LoadGameDialog::~LoadGameDialog()
-{
-
-}
-
-void LoadGameDialog::onYesButtonClicked()
-{
-
-}
-
-void LoadGameDialog::onNoButtonClicked()
-{
-	hide();
-}
 
 GameWindow::GameWindow() :
 				_hBox(Gtk::ORIENTATION_HORIZONTAL),
@@ -102,9 +70,9 @@ GameWindow::GameWindow() :
 	_buttonQuit.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onQuitClick));
 
-	SFMLGame* msd = new SFMLGame(800, 800);
-	msd->bindGame(new Game(false, false));
-	_gameWidget.bindWin(msd);
+//	SFMLGame* msd = new SFMLGame(800, 800);
+//	msd->bindGame(new Game(false, false));
+//	_gameWidget.bindWin(msd);
 //	_gameWidget.signal_clicked().connect(
 //			sigc::mem_fun(*this, &GameWindow::onCanvasClick));
 
@@ -125,12 +93,6 @@ GameWindow::~GameWindow()
 void GameWindow::onQuitClick()
 {
 	hide();
-}
-
-void GameWindow::onCanvasClick(Gdk::Event* e) {
-	double x, y;
-	e->get_coords(x,y);
-	std::cout << "x: " << x << " y: " << y << std::endl;
 }
 
 void GameWindow::onLoadGameClick()
@@ -167,7 +129,7 @@ void GameWindow::onLoadGameClick()
 
       Save s;
       s.read(filename);
-      _gameWidget._sfRenWin->_game->restoreToSave(s);
+      _gameWidget._game.restoreToSave(s);
       break;
     }
     case(Gtk::RESPONSE_CANCEL):
@@ -213,7 +175,7 @@ void GameWindow::onSaveGameClick()
       //Notice that this is a std::string, not a Glib::ustring.
       std::string filename = dialog.get_filename();
       std::cout << "File selected: " <<  filename << std::endl;
-      _gameWidget._sfRenWin->_game->getSave().write(filename + ".cks");
+      _gameWidget._game.getSave().write(filename + ".cks");
       break;
     }
     case(Gtk::RESPONSE_CANCEL):
