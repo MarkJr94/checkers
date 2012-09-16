@@ -16,27 +16,37 @@ Game* AI::_game = new Game(false, false);
 const bool db = false;
 const bool dbg = true;
 
-void printMove(const Move& move) {
+void printMove(const Move& move)
+{
 	std::cout << "SRC: " << move.src << " DST: " << move.dst << "\t";
 }
 
 AI::AI(const unsigned degree, const Save& save, const unsigned difficulty) :
-		_level(degree), _difficulty(difficulty), _children(), _moves(), _save(
-				save), _p1Avg(0), _p2Avg(0) {
+				_level(degree),
+				_difficulty(difficulty),
+				_children(),
+				_moves(),
+				_save(save),
+				_p1Avg(0),
+				_p2Avg(0)
+{
 	srand(time(NULL));
 }
 
-AI::~AI() {
+AI::~AI()
+{
 	for (auto child : _children)
 		delete child;
 }
 
-void AI::initialize(const Save& save) {
+void AI::initialize(const Save& save)
+{
 	_save = save;
 	_game->restoreToSave(save);
-	_p1Avg = _game->getP1score();
-	_p2Avg = _game->getP2score();
-
+//	_p1Avg = _game->getP1score();
+//	_p2Avg = _game->getP2score();
+	_p1Avg = _game->p1NumPieces();
+	_p2Avg = _game->p2NumPieces();
 	for (auto child : _children)
 		delete child;
 	_children.clear();
@@ -44,14 +54,16 @@ void AI::initialize(const Save& save) {
 	_moves.clear();
 }
 
-void AI::printScene() {
+void AI::printScene()
+{
 	using namespace std;
 
 	cout << "This is a degree " << _level << " AI with " << "P1 Min: " << _p1Avg
 			<< "\tP2 Min: " << _p2Avg << endl;
 }
 
-void AI::generateMovesBlack() {
+void AI::generateMovesBlack()
+{
 //	using namespace std;
 	using namespace Bit::Masks;
 	using Bit::rol;
@@ -67,21 +79,22 @@ void AI::generateMovesBlack() {
 		const BB mover = highBit(Movers);
 //		std::cout << "++++++++++++mover = :" << hex << mover << dec <<std::endl;
 		Movers ^= mover;
-		if ((target = ((rol(mover & CAN_UPLEFT,7) & empty))))
+		if ((target = ((rol(mover & CAN_UPLEFT, 7) & empty))))
 			_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		if ((target = ((rol(mover & CAN_UPRIGHT,1) & empty))))
-					_moves.push_back( { bbUMap[mover], bbUMap[target] });
+		if ((target = ((rol(mover & CAN_UPRIGHT, 1) & empty))))
+			_moves.push_back( { bbUMap[mover], bbUMap[target] });
 
 		if (mover & _game->_K) {
-			if ((target = ((ror(mover & CAN_DOWNRIGHT,7) & empty))))
+			if ((target = ((ror(mover & CAN_DOWNRIGHT, 7) & empty))))
 				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			if ((target = ((ror(mover & CAN_DOWNLEFT,1) & empty))))
-						_moves.push_back( { bbUMap[mover], bbUMap[target] });
+			if ((target = ((ror(mover & CAN_DOWNLEFT, 1) & empty))))
+				_moves.push_back( { bbUMap[mover], bbUMap[target] });
 		}
 	}
 }
 
-void AI::generateMovesWhite() {
+void AI::generateMovesWhite()
+{
 	using namespace std;
 	using namespace Bit::Masks;
 	using Bit::ror;
@@ -98,21 +111,22 @@ void AI::generateMovesWhite() {
 //		std::cout << "++++++++++++mover = :" << hex << mover << dec <<std::endl;
 		Movers ^= mover;
 
-		if ((target = ((ror(mover & CAN_DOWNRIGHT,7) & empty))))
+		if ((target = ((ror(mover & CAN_DOWNRIGHT, 7) & empty))))
 			_moves.push_back( { bbUMap[mover], bbUMap[target] });
-		if ((target = ((ror(mover & CAN_DOWNLEFT,1) & empty))))
-					_moves.push_back( { bbUMap[mover], bbUMap[target] });
+		if ((target = ((ror(mover & CAN_DOWNLEFT, 1) & empty))))
+			_moves.push_back( { bbUMap[mover], bbUMap[target] });
 
 		if (mover & _game->_K) {
-			if ((target = ((rol(mover & CAN_UPLEFT,7) & empty))))
+			if ((target = ((rol(mover & CAN_UPLEFT, 7) & empty))))
 				_moves.push_back( { bbUMap[mover], bbUMap[target] });
-			if ((target = ((rol(mover & CAN_UPRIGHT,1) & empty))))
-						_moves.push_back( { bbUMap[mover], bbUMap[target] });
+			if ((target = ((rol(mover & CAN_UPRIGHT, 1) & empty))))
+				_moves.push_back( { bbUMap[mover], bbUMap[target] });
 		}
 	}
 }
 
-void AI::generateJumpsBlack() {
+void AI::generateJumpsBlack()
+{
 	using namespace std;
 	using Bit::Masks::bbUMap;
 	using Bit::rol;
@@ -129,29 +143,30 @@ void AI::generateJumpsBlack() {
 		jumpers ^= j;
 		BB victims = _game->_WP;
 		BB vict;
-		vict = rol(j,7) & victims;
-		if (_game->canJump(j,vict)) {
+		vict = rol(j, 7) & victims;
+		if (_game->canJump(j, vict)) {
 			_moves.push_back( { bbUMap[j], bbUMap[vict] });
 		}
-		vict = rol(j,1) & victims;
-		if (_game->canJump(j,vict)) {
+		vict = rol(j, 1) & victims;
+		if (_game->canJump(j, vict)) {
 			_moves.push_back( { bbUMap[j], bbUMap[vict] });
 		}
 
 		if (j & _game->_K) {
-			vict = ror(j,7) & victims;
-			if (_game->canJump(j,vict)) {
+			vict = ror(j, 7) & victims;
+			if (_game->canJump(j, vict)) {
 				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 			}
-			vict = ror(j,1) & victims;
-			if (_game->canJump(j,vict)) {
+			vict = ror(j, 1) & victims;
+			if (_game->canJump(j, vict)) {
 				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 			}
 		}
 	}
 }
 
-void AI::generateJumpsWhite() {
+void AI::generateJumpsWhite()
+{
 	using namespace std;
 	using Bit::Masks::bbUMap;
 	using Bit::rol;
@@ -167,29 +182,30 @@ void AI::generateJumpsWhite() {
 		jumpers ^= j;
 		BB victims = _game->_BP;
 
-		BB vict = ror(j,7) & victims;
-		if (_game->canJump(j,vict)) {
+		BB vict = ror(j, 7) & victims;
+		if (_game->canJump(j, vict)) {
 			_moves.push_back( { bbUMap[j], bbUMap[vict] });
 		}
-		vict = ror(j,1) & victims;
-		if (_game->canJump(j,vict)) {
+		vict = ror(j, 1) & victims;
+		if (_game->canJump(j, vict)) {
 			_moves.push_back( { bbUMap[j], bbUMap[vict] });
 		}
 
 		if (j & _game->_K) {
-			vict = rol(j,7) & victims;
-			if (_game->canJump(j,vict)) {
+			vict = rol(j, 7) & victims;
+			if (_game->canJump(j, vict)) {
 				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 			}
-			vict = rol(j,1) & victims;
-			if (_game->canJump(j,vict)) {
+			vict = rol(j, 1) & victims;
+			if (_game->canJump(j, vict)) {
 				_moves.push_back( { bbUMap[j], bbUMap[vict] });
 			}
 		}
 	}
 }
 
-std::pair<bool, unsigned> AI::generateOutcomes() {
+std::pair<bool, unsigned> AI::generateOutcomes()
+{
 	using std::cout;
 	using std::endl;
 
@@ -218,8 +234,8 @@ std::pair<bool, unsigned> AI::generateOutcomes() {
 				printMove(_moves[i]);
 				cout << "Turn: " << _game->_turn << " " << "Jump: "
 						<< _errtable[_game->jump(_moves[i])] << endl;
-			}
-//			_game->jump(_moves[i]);
+			} else
+				_game->jump(_moves[i]);
 			_children.push_back(
 					new AI(_level + 1, _game->getSave(), _difficulty));
 			_game->restoreToSave(_save);
@@ -230,8 +246,8 @@ std::pair<bool, unsigned> AI::generateOutcomes() {
 				printMove(_moves[i]);
 				cout << "Turn: " << _game->_turn << " " << "Move: "
 						<< _errtable[_game->makeMove(_moves[i])] << endl;
-			}
-//			_game->makeMove(_moves[i]);
+			} else
+				_game->makeMove(_moves[i]);
 			_children.push_back(
 					new AI(_level + 1, _game->getSave(), _difficulty));
 			_game->restoreToSave(_save);
@@ -244,7 +260,8 @@ std::pair<bool, unsigned> AI::generateOutcomes() {
 	return {jumps, numOutcomes};
 }
 
-void AI::updateScores() {
+void AI::updateScores()
+{
 	if (_children.empty())
 		return;
 
@@ -261,7 +278,8 @@ void AI::updateScores() {
 	_p2Avg = temp2 / _children.size();
 }
 
-std::pair<Move, bool> AI::evaluateMoves(bool aggro) {
+std::pair<Move, bool> AI::evaluateMoves(bool aggro)
+{
 
 	bool optimizeForP1 = _game->_turn;
 	std::pair<bool, unsigned> info = generateOutcomes();
@@ -317,13 +335,15 @@ std::pair<Move, bool> AI::evaluateMoves(bool aggro) {
 	return {_moves[favoredSon],info.first};
 }
 
-std::pair<Move, bool> AI::evaluateGame(Game& game) {
+std::pair<Move, bool> AI::evaluateGame(Game& game)
+{
 	_save = game.getSave();
 
-	return evaluateMoves(true);
+	return evaluateMoves(false);
 }
 
-Move AI::getRandomMove() const {
+Move AI::getRandomMove() const
+{
 	unsigned index = rand() % _children.size();
 
 	return _moves[index];

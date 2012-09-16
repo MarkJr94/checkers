@@ -5,7 +5,7 @@
  *      Author: msinclair94
  */
 
-#include "SFMLWidget.hpp"
+#include "SFMLGame.hpp"
 #include "GameWindow.hpp"
 
 int main(int argc, char *argv[]) {

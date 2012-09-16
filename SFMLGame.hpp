@@ -35,15 +35,6 @@
 #include <gdkmm.h>
 #include <gdk/gdkx.h>
 
-// SFML Includes
-
-#include <gdk/gdk.h>
-#include <gdkmm/general.h>
-#include <gtkmm.h>
-
-//const int circRad = 40;
-//const int cellSz = 100;
-
 class SFMLGame : public sf::RenderWindow, public Gtk::Widget {
 public:
 

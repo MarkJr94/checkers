@@ -26,6 +26,10 @@ SFMLGame::SFMLGame(const int wide, const int high) :
 	set_has_window(false);
 
 	add_events(Gdk::BUTTON_PRESS_MASK);
+	add_events(Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK);
+
+//	set_can_focus(true);
+//	grab_focus();
 
 	Glib::signal_idle().connect(sigc::mem_fun(*this, &SFMLGame::on_idle));
 }
@@ -392,6 +396,9 @@ void SFMLGame::on_realize()
         ///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
         ///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
         sf::RenderWindow::Create(GDK_WINDOW_XID(_gdkWindow->gobj()));
+
+    	set_can_focus(true);
+    	grab_focus();
     }
 }
 
@@ -447,6 +454,12 @@ bool SFMLGame::on_key_press_event(GdkEventKey* event) {
 	using std::endl;
 
 	switch (event->keyval) {
-	case
+	case GDK_KEY_q:
+		cout << "Returning to normal state" << endl;
+		_state = NORMAL;
+		break;
+	default:
+		break;
 	}
+	return true;
 }
