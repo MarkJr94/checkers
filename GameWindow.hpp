@@ -19,8 +19,8 @@ public:
 	void entry(const std::string&);
 
 private:
-	Gtk::Entry _fileEnt;
-	Gtk::Label _label;
+	Gtk::Entry m_filename_entry;
+	Gtk::Label m_file_entry_label;
 	typedef Gtk::Dialog super;
 };
 
@@ -38,23 +38,23 @@ protected:
 	void onLoadGameClick();
 
 	// Layout containers
-	Gtk::Box _hBox; // TopLevel
-	Gtk::Grid _grid0;
+	Gtk::Box m_toplevel_hbox; // TopLevel
+	Gtk::Grid m_grid;
 
 	//Child widgets:
-	SFMLGame _gameWidget;
+	SFMLGame m_game_widget;
 
 	Gtk::ButtonBox m_file_box;
-	Gtk::Button _mButtonSaveGame;
-	Gtk::Button _buttonLoadGame;
+	Gtk::Button m_save_game_button;
+	Gtk::Button m_load_game_button;
 
-	Gtk::ButtonBox _checkBox;
-	Gtk::Button _buttonCheckpoint;
-	Gtk::Button _buttonRestoreCheckpoint;
+	Gtk::ButtonBox m_checkpoint_box;
+	Gtk::Button m_checkpoint_button;
+	Gtk::Button m_checkpoint_restore_button;
 
-	Gtk::Button _buttonQuit;
+	Gtk::Button m_button_quit;
 
-	Save
+	Save m_checkpoint;
 };
 
 #endif /* GAMEWINDOW_HPP_ */
