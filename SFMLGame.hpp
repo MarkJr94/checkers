@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-
 // SFML Includes
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -35,31 +34,29 @@
 #include <gdkmm.h>
 #include <gdk/gdkx.h>
 
-class SFMLGame : public sf::RenderWindow, public Gtk::Widget {
+class SFMLGame: public sf::RenderWindow, public Gtk::Widget {
 public:
 
-
 	friend class GameWindow;
-	friend class SFMLWidget;
 
 	SFMLGame(const int wide = 800, const int high = 800);
-	SFMLGame(const sf::VideoMode& mode = sf::VideoMode(800,800,32));
+	SFMLGame(const sf::VideoMode& mode = sf::VideoMode(800, 800, 32));
 	virtual ~SFMLGame();
 
 	/* ===================== SFML Interface ============= */
 	void update();
 
-	void drawCell(Cell c,int x, int y);
-
 	void loop();
 
-	enum State {NORMAL, HLIGHT_1, EVALUATING};
+	enum State {
+		NORMAL, HLIGHT_1, PLAYER_MOVE, AI_MOVE
+	};
 
 	/* ===================== Gtkmm Interface =================== */
 
 private:
 	/* ===================== SFML Implementation ============= */
-	typedef sf::RenderWindow super;
+	typedef sf::RenderWindow supersf;
 	typedef std::vector<Cell> Board;
 	Game mGame;
 	AI mAi;
@@ -75,7 +72,10 @@ private:
 
 	MoveCode evalSelections();
 
+	void drawCell(Cell c, int x, int y);
+
 	/* ===================== Gtkmm Implementation =================== */
+	typedef Gtk::Widget supergtk;
 
 	virtual void on_size_request(Gtk::Requisition* requisition);
 

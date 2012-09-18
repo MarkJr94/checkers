@@ -14,7 +14,7 @@
 #include "SFMLGame.hpp"
 
 SFMLGame::SFMLGame(const int wide, const int high) :
-				sf::RenderWindow(sf::VideoMode(wide, high, 32), "Game Window",
+				supersf(sf::VideoMode(wide, high, 32), "Game Window",
 						sf::Style::Titlebar | sf::Style::Close),
 				mGame(false, false),
 				mAi(),
@@ -28,14 +28,11 @@ SFMLGame::SFMLGame(const int wide, const int high) :
 	add_events(Gdk::BUTTON_PRESS_MASK);
 	add_events(Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK);
 
-//	set_can_focus(true);
-//	grab_focus();
-
 	Glib::signal_idle().connect(sigc::mem_fun(*this, &SFMLGame::on_idle));
 }
 
 SFMLGame::SFMLGame(const sf::VideoMode& mode) :
-				sf::RenderWindow(mode, "Game Window",
+				supersf(mode, "Game Window",
 						sf::Style::Titlebar | sf::Style::Close),
 				mGame(false, false),
 				mAi(),
@@ -63,7 +60,6 @@ SFMLGame::~SFMLGame()
 /* ======================================================================= */
 /* ======================================================================= */
 /* ======================================================================= */
-
 
 sf::Vector2<int> SFMLGame::resolveMouse(sf::Vector2<int> downVec) const
 {
@@ -165,39 +161,40 @@ void SFMLGame::update()
 	using std::cout;
 	using std::endl;
 
-	do {
-		if (mState == EVALUATING) {
-			MoveCode err;
+	if (mGame.isLive()) {
+		do {
+			if (mState == PLAYER_MOVE) {
+				MoveCode err;
 
-			err = evalSelections();
-			std::cout << errorTable[err] << std::endl;
-			if (mGame.mTurn) {
-				mState = NORMAL;
-				break;
+				err = evalSelections();
+				std::cout << errorTable[err] << std::endl;
+				if (mGame.mTurn) {
+					mState = NORMAL;
+					break;
+				} else {
+					mState = AI_MOVE;
+					break;
+				}
+
+			} else if (mState == AI_MOVE) {
+				std::pair<Move, bool> moveinfo = mAi.evaluateGame(mGame);
+				cout << "AI Move: " << moveinfo.first << endl;
+
+				if (moveinfo.first.dst == 0 && moveinfo.first.src == 0)
+					break;
+
+				if (moveinfo.second) {
+					cout << errorTable[mGame.jump(moveinfo.first)] << endl;
+				} else
+					cout << errorTable[mGame.makeMove(moveinfo.first)] << endl;
+
+				if (mGame.mTurn)
+					mState = NORMAL;
 			}
-			std::pair<Move, bool> moveinfo = mAi.evaluateGame(mGame);
-			cout << "AI Move: " << moveinfo.first << endl;
-			if (moveinfo.first.dst == 0 && moveinfo.first.src == 0)
-				break;
-			if (moveinfo.second) {
-				cout << errorTable[mGame.jump(moveinfo.first)] << endl;
-			} else
-				cout << errorTable[mGame.makeMove(moveinfo.first)] << endl;
-//			}
-			if (mGame.mTurn)
-				mState = NORMAL;
-		}
-	} while (0);
-	Clear();
-	int m = min(GetWidth(), GetHeight());
-//	SetSize(m,m);
-	CELLSZ = m / 8;
-	CIRCRAD = CELLSZ * 2 / 5;
+		} while (0);
+	}
 
-//	static int counter = 0;
-//	if (counter++ % 30 == 0)
-//	cout << cellSz << ": :" << circRad <<  "\t";
-//	cout.flush();
+	Clear();
 
 	mBoard = mGame.toArr();
 
@@ -209,7 +206,7 @@ void SFMLGame::update()
 
 	Shape cell;
 	switch (mState) {
-	case EVALUATING:
+	case PLAYER_MOVE:
 		cell = Shape::Rectangle(mDown2.x, mDown2.y, (mDown2.x + CELLSZ),
 				(mDown2.y + CELLSZ), Color(0, 0, 0, 0), -4.f,
 				sf::Color::Yellow);
@@ -223,7 +220,6 @@ void SFMLGame::update()
 	default:
 		break;
 	}
-//	std::cout << _mDown1 << " " << _state << std::endl;
 }
 
 MoveCode SFMLGame::evalSelections()
@@ -277,7 +273,7 @@ void SFMLGame::loop()
 	using std::endl;
 
 	while (IsOpened() && mGame.isLive()) {
-		if (mState == EVALUATING) {
+		if (mState == PLAYER_MOVE) {
 			MoveCode err;
 
 			err = evalSelections();
@@ -315,112 +311,108 @@ void SFMLGame::loop()
 
 bool SFMLGame::on_idle()
 {
-    if(_gdkWindow)
-    {
-        update();
-        Display();
-    }
+	if (_gdkWindow) {
+		update();
+		Display();
+	}
 
-    return true;
+	return true;
 }
 
 void SFMLGame::on_size_request(Gtk::Requisition* requisition)
 {
-    *requisition = Gtk::Requisition();
+	*requisition = Gtk::Requisition();
 
-    requisition->width = GetWidth();
-    requisition->height = GetHeight();
+	requisition->width = GetWidth();
+	requisition->height = GetHeight();
 }
 
 void SFMLGame::on_size_allocate(Gtk::Allocation& allocation)
 {
-    //Do something with the space that we have actually been given:
-    //(We will not be given heights or widths less than we have requested, though
-    //we might get more)
+	//Do something with the space that we have actually been given:
+	//(We will not be given heights or widths less than we have requested, though
+	//we might get more)
 
-    this->set_allocation(allocation);
+	this->set_allocation(allocation);
 
-    if(_gdkWindow)
-    {
+	if (_gdkWindow) {
 //        _gdkWindow->move_resize(allocation.get_x(), allocation.get_y(), allocation.get_width(), allocation.get_height() );
-    	_gdkWindow->move(allocation.get_x(), allocation.get_y());
+		_gdkWindow->move(allocation.get_x(), allocation.get_y());
 //        _sfRenWin->SetSize(allocation.get_width(), allocation.get_height());
 //        _sfRenWin->SetPosition(allocation.get_x(),allocation.gset_y());
-    }
+	}
 }
 
 void SFMLGame::on_map()
 {
-    Gtk::Widget::on_map();
+	Gtk::Widget::on_map();
 }
 
 void SFMLGame::on_unmap()
 {
-    Gtk::Widget::on_unmap();
+	Gtk::Widget::on_unmap();
 }
 
 void SFMLGame::on_realize()
 {
-    Gtk::Widget::on_realize();
+	Gtk::Widget::on_realize();
 
-    if(!_gdkWindow)
-    {
-        //Create the GdkWindow:
-        GdkWindowAttr attributes;
-        memset(&attributes, 0, sizeof(attributes));
+	if (!_gdkWindow) {
+		//Create the GdkWindow:
+		GdkWindowAttr attributes;
+		memset(&attributes, 0, sizeof(attributes));
 
-        Gtk::Allocation allocation = get_allocation();
+		Gtk::Allocation allocation = get_allocation();
 
-        //Set initial position and size of the Gdk::Window:
-        attributes.x = allocation.get_x();
-        attributes.y = allocation.get_y();
-        attributes.width = allocation.get_width();
-        attributes.height = allocation.get_height();
+		//Set initial position and size of the Gdk::Window:
+		attributes.x = allocation.get_x();
+		attributes.y = allocation.get_y();
+		attributes.width = allocation.get_width();
+		attributes.height = allocation.get_height();
 
-        attributes.event_mask = get_events () | Gdk::EXPOSURE_MASK;
-        attributes.window_type = GDK_WINDOW_CHILD;
-        attributes.wclass = GDK_INPUT_OUTPUT;
+		attributes.event_mask = get_events() | Gdk::EXPOSURE_MASK;
+		attributes.window_type = GDK_WINDOW_CHILD;
+		attributes.wclass = GDK_INPUT_OUTPUT;
 
-
-        _gdkWindow = Gdk::Window::create(get_window() /* parent */, &attributes,
-                GDK_WA_X | GDK_WA_Y);
+		_gdkWindow = Gdk::Window::create(get_window() /* parent */, &attributes,
+				GDK_WA_X | GDK_WA_Y);
 //        unset_flags(Gtk::NO_WINDOW);
-        set_has_window(true);
-        set_window(_gdkWindow);
+		set_has_window(true);
+		set_window(_gdkWindow);
 
-        //set colors
+		//set colors
 
-        //make the widget receive expose events
-        _gdkWindow->set_user_data(gobj());
+		//make the widget receive expose events
+		_gdkWindow->set_user_data(gobj());
 
-        ///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
-        ///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
-        sf::RenderWindow::Create(GDK_WINDOW_XID(_gdkWindow->gobj()));
+		///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
+		///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
+		sf::RenderWindow::Create(GDK_WINDOW_XID(_gdkWindow->gobj()));
 
-    	set_can_focus(true);
-    	grab_focus();
-    }
+		set_can_focus(true);
+		grab_focus();
+	}
 }
 
 void SFMLGame::on_unrealize()
 {
-  _gdkWindow.clear();
+	_gdkWindow.clear();
 
-  //Call base class:
-  Gtk::Widget::on_unrealize();
+	//Call base class:
+	Gtk::Widget::on_unrealize();
 }
 
 bool SFMLGame::on_expose_event(GdkEventExpose* event)
 {
-    if(_gdkWindow)
-    {
-        update();
-        Display();
-    }
-    return true;
+	if (_gdkWindow) {
+		update();
+		Display();
+	}
+	return true;
 }
 
-bool SFMLGame::on_button_press_event(GdkEventButton* event) {
+bool SFMLGame::on_button_press_event(GdkEventButton* event)
+{
 	using std::cout;
 	using std::endl;
 	using sf::Vector2;
@@ -431,16 +423,12 @@ bool SFMLGame::on_button_press_event(GdkEventButton* event) {
 
 	switch (mState) {
 	case SFMLGame::NORMAL:
-		mDown1 = resolveMouse(
-				Vector2<int>(event->x,
-						event->y));
+		mDown1 = resolveMouse(Vector2<int>(event->x, event->y));
 		mState = SFMLGame::HLIGHT_1;
 		break;
 	case SFMLGame::HLIGHT_1:
-		mDown2 = resolveMouse(
-				Vector2<int>(event->x,
-						event->y));
-		mState = SFMLGame::EVALUATING;
+		mDown2 = resolveMouse(Vector2<int>(event->x, event->y));
+		mState = SFMLGame::PLAYER_MOVE;
 		break;
 	default:
 		break;
@@ -449,7 +437,8 @@ bool SFMLGame::on_button_press_event(GdkEventButton* event) {
 	return true;
 }
 
-bool SFMLGame::on_key_press_event(GdkEventKey* event) {
+bool SFMLGame::on_key_press_event(GdkEventKey* event)
+{
 	using std::cout;
 	using std::endl;
 

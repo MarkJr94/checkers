@@ -28,6 +28,16 @@ public:
 
 	std::pair<Move,bool> evaluateGame(Game&);
 
+	void difficulty(unsigned difficulty)
+	{
+		mDifficulty = difficulty;
+	}
+
+	unsigned difficulty() const
+	{
+		return mDifficulty;
+	}
+
 private:
 	AI(const AI&);
 	AI& operator=(const AI&);

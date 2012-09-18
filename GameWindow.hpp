@@ -50,7 +50,7 @@ protected:
 	//Child widgets:
 	SFMLGame mGameWidget;
 
-	Gtk::ButtonBox m_BoxFile;
+	Gtk::ButtonBox mBoxFile;
 	Gtk::Button mButtonSave;
 	Gtk::Button mButtonLoad;
 
@@ -63,6 +63,8 @@ protected:
 	Gtk::Button mButtonQuit;
 
 	Save mCheckpoint;
+
+	typedef Gtk::Window super;
 };
 
 #endif /* GAMEWINDOW_HPP_ */
