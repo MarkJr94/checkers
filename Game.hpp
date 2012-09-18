@@ -19,9 +19,9 @@ public:
 	friend class SFMLGame;
 
 	/* Constructor */
-	Game(const bool db, const bool interact);
+	Game(const bool debug, const bool interact);
 	/* Constructor from memory */
-	Game(const Save& record, const bool db, const bool interact);
+	Game(const Save& record, const bool debug, const bool interact);
 	/* Destructor */
 	virtual ~Game();
 
@@ -31,10 +31,10 @@ public:
 	void print() const;
 
 	/* Piece Movement */
-	MoveCode makeMove(const Move&);
+	MoveCode makeMove(const Move& move);
 
 	/* Jumping */
-	MoveCode jump(const Move&);
+	MoveCode jump(const Move& move);
 	/* restore game to save */
 	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
@@ -42,33 +42,33 @@ public:
 
 	/* Get p1 score */
 	unsigned getP1score() const {
-		return Bit::bitCount(_BP & ~_K) + 2 * Bit::bitCount(_BP & _K);
+		return Bit::bitCount(mBP & ~mK) + 2 * Bit::bitCount(mBP & mK);
 	}
 	/* Get p2 score */
 	unsigned getP2score() const {
-		return Bit::bitCount(_WP & ~_K) + 2 * Bit::bitCount(_WP & _K);
+		return Bit::bitCount(mWP & ~mK) + 2 * Bit::bitCount(mWP & mK);
 	}
 
-	unsigned p1NumPieces() const {return Bit::bitCount(_BP);}
-	unsigned p2NumPieces() const {return Bit::bitCount(_WP);}
+	unsigned p1NumPieces() const {return Bit::bitCount(mBP);}
+	unsigned p2NumPieces() const {return Bit::bitCount(mWP);}
 
-	bool isLive () const { return _WP && _BP;}
+	bool isLive () const { return mWP && mBP;}
 
 	std::vector<Cell> toArr() const;
 
 private:
-	BitBoard _WP;
-	BitBoard _BP;
-	BitBoard _K;
+	BitBoard mWP;
+	BitBoard mBP;
+	BitBoard mK;
 
 
 	typedef BitBoard BB;
 	/* Tracks if it's P1's turn or not */
-	bool _turn;
-	bool _debug;
-	Save _save;
-	bool _interact;
-	BB _mustJump;
+	bool mTurn;
+	bool mDebug;
+	Save mSave;
+	bool mInteract;
+	BB mMustJump;
 
 	/* Update save game */
 	void updateSave();
@@ -77,7 +77,7 @@ private:
 	BitBoard getJumpers() const;
 	BitBoard getMovers() const;
 	BitBoard getEmpty() const {
-		return ~(_WP | _BP);
+		return ~(mWP | mBP);
 	}
 	inline BB canJump(const BB src, const BB vict);
 };

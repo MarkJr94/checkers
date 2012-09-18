@@ -20,8 +20,6 @@ namespace Masks {
 extern const BitBoard WP_INIT, BP_INIT;
 extern const BitBoard ROW_2, ROW_7;
 extern const BitBoard ROW_1, ROW_8;
-//extern const BitBoard CAN_UP, CAN_DOWN;
-//extern const BitBoard CAN_LEFT, CAN_RIGHT;
 extern const BitBoard CAN_UPLEFT, CAN_UPRIGHT;
 extern const BitBoard CAN_DOWNLEFT, CAN_DOWNRIGHT;
 
@@ -69,13 +67,13 @@ enum Cell {
 	EMPTY, P_W, P_B, K_W, K_B
 };
 
-const std::string _ctable[] { "---", "WHI", "BLK", "KWH", "KBK" };
+const std::string cellTable[] { "---", "WHI", "BLK", "KWH", "KBK" };
 
 enum MoveCode {
 	SUCCESS, VOID_PIECE, ILLEGAL_MOVE, WRONG_PIECE, QUIT, INPUT_FAIL
 };
 
-const std::string _errtable[] { "SUCCESS", "VOID_PIECE", "ILLEGAL_MOVE",
+const std::string errorTable[] { "SUCCESS", "VOID_PIECE", "ILLEGAL_MOVE",
 		"WRONG_PIECE", "QUIT", "INPUT_FAIL" };
 
 #endif /* BITBOARD_HPP_ */

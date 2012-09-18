@@ -61,15 +61,15 @@ private:
 	/* ===================== SFML Implementation ============= */
 	typedef sf::RenderWindow super;
 	typedef std::vector<Cell> Board;
-	Game _game;
-	AI _ai;
-	Board _board;
-	sf::Vector2<int> _mDown1;
-	sf::Vector2<int> _mDown2;
-	State _state;
+	Game mGame;
+	AI mAi;
+	Board mBoard;
+	sf::Vector2<int> mDown1;
+	sf::Vector2<int> mDown2;
+	State mState;
 
-	int circRad = 40;
-	int cellSz = 100;
+	int CIRCRAD = 40;
+	int CELLSZ = 100;
 
 	sf::Vector2<int> resolveMouse(sf::Vector2<int>) const;
 

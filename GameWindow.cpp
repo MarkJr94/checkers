@@ -18,7 +18,7 @@ SaveDialog::SaveDialog(const std::string& title, bool modal) :
 				m_filename_entry(),
 				m_file_entry_label("Enter file name: ")
 {
-	set_has_resize_grip (false);
+	set_has_resize_grip(false);
 	set_resizable(false);
 
 	Gtk::Box* area = get_content_area();
@@ -28,22 +28,26 @@ SaveDialog::SaveDialog(const std::string& title, bool modal) :
 //	area->pack_start(_label,true,true);
 //	area->pack_end(_fileEnt,true,true);
 
-	Gtk::Button* ok =  (manage(new Gtk::Button (Gtk::Stock::OK)));
+	Gtk::Button* ok = (manage(new Gtk::Button(Gtk::Stock::OK)));
 	ok->set_can_default(true);
 	set_default(*ok);
-	add_button(Gtk::Stock::CANCEL,Gtk::RESPONSE_CANCEL);
-	add_action_widget(*ok,Gtk::RESPONSE_OK);
+	add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	add_action_widget(*ok, Gtk::RESPONSE_OK);
 
 	show_all_children();
 }
 
-SaveDialog::~SaveDialog() {}
+SaveDialog::~SaveDialog()
+{
+}
 
-std::string SaveDialog::entry() {
+std::string SaveDialog::entry()
+{
 	return m_filename_entry.get_text();
 }
 
-void SaveDialog::entry(const std::string& s) {
+void SaveDialog::entry(const std::string& s)
+{
 	m_filename_entry.set_text(s);
 }
 
@@ -55,51 +59,80 @@ void setStock(Gtk::Button& button, std::string label, const Gtk::StockID stock)
 }
 
 GameWindow::GameWindow() :
-				m_toplevel_hbox(Gtk::ORIENTATION_HORIZONTAL),
-				m_grid(),
-				m_game_widget(sf::VideoMode(800, 800, 32)),
-				m_file_box(Gtk::ORIENTATION_HORIZONTAL),
-				m_save_game_button("Save"),
-				m_load_game_button("Load"),
-				m_checkpoint_box(),
-				m_checkpoint_button(),
-				m_checkpoint_restore_button(),
-				m_button_quit("Quit"),
-				m_checkpoint()
+				mHbox(Gtk::ORIENTATION_HORIZONTAL),
+				mGrid(),
+				mGameWidget(sf::VideoMode(800, 800, 32)),
+				m_BoxFile(Gtk::ORIENTATION_HORIZONTAL),
+				mButtonSave(),
+				mButtonLoad(),
+				mBoxCheckpoint(),
+				mButtonCheckpoint(),
+				mButtonRestore(),
+				mBoxQuit(),
+				mButtonSaveQuit("Save and Exit"),
+				mButtonQuit("Quit"),
+				mCheckpoint()
 {
 	set_title("Custom Widget example");
 	set_border_width(6);
 	set_default_size(900, 800);
 
-	add(m_toplevel_hbox);
-	m_toplevel_hbox.pack_start(m_grid, Gtk::PACK_EXPAND_PADDING);
+	add(mHbox);
+	mHbox.pack_start(mGrid, Gtk::PACK_EXPAND_PADDING);
 
-	m_grid.set_row_homogeneous(true);
-	m_grid.attach(m_file_box, 0, 0, 1, 1);
+//	m_grid.set_row_homogeneous(true);
+	mGrid.attach(m_BoxFile, 0, 0, 2, 1);
 
-	m_file_box.pack_start(m_save_game_button, Gtk::PACK_EXPAND_PADDING);
-	m_file_box.pack_start(m_load_game_button, Gtk::PACK_EXPAND_PADDING);
-	m_file_box.set_border_width(6);
-	m_file_box.set_layout(Gtk::BUTTONBOX_END);
+	m_BoxFile.pack_start(mButtonSave, Gtk::PACK_EXPAND_WIDGET);
+	m_BoxFile.pack_start(mButtonLoad, Gtk::PACK_EXPAND_WIDGET);
+	m_BoxFile.set_border_width(6);
+	m_BoxFile.set_homogeneous(true);
 
-	setStock(m_save_game_button, "Save Game", Gtk::Stock::FILE);
-	m_save_game_button.signal_clicked().connect(
-			sigc::mem_fun(*this, &GameWindow::onSaveGameClick));
+	setStock(mButtonSave, "Save Game", Gtk::Stock::FILE);
+	mButtonSave.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onSaveClick));
 
-	setStock(m_load_game_button, "Load Game", Gtk::Stock::FILE);
-	m_load_game_button.signal_clicked().connect(
-			sigc::mem_fun(*this, &GameWindow::onLoadGameClick));
+	setStock(mButtonLoad, "Load Game", Gtk::Stock::FILE);
+	mButtonLoad.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onLoadClick));
 
-	m_grid.attach(m_button_quit, 0, 4, 1, 1);
-	setStock(m_button_quit, "Quit", Gtk::Stock::QUIT);
-	m_button_quit.signal_clicked().connect(
+	mGrid.attach(mBoxCheckpoint, 0, 1, 2, 1);
+
+	mBoxCheckpoint.pack_start(mButtonCheckpoint, Gtk::PACK_EXPAND_WIDGET);
+	mBoxCheckpoint.pack_start(mButtonRestore, Gtk::PACK_EXPAND_WIDGET);
+	mBoxCheckpoint.set_border_width(6);
+	mBoxCheckpoint.set_homogeneous(true);
+
+	setStock(mButtonCheckpoint, "Checkpoint", Gtk::Stock::APPLY);
+	mButtonCheckpoint.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onCheckpointClick));
+
+	setStock(mButtonRestore,"Restore",Gtk::Stock::REVERT_TO_SAVED);
+	mButtonRestore.signal_clicked().connect(
+			sigc::mem_fun(*this,&GameWindow::onRestoreClick));
+
+	mGrid.attach(mBoxQuit,0,4,2,1);
+
+
+	mBoxQuit.pack_start(mButtonSaveQuit,Gtk::PACK_EXPAND_WIDGET);
+	mBoxQuit.pack_start(mButtonQuit,Gtk::PACK_EXPAND_WIDGET);
+	mBoxQuit.set_border_width(6);
+	mBoxQuit.set_homogeneous(true);
+
+
+//	setStock(m_button_save_quit,"Save and Exit",Gtk::Stock::DIRECTORY);
+	mButtonSaveQuit.signal_clicked().connect(
+			sigc::mem_fun(*this,&GameWindow::onQuitClick));
+
+	setStock(mButtonQuit, "Quit", Gtk::Stock::QUIT);
+	mButtonQuit.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onQuitClick));
 
-	m_toplevel_hbox.pack_start(m_game_widget, Gtk::PACK_EXPAND_PADDING);
-	m_game_widget.set_hexpand(false);
-	m_game_widget.set_vexpand(false);
-	m_game_widget.show();
-	m_game_widget.set_size_request(800, 800);
+	mHbox.pack_start(mGameWidget, Gtk::PACK_EXPAND_PADDING);
+	mGameWidget.set_hexpand(false);
+	mGameWidget.set_vexpand(false);
+	mGameWidget.show();
+	mGameWidget.set_size_request(800, 800);
 
 	show_all_children();
 }
@@ -113,7 +146,7 @@ void GameWindow::onQuitClick()
 	hide();
 }
 
-void GameWindow::onLoadGameClick()
+void GameWindow::onLoadClick()
 {
 	Gtk::FileChooserDialog dialog("Please choose a file",
 			Gtk::FILE_CHOOSER_ACTION_OPEN);
@@ -145,7 +178,7 @@ void GameWindow::onLoadGameClick()
 
 		Save s;
 		s.read(filename);
-		m_game_widget._game.restoreToSave(s);
+		mGameWidget.mGame.restoreToSave(s);
 		break;
 	}
 	case (Gtk::RESPONSE_CANCEL): {
@@ -159,7 +192,8 @@ void GameWindow::onLoadGameClick()
 	}
 }
 
-void GameWindow::onSaveGameClick() {
+void GameWindow::onSaveClick()
+{
 	SaveDialog dialog("Save your game", true);
 
 	dialog.set_transient_for(*this);
@@ -175,7 +209,7 @@ void GameWindow::onSaveGameClick() {
 		//Notice that this is a std::string, not a Glib::ustring.
 		std::string filename = dialog.entry();
 		std::cout << "File selected: " << filename << std::endl;
-		m_game_widget._game.getSave().write("saves/" + filename + ".cks");
+		mGameWidget.mGame.getSave().write("saves/" + filename + ".cks");
 		break;
 	}
 	case (Gtk::RESPONSE_CANCEL): {
@@ -187,4 +221,20 @@ void GameWindow::onSaveGameClick() {
 		break;
 	}
 	}
+}
+
+void GameWindow::onCheckpointClick()
+{
+	mCheckpoint = mGameWidget.mGame.getSave();
+}
+
+void GameWindow::onRestoreClick()
+{
+	mGameWidget.mGame.restoreToSave(mCheckpoint);
+}
+
+void GameWindow::onSaveQuitClick()
+{
+	onSaveClick();
+	hide();
 }

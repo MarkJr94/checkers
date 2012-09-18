@@ -33,28 +33,36 @@ protected:
 	//Signal handlers:
 	void onQuitClick();
 
-	void onSaveGameClick();
+	void onSaveQuitClick();
 
-	void onLoadGameClick();
+	void onSaveClick();
+
+	void onLoadClick();
+
+	void onCheckpointClick();
+
+	void onRestoreClick();
 
 	// Layout containers
-	Gtk::Box m_toplevel_hbox; // TopLevel
-	Gtk::Grid m_grid;
+	Gtk::Box mHbox; // TopLevel
+	Gtk::Grid mGrid;
 
 	//Child widgets:
-	SFMLGame m_game_widget;
+	SFMLGame mGameWidget;
 
-	Gtk::ButtonBox m_file_box;
-	Gtk::Button m_save_game_button;
-	Gtk::Button m_load_game_button;
+	Gtk::ButtonBox m_BoxFile;
+	Gtk::Button mButtonSave;
+	Gtk::Button mButtonLoad;
 
-	Gtk::ButtonBox m_checkpoint_box;
-	Gtk::Button m_checkpoint_button;
-	Gtk::Button m_checkpoint_restore_button;
+	Gtk::ButtonBox mBoxCheckpoint;
+	Gtk::Button mButtonCheckpoint;
+	Gtk::Button mButtonRestore;
 
-	Gtk::Button m_button_quit;
+	Gtk::Box mBoxQuit;
+	Gtk::Button mButtonSaveQuit;
+	Gtk::Button mButtonQuit;
 
-	Save m_checkpoint;
+	Save mCheckpoint;
 };
 
 #endif /* GAMEWINDOW_HPP_ */

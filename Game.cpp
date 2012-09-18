@@ -5,12 +5,12 @@
 #include "Game.hpp"
 
 Game::Game(const bool debug, const bool interact) :
-		_WP(Bit::Masks::WP_INIT), _BP(Bit::Masks::BP_INIT), _K(0), _turn(true), _debug(
-				debug), _save(), _interact(interact), _mustJump(0) {
+		mWP(Bit::Masks::WP_INIT), mBP(Bit::Masks::BP_INIT), mK(0), mTurn(true), mDebug(
+				debug), mSave(), mInteract(interact), mMustJump(0) {
 }
 
 Game::Game(const Save& save, const bool debug, const bool interact) :
-		_debug(debug), _interact(interact) {
+		mDebug(debug), mInteract(interact) {
 	restoreToSave(save);
 }
 
@@ -20,25 +20,25 @@ Game::~Game() {
 void Game::restoreToSave(const Save& save) {
 	using namespace std;
 
-	_save = save;
-	_WP = save.WP;
-	_BP = save.BP;
-	_K = save.K;
-	_turn = save.turn;
-	_mustJump = save.mustJump;
+	mSave = save;
+	mWP = save.WP;
+	mBP = save.BP;
+	mK = save.K;
+	mTurn = save.turn;
+	mMustJump = save.mustJump;
 }
 
 inline void Game::updateSave() {
-	_save.WP = _WP;
-	_save.BP = _BP;
-	_save.K = _K;
-	_save.turn = _turn;
-	_save.mustJump = _mustJump;
+	mSave.WP = mWP;
+	mSave.BP = mBP;
+	mSave.K = mK;
+	mSave.turn = mTurn;
+	mSave.mustJump = mMustJump;
 }
 
 Save Game::getSave() {
 	updateSave();
-	return _save;
+	return mSave;
 }
 
 std::vector<Cell> Game::toArr() const {
@@ -48,17 +48,17 @@ std::vector<Cell> Game::toArr() const {
 
 	for (unsigned i = 0; i < 32; i++) {
 		unsigned odd = (i / 4) & 1;
-		if (_WP & S[i])
+		if (mWP & S[i])
 			b[i * 2 + odd] = P_W;
 	}
 
 	for (unsigned i = 0; i < 32; i++) {
 		unsigned odd = (i / 4) & 1;
-		if (_BP & S[i])
+		if (mBP & S[i])
 			b[i * 2 + odd] = P_B;
 	}
 
-	BitBoard WK = _WP & _K;
+	BitBoard WK = mWP & mK;
 	if (WK) {
 		for (unsigned i = 0; i < 32; i++) {
 			unsigned odd = (i / 4) & 1;
@@ -67,7 +67,7 @@ std::vector<Cell> Game::toArr() const {
 		}
 	}
 
-	BitBoard BK = _BP & _K;
+	BitBoard BK = mBP & mK;
 	if (BK) {
 		for (unsigned i = 0; i < 32; i++) {
 			unsigned odd = (i / 4) & 1;
@@ -83,18 +83,18 @@ void Game::print() const {
 	using std::cout;
 	using std::endl;
 
-	if (_turn)
+	if (mTurn)
 		cout << "Player 1's turn.\n";
 	else
 		cout << "Player 2's turn.\n";
-	cout << "P1: " << Bit::bitCount(_BP) << "\tP2: " << Bit::bitCount(_WP)
+	cout << "P1: " << Bit::bitCount(mBP) << "\tP2: " << Bit::bitCount(mWP)
 			<< endl;
 
 	std::vector<Cell> b = toArr();
 
 	for (int j = 7; j >= 0; j--) {
 		for (int i = 0; i < 8; i++)
-			cout << _ctable[b[i + 8 * j]];
+			cout << cellTable[b[i + 8 * j]];
 		cout << endl;
 	}
 
@@ -105,30 +105,30 @@ BitBoard Game::getJumpers() const {
 	using Bit::ror;
 	using Bit::rol;
 
-	BitBoard empty = ~(_WP | _BP);
+	BitBoard empty = ~(mWP | mBP);
 	BitBoard Temp;
 	BitBoard jumpers = 0;
-	if (_turn) {
-		BitBoard BK = _BP & _K;
-		Temp = ror(empty, 7) & _WP & CAN_UPLEFT;
-		jumpers |= ror(Temp, 7) & _BP & CAN_UPLEFT;
-		Temp = ror(empty, 1) & _WP & CAN_UPRIGHT;
-		jumpers |= ror(Temp, 1) & _BP & CAN_UPRIGHT;
+	if (mTurn) {
+		BitBoard BK = mBP & mK;
+		Temp = ror(empty, 7) & mWP & CAN_UPLEFT;
+		jumpers |= ror(Temp, 7) & mBP & CAN_UPLEFT;
+		Temp = ror(empty, 1) & mWP & CAN_UPRIGHT;
+		jumpers |= ror(Temp, 1) & mBP & CAN_UPRIGHT;
 
-		Temp = rol(empty, 7) & _WP & CAN_DOWNRIGHT;
+		Temp = rol(empty, 7) & mWP & CAN_DOWNRIGHT;
 		jumpers |= rol(Temp, 7) & BK & CAN_DOWNRIGHT;
-		Temp = rol(empty, 1) & _WP & CAN_DOWNLEFT;
+		Temp = rol(empty, 1) & mWP & CAN_DOWNLEFT;
 		jumpers |= rol(Temp, 1) & BK & CAN_DOWNLEFT;
 	} else {
-		BitBoard WK = _WP & _K;
-		Temp = rol(empty, 7) & _BP & CAN_DOWNRIGHT;
-		jumpers |= rol(Temp, 7) & _WP & CAN_DOWNRIGHT;
-		Temp = rol(empty, 1) & _BP & CAN_DOWNLEFT;
-		jumpers |= rol(Temp, 1) & _WP & CAN_DOWNLEFT;
+		BitBoard WK = mWP & mK;
+		Temp = rol(empty, 7) & mBP & CAN_DOWNRIGHT;
+		jumpers |= rol(Temp, 7) & mWP & CAN_DOWNRIGHT;
+		Temp = rol(empty, 1) & mBP & CAN_DOWNLEFT;
+		jumpers |= rol(Temp, 1) & mWP & CAN_DOWNLEFT;
 
-		Temp = ror(empty, 7) & _BP & CAN_UPLEFT;
+		Temp = ror(empty, 7) & mBP & CAN_UPLEFT;
 		jumpers |= ror(Temp, 7) & WK & CAN_UPLEFT;
-		Temp = ror(empty, 1) & _BP & CAN_UPRIGHT;
+		Temp = ror(empty, 1) & mBP & CAN_UPRIGHT;
 		jumpers |= ror(Temp, 1) & WK & CAN_UPRIGHT;
 	}
 
@@ -140,19 +140,19 @@ BitBoard Game::getMovers() const {
 	using Bit::ror;
 	using Bit::rol;
 
-	const BB empty = ~(_WP | _BP);
+	const BB empty = ~(mWP | mBP);
 	BB Movers;
 
-	if (_turn) {
-		const BB BK = _BP & _K;
-		Movers = ror(empty, 7) & _BP & CAN_UPLEFT;
-		Movers |= ror(empty, 1) & _BP & CAN_UPRIGHT;
+	if (mTurn) {
+		const BB BK = mBP & mK;
+		Movers = ror(empty, 7) & mBP & CAN_UPLEFT;
+		Movers |= ror(empty, 1) & mBP & CAN_UPRIGHT;
 		Movers |= rol(empty, 7) & BK & CAN_DOWNRIGHT;
 		Movers |= rol(empty, 1) & BK & CAN_DOWNLEFT;
 	} else {
-		const BB WK = _WP & _K; // Kings
-		Movers = rol(empty, 7) & _WP & CAN_DOWNRIGHT;
-		Movers |= rol(empty, 1) & _WP & CAN_DOWNLEFT;
+		const BB WK = mWP & mK; // Kings
+		Movers = rol(empty, 7) & mWP & CAN_DOWNRIGHT;
+		Movers |= rol(empty, 1) & mWP & CAN_DOWNLEFT;
 		Movers |= ror(empty, 7) & WK & CAN_UPLEFT;
 		Movers |= ror(empty, 1) & WK & CAN_UPRIGHT;
 	}
@@ -170,26 +170,26 @@ MoveCode Game::makeMove(const Move& move) {
 	if (move.src > 31 || move.dst > 31)
 		return ILLEGAL_MOVE;
 
-	if (_mustJump)
+	if (mMustJump)
 		return WRONG_PIECE;
 
-	const BitBoard src = (_turn ? _BP & S[move.src] : _WP & S[move.src]);
+	const BitBoard src = (mTurn ? mBP & S[move.src] : mWP & S[move.src]);
 
 	if (!src)
 		return VOID_PIECE;
 
-	const BitBoard empty = ~(_WP | _BP);
+	const BitBoard empty = ~(mWP | mBP);
 
 	BitBoard valMoves = 0;
 	BB SK;
-	if (_turn) {
-		SK = src & _K;
+	if (mTurn) {
+		SK = src & mK;
 		valMoves = empty & rol(src & CAN_UPLEFT, 7);
 		valMoves |= empty & rol(src & CAN_UPRIGHT, 1);
 		valMoves |= empty & ror(SK & CAN_DOWNRIGHT, 7);
 		valMoves |= empty & ror(SK & CAN_DOWNLEFT, 1);
 	} else {
-		SK = src & _K;
+		SK = src & mK;
 		valMoves = empty & ror(src & CAN_DOWNRIGHT, 7);
 		valMoves |= empty & ror(src & CAN_DOWNLEFT, 1);
 		valMoves |= empty & rol(SK & CAN_UPLEFT, 7);
@@ -201,24 +201,24 @@ MoveCode Game::makeMove(const Move& move) {
 	if (!(valMoves & dst))
 		return ILLEGAL_MOVE;
 
-	if (_turn) {
-		_BP ^= src;
-		_BP |= dst;
+	if (mTurn) {
+		mBP ^= src;
+		mBP |= dst;
 	} else {
-		_WP ^= src;
-		_WP |= dst;
+		mWP ^= src;
+		mWP |= dst;
 	}
 
 	if (SK) {
-		_K ^= src;
-		_K ^= dst;
+		mK ^= src;
+		mK ^= dst;
 	}
 
 	if ((dst & ROW_1) || (dst & ROW_8))
-		_K |= dst;
+		mK |= dst;
 
-	_mustJump = 0;
-	_turn = !_turn;
+	mMustJump = 0;
+	mTurn = !mTurn;
 	return SUCCESS;
 }
 
@@ -227,15 +227,15 @@ BB Game::canJump(const BB src, const BB vict) {
 	using Bit::ror;
 	using namespace Bit::Masks;
 
-	if (_mustJump)
-		if (src != _mustJump)
+	if (mMustJump)
+		if (src != mMustJump)
 			return 0u;
 	BB Temp;
 	BB SK;
-	BB empty = ~(_WP | _BP);
+	BB empty = ~(mWP | mBP);
 
-	if (_turn) {
-		SK = src & _K;
+	if (mTurn) {
+		SK = src & mK;
 
 		Temp = rol(src & CAN_UPLEFT, 7) & vict;
 		if (Temp)
@@ -251,7 +251,7 @@ BB Game::canJump(const BB src, const BB vict) {
 		if (Temp)
 			return ror(Temp & CAN_DOWNLEFT, 1) & empty;
 	} else {
-		SK = src & _K;
+		SK = src & mK;
 
 		Temp = ror(src & CAN_DOWNRIGHT, 7) & vict;
 		if (Temp)
@@ -278,11 +278,11 @@ MoveCode Game::jump(const Move& move) {
 	if (move.src > 31 || move.dst > 31)
 		return ILLEGAL_MOVE;
 
-	const BitBoard src = (_turn ? _BP & S[move.src] : _WP & S[move.src]);
-	const BitBoard vict = (_turn ? _WP & S[move.dst] : _BP & S[move.dst]);
+	const BitBoard src = (mTurn ? mBP & S[move.src] : mWP & S[move.src]);
+	const BitBoard vict = (mTurn ? mWP & S[move.dst] : mBP & S[move.dst]);
 
-	if (_mustJump)
-		if (src != _mustJump)
+	if (mMustJump)
+		if (src != mMustJump)
 			return WRONG_PIECE;
 
 	if (!vict || !src)
@@ -296,32 +296,32 @@ MoveCode Game::jump(const Move& move) {
 	if (!nextLoc)
 		return ILLEGAL_MOVE;
 
-	if (_turn) {
-		_BP ^= src;
-		_WP ^= vict;
-		_BP ^= nextLoc;
+	if (mTurn) {
+		mBP ^= src;
+		mWP ^= vict;
+		mBP ^= nextLoc;
 
 	} else {
-		_WP ^= src;
-		_BP ^= vict;
-		_WP ^= nextLoc;
+		mWP ^= src;
+		mBP ^= vict;
+		mWP ^= nextLoc;
 	}
 
-	if (_K & src) {
-		_K ^= src;
-		_K ^= nextLoc;
+	if (mK & src) {
+		mK ^= src;
+		mK ^= nextLoc;
 	} else if ((nextLoc & ROW_8) || (nextLoc & ROW_1))
-		_K ^= nextLoc;
+		mK ^= nextLoc;
 
-	if (_K & vict) {
-		_K ^= vict;
+	if (mK & vict) {
+		mK ^= vict;
 	}
 
 	if (nextLoc & getJumpers()) {
-		_mustJump = nextLoc;
+		mMustJump = nextLoc;
 	} else {
-		_mustJump = 0;
-		_turn = !_turn;
+		mMustJump = 0;
+		mTurn = !mTurn;
 	}
 
 	return SUCCESS;
@@ -357,7 +357,7 @@ MoveCode Game::receiveInput() {
 	MoveCode retval;
 	if ((retval = makeMove(move)) != SUCCESS) {
 		cerr << "Movement Error:\n";
-		cerr << _errtable[retval];
+		cerr << errorTable[retval];
 	}
 	return retval;
 }

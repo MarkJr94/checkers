@@ -16,12 +16,12 @@
 SFMLGame::SFMLGame(const int wide, const int high) :
 				sf::RenderWindow(sf::VideoMode(wide, high, 32), "Game Window",
 						sf::Style::Titlebar | sf::Style::Close),
-				_game(false, false),
-				_ai(),
-				_board(64),
-				_state(NORMAL),
-				circRad(40),
-				cellSz(100)
+				mGame(false, false),
+				mAi(),
+				mBoard(64),
+				mState(NORMAL),
+				CIRCRAD(40),
+				CELLSZ(100)
 {
 	set_has_window(false);
 
@@ -37,12 +37,12 @@ SFMLGame::SFMLGame(const int wide, const int high) :
 SFMLGame::SFMLGame(const sf::VideoMode& mode) :
 				sf::RenderWindow(mode, "Game Window",
 						sf::Style::Titlebar | sf::Style::Close),
-				_game(false, false),
-				_ai(),
-				_board(64),
-				_state(NORMAL),
-				circRad(40),
-				cellSz(100)
+				mGame(false, false),
+				mAi(),
+				mBoard(64),
+				mState(NORMAL),
+				CIRCRAD(40),
+				CELLSZ(100)
 {
 	set_has_window(false);
 
@@ -69,8 +69,8 @@ sf::Vector2<int> SFMLGame::resolveMouse(sf::Vector2<int> downVec) const
 {
 	int x = downVec.x;
 	int y = downVec.y;
-	x -= x % cellSz;
-	y -= y % cellSz;
+	x -= x % CELLSZ;
+	y -= y % CELLSZ;
 	return {x,y};
 }
 
@@ -91,22 +91,22 @@ void SFMLGame::drawCell(Cell c, int i, int j)
 	int odd = y & 1;
 	if (odd) {
 		if (x & 1) {
-			cell = Shape::Rectangle(x * cellSz, y * cellSz, (x + 1) * cellSz,
-					(y + 1) * cellSz, tan);
+			cell = Shape::Rectangle(x * CELLSZ, y * CELLSZ, (x + 1) * CELLSZ,
+					(y + 1) * CELLSZ, tan);
 			Draw(cell);
 		} else {
-			cell = Shape::Rectangle(x * cellSz, y * cellSz, (x + 1) * cellSz,
-					(y + 1) * cellSz, darkBrown);
+			cell = Shape::Rectangle(x * CELLSZ, y * CELLSZ, (x + 1) * CELLSZ,
+					(y + 1) * CELLSZ, darkBrown);
 			Draw(cell);
 		}
 	} else {
 		if (x & 1) {
-			cell = Shape::Rectangle(x * cellSz, y * cellSz, (x + 1) * cellSz,
-					(y + 1) * cellSz, darkBrown);
+			cell = Shape::Rectangle(x * CELLSZ, y * CELLSZ, (x + 1) * CELLSZ,
+					(y + 1) * CELLSZ, darkBrown);
 			Draw(cell);
 		} else {
-			cell = Shape::Rectangle(x * cellSz, y * cellSz, (x + 1) * cellSz,
-					(y + 1) * cellSz, tan);
+			cell = Shape::Rectangle(x * CELLSZ, y * CELLSZ, (x + 1) * CELLSZ,
+					(y + 1) * CELLSZ, tan);
 			Draw(cell);
 		}
 	}
@@ -115,26 +115,26 @@ void SFMLGame::drawCell(Cell c, int i, int j)
 		return;
 
 	Shape piece;
-	const int hCellSz = cellSz / 2;
+	const int hCellSz = CELLSZ / 2;
 	switch (c) {
 	case P_B:
-		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz,
-				circRad, black);
+		piece = Shape::Circle(x * CELLSZ + hCellSz, y * CELLSZ + hCellSz,
+				CIRCRAD, black);
 		Draw(piece);
 		break;
 	case P_W:
-		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz,
-				circRad, white);
+		piece = Shape::Circle(x * CELLSZ + hCellSz, y * CELLSZ + hCellSz,
+				CIRCRAD, white);
 		Draw(piece);
 		break;
 	case K_B:
-		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz,
-				circRad, black, -5.f, Color::Cyan);
+		piece = Shape::Circle(x * CELLSZ + hCellSz, y * CELLSZ + hCellSz,
+				CIRCRAD, black, -5.f, Color::Cyan);
 		Draw(piece);
 		break;
 	case K_W:
-		piece = Shape::Circle(x * cellSz + hCellSz, y * cellSz + hCellSz,
-				circRad, white, -5.f, Color::Cyan);
+		piece = Shape::Circle(x * CELLSZ + hCellSz, y * CELLSZ + hCellSz,
+				CIRCRAD, white, -5.f, Color::Cyan);
 		Draw(piece);
 		break;
 	default:
@@ -166,57 +166,57 @@ void SFMLGame::update()
 	using std::endl;
 
 	do {
-		if (_state == EVALUATING) {
+		if (mState == EVALUATING) {
 			MoveCode err;
 
 			err = evalSelections();
-			std::cout << _errtable[err] << std::endl;
-			if (_game._turn) {
-				_state = NORMAL;
+			std::cout << errorTable[err] << std::endl;
+			if (mGame.mTurn) {
+				mState = NORMAL;
 				break;
 			}
-			std::pair<Move, bool> moveinfo = _ai.evaluateGame(_game);
+			std::pair<Move, bool> moveinfo = mAi.evaluateGame(mGame);
 			cout << "AI Move: " << moveinfo.first << endl;
 			if (moveinfo.first.dst == 0 && moveinfo.first.src == 0)
 				break;
 			if (moveinfo.second) {
-				cout << _errtable[_game.jump(moveinfo.first)] << endl;
+				cout << errorTable[mGame.jump(moveinfo.first)] << endl;
 			} else
-				cout << _errtable[_game.makeMove(moveinfo.first)] << endl;
+				cout << errorTable[mGame.makeMove(moveinfo.first)] << endl;
 //			}
-			if (_game._turn)
-				_state = NORMAL;
+			if (mGame.mTurn)
+				mState = NORMAL;
 		}
 	} while (0);
 	Clear();
 	int m = min(GetWidth(), GetHeight());
 //	SetSize(m,m);
-	cellSz = m / 8;
-	circRad = cellSz * 2 / 5;
+	CELLSZ = m / 8;
+	CIRCRAD = CELLSZ * 2 / 5;
 
 //	static int counter = 0;
 //	if (counter++ % 30 == 0)
 //	cout << cellSz << ": :" << circRad <<  "\t";
 //	cout.flush();
 
-	_board = _game.toArr();
+	mBoard = mGame.toArr();
 
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			drawCell(_board[i + j * 8], i, j);
+			drawCell(mBoard[i + j * 8], i, j);
 		}
 	}
 
 	Shape cell;
-	switch (_state) {
+	switch (mState) {
 	case EVALUATING:
-		cell = Shape::Rectangle(_mDown2.x, _mDown2.y, (_mDown2.x + cellSz),
-				(_mDown2.y + cellSz), Color(0, 0, 0, 0), -4.f,
+		cell = Shape::Rectangle(mDown2.x, mDown2.y, (mDown2.x + CELLSZ),
+				(mDown2.y + CELLSZ), Color(0, 0, 0, 0), -4.f,
 				sf::Color::Yellow);
 		Draw(cell);
 	case HLIGHT_1:
-		cell = Shape::Rectangle(_mDown1.x, _mDown1.y, (_mDown1.x + cellSz),
-				(_mDown1.y + cellSz), Color(0, 0, 0, 0), -4.f,
+		cell = Shape::Rectangle(mDown1.x, mDown1.y, (mDown1.x + CELLSZ),
+				(mDown1.y + CELLSZ), Color(0, 0, 0, 0), -4.f,
 				sf::Color::Yellow);
 		Draw(cell);
 		break;
@@ -230,7 +230,7 @@ MoveCode SFMLGame::evalSelections()
 {
 	using sf::Vector2i;
 
-	int x = _mDown1.x / cellSz, y = 7 - _mDown1.y / cellSz;
+	int x = mDown1.x / CELLSZ, y = 7 - mDown1.y / CELLSZ;
 	unsigned short src;
 
 	int odd = y & 1;
@@ -245,8 +245,8 @@ MoveCode SFMLGame::evalSelections()
 		src = src / 2;
 	}
 
-	x = _mDown2.x / cellSz;
-	y = 7 - _mDown2.y / cellSz;
+	x = mDown2.x / CELLSZ;
+	y = 7 - mDown2.y / CELLSZ;
 	unsigned short dst;
 
 	odd = y & 1;
@@ -261,13 +261,13 @@ MoveCode SFMLGame::evalSelections()
 		dst /= 2;
 	}
 
-	_board = _game.toArr();
+	mBoard = mGame.toArr();
 	Move m = { src, dst };
 	std::cout << "Player Move: " << m << std::endl;
-	if (_board[x + y * 8] == EMPTY) {
-		return _game.makeMove(m);
+	if (mBoard[x + y * 8] == EMPTY) {
+		return mGame.makeMove(m);
 	} else {
-		return _game.jump(m);
+		return mGame.jump(m);
 	}
 }
 
@@ -276,26 +276,26 @@ void SFMLGame::loop()
 	using std::cout;
 	using std::endl;
 
-	while (IsOpened() && _game.isLive()) {
-		if (_state == EVALUATING) {
+	while (IsOpened() && mGame.isLive()) {
+		if (mState == EVALUATING) {
 			MoveCode err;
 
 			err = evalSelections();
-			std::cout << _errtable[err] << std::endl;
-			if (_game._turn) {
-				_state = NORMAL;
+			std::cout << errorTable[err] << std::endl;
+			if (mGame.mTurn) {
+				mState = NORMAL;
 				continue;
 			}
-			std::pair<Move, bool> moveinfo = _ai.evaluateGame(_game);
+			std::pair<Move, bool> moveinfo = mAi.evaluateGame(mGame);
 			cout << "AI Move: " << moveinfo.first << endl;
 			if (moveinfo.first.dst == 0 && moveinfo.first.src == 0)
 				break;
 			if (moveinfo.second) {
-				cout << _errtable[_game.jump(moveinfo.first)] << endl;
+				cout << errorTable[mGame.jump(moveinfo.first)] << endl;
 			} else
-				cout << _errtable[_game.makeMove(moveinfo.first)] << endl;
-			if (_game._turn)
-				_state = NORMAL;
+				cout << errorTable[mGame.makeMove(moveinfo.first)] << endl;
+			if (mGame.mTurn)
+				mState = NORMAL;
 		}
 		update();
 		Display();
@@ -429,18 +429,18 @@ bool SFMLGame::on_button_press_event(GdkEventButton* event) {
 	cout << event->x << endl;
 	cout << event->y << endl;
 
-	switch (_state) {
+	switch (mState) {
 	case SFMLGame::NORMAL:
-		_mDown1 = resolveMouse(
+		mDown1 = resolveMouse(
 				Vector2<int>(event->x,
 						event->y));
-		_state = SFMLGame::HLIGHT_1;
+		mState = SFMLGame::HLIGHT_1;
 		break;
 	case SFMLGame::HLIGHT_1:
-		_mDown2 = resolveMouse(
+		mDown2 = resolveMouse(
 				Vector2<int>(event->x,
 						event->y));
-		_state = SFMLGame::EVALUATING;
+		mState = SFMLGame::EVALUATING;
 		break;
 	default:
 		break;
@@ -456,7 +456,7 @@ bool SFMLGame::on_key_press_event(GdkEventKey* event) {
 	switch (event->keyval) {
 	case GDK_KEY_q:
 		cout << "Returning to normal state" << endl;
-		_state = NORMAL;
+		mState = NORMAL;
 		break;
 	default:
 		break;

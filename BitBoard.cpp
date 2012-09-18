@@ -35,12 +35,6 @@ const BitBoard CAN_UPRIGHT = ~(S[7] | S[15] | S[23] | S[31] | ROW_8);
 const BitBoard CAN_DOWNLEFT = ~(S[0] | S[8] | S[16] | S[24] | ROW_1);
 const BitBoard CAN_DOWNRIGHT = ~(S[7] | S[15] | S[23] | S[31] | ROW_1);
 
-//const BitBoard CAN_UP = ~ROW_8;
-//const BitBoard CAN_DOWN =  ~ROW_1;
-//const BitBoard CAN_LEFT = ~(S[0] | S[8] | S[16] | S[24]);
-//const BitBoard CAN_RIGHT = ~(S[7] | S[15] | S[23] | S[31]);
-
-
  std::map<BitBoard,unsigned short> bbUMap  = {
 		{S[0],0},
 		{S[1],1},

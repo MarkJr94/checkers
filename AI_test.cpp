@@ -24,9 +24,9 @@ void testmJump() {
 		moveinfo = a.evaluateGame(g);
 
 		if (moveinfo.second) {
-			cout << _errtable[g.jump(moveinfo.first)] << endl;
+			cout << errorTable[g.jump(moveinfo.first)] << endl;
 		} else
-			cout << _errtable[g.makeMove(moveinfo.first)] << endl;
+			cout << errorTable[g.makeMove(moveinfo.first)] << endl;
 	} while (g.getP1score() > 0 &&  g.getP2score() > 0);
 
 }

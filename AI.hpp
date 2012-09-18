@@ -35,7 +35,7 @@ private:
 	void generateMovesBlack();
 	void generateMovesWhite();
 	void generateMoves() {
-		if (_game->_turn)
+		if (sGame->mTurn)
 			generateMovesBlack();
 		else
 			generateMovesWhite();
@@ -45,7 +45,7 @@ private:
 	void generateJumpsBlack();
 	void generateJumpsWhite();
 	void generateJumps() {
-		if (_game->_turn)
+		if (sGame->mTurn)
 			generateJumpsBlack();
 		else
 			generateJumpsWhite();
@@ -59,15 +59,15 @@ private:
 
 	void initialize(const Save&);
 
-	unsigned _level;
-	unsigned _difficulty;
-	std::vector<AI *> _children;
-	std::vector<Move> _moves;
-	Save _save;
-	float _p1Avg;
-	float _p2Avg;
+	unsigned mLevel;
+	unsigned mDifficulty;
+	std::vector<AI *> mChildren;
+	std::vector<Move> mMoves;
+	Save mSave;
+	float mP1Avg;
+	float mP2Avg;
 
-	static Game* _game;
+	static Game* sGame;
 };
 
 #endif /* AI_HPP_ */
