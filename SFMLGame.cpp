@@ -345,17 +345,17 @@ void SFMLGame::on_size_allocate(Gtk::Allocation& allocation)
 
 void SFMLGame::on_map()
 {
-	Gtk::Widget::on_map();
+	supergtk::on_map();
 }
 
 void SFMLGame::on_unmap()
 {
-	Gtk::Widget::on_unmap();
+	supergtk::on_unmap();
 }
 
 void SFMLGame::on_realize()
 {
-	Gtk::Widget::on_realize();
+	supergtk::on_realize();
 
 	if (!_gdkWindow) {
 		//Create the GdkWindow:
@@ -390,7 +390,7 @@ void SFMLGame::on_realize()
 		sf::RenderWindow::Create(GDK_WINDOW_XID(_gdkWindow->gobj()));
 
 		set_can_focus(true);
-		grab_focus();
+//		grab_focus();
 	}
 }
 
@@ -416,6 +416,8 @@ bool SFMLGame::on_button_press_event(GdkEventButton* event)
 	using std::cout;
 	using std::endl;
 	using sf::Vector2;
+
+	grab_focus();
 
 	cout << event->type << endl;
 	cout << event->x << endl;

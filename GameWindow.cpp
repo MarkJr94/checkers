@@ -23,6 +23,14 @@ std::string tostr(const T& t)
 	return ss.str();
 }
 
+template <typename T>
+std::string& operator<<(std::string& str, const T& t)
+{
+	std::stringstream ss;
+	str = (ss << t).str();
+	return str;
+}
+
 SaveDialog::SaveDialog(const std::string& title, bool modal) :
 				super(title, modal),
 				m_filename_entry(),
@@ -82,26 +90,26 @@ GameWindow::GameWindow() :
 				mButtonCheckpoint(),
 				mButtonRestore(),
 				mBoxQuit(),
-				mButtonSaveQuit("Save and Exit"),
+				mButtonSaveQuit("Save/Exit"),
 				mButtonQuit("Quit"),
 				mCheckpoint()
 {
 	set_title("Simple Checkers");
 	set_border_width(6);
-	set_default_size(900, 800);
+	set_default_size(800, 800);
 
 	add(mHbox);
 	mHbox.pack_start(mGrid, Gtk::PACK_EXPAND_PADDING);
 
-//	m_grid.set_row_homogeneous(true);
+	mGrid.set_column_homogeneous(true);
 	mGrid.attach(mBoxFile, 0, 0, 2, 1);
-	mGrid.set_row_spacing(20);
+	mGrid.set_column_spacing(0);
 
 //	mButtonSave.set_size_request(130,130);
 
 	mBoxFile.pack_start(mButtonSave, Gtk::PACK_EXPAND_WIDGET);
 	mBoxFile.pack_start(mButtonLoad, Gtk::PACK_EXPAND_WIDGET);
-	mBoxFile.set_border_width(6);
+//	mBoxFile.set_border_width(6);
 	mBoxFile.set_homogeneous(true);
 
 	setStock(mButtonSave, "Save Game", Gtk::Stock::SAVE);
@@ -112,11 +120,11 @@ GameWindow::GameWindow() :
 	mButtonLoad.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onLoadClick));
 
-	mGrid.attach(mBoxCheckpoint, 0, 1, 2, 1);
+	mGrid.attach(mBoxCheckpoint, 2, 0, 2, 1);
 
 	mBoxCheckpoint.pack_start(mButtonCheckpoint, Gtk::PACK_EXPAND_WIDGET);
 	mBoxCheckpoint.pack_start(mButtonRestore, Gtk::PACK_EXPAND_WIDGET);
-	mBoxCheckpoint.set_border_width(6);
+//	mBoxCheckpoint.set_border_width(6);
 	mBoxCheckpoint.set_homogeneous(true);
 
 	setStock(mButtonCheckpoint, "Checkpoint", Gtk::Stock::APPLY);
@@ -127,11 +135,11 @@ GameWindow::GameWindow() :
 	mButtonRestore.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onRestoreClick));
 
-	mGrid.attach(mBoxQuit, 0, 5, 2, 1);
+	mGrid.attach(mBoxQuit, 4, 0, 2, 1);
 
 	mBoxQuit.pack_start(mButtonSaveQuit, Gtk::PACK_EXPAND_WIDGET);
 	mBoxQuit.pack_start(mButtonQuit, Gtk::PACK_EXPAND_WIDGET);
-	mBoxQuit.set_border_width(6);
+//	mBoxQuit.set_border_width(6);
 	mBoxQuit.set_homogeneous(true);
 
 //	setStock(m_button_save_quit,"Save and Exit",Gtk::Stock::DIRECTORY);
