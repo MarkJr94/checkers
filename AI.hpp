@@ -65,7 +65,7 @@ private:
 
 	std::pair<Move,bool> evaluateMoves(bool aggro = false);
 
-	void updateScores();
+	void updateScores(bool turn);
 
 	void initialize(const Save&);
 
@@ -74,8 +74,8 @@ private:
 	std::vector<AI *> mChildren;
 	std::vector<Move> mMoves;
 	Save mSave;
-	float mP1Avg;
-	float mP2Avg;
+	float mAvgScore;
+//	float mP2Avg;
 
 	static Game* sGame;
 };

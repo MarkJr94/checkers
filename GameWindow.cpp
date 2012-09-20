@@ -80,7 +80,7 @@ void setStock(Gtk::Button& button, std::string label, const Gtk::StockID stock)
 
 GameWindow::GameWindow() :
 				super(),
-				mVbox(Gtk::ORIENTATION_HORIZONTAL),
+				mVBox(Gtk::ORIENTATION_HORIZONTAL),
 //				mGrid(),
 				mGameWidget(sf::VideoMode(800, 800, 32)),
 				mBoxFile(Gtk::ORIENTATION_HORIZONTAL),
@@ -97,20 +97,15 @@ GameWindow::GameWindow() :
 	set_title("Simple Checkers");
 	set_border_width(6);
 	set_default_size(800, 800);
+	set_resizable(false);
 
-	add(mVbox);
-	mVbox.pack_start(mGrid, Gtk::PACK_EXPAND_PADDING);
+	add(mHBox);
 
-	mGrid.set_column_homogeneous(true);
-	mGrid.attach(mBoxFile, 0, 0, 2, 1);
-	mGrid.set_column_spacing(0);
+	mHBox.pack_start(mVBox,Gtk::PACK_EXPAND_WIDGET);
+	mVBox.set_homogeneous(true);
 
-//	mButtonSave.set_size_request(130,130);
-
-	mBoxFile.pack_start(mButtonSave, Gtk::PACK_EXPAND_WIDGET);
-	mBoxFile.pack_start(mButtonLoad, Gtk::PACK_EXPAND_WIDGET);
-//	mBoxFile.set_border_width(6);
-	mBoxFile.set_homogeneous(true);
+	mVBox.pack_start(mButtonSave,Gtk::PACK_EXPAND_WIDGET);
+	mVBox.pack_start(mButtonLoad,Gtk::PACK_EXPAND_WIDGET);
 
 	setStock(mButtonSave, "Save Game", Gtk::Stock::SAVE);
 	mButtonSave.signal_clicked().connect(
@@ -120,12 +115,8 @@ GameWindow::GameWindow() :
 	mButtonLoad.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onLoadClick));
 
-	mGrid.attach(mBoxCheckpoint, 2, 0, 2, 1);
-
-	mBoxCheckpoint.pack_start(mButtonCheckpoint, Gtk::PACK_EXPAND_WIDGET);
-	mBoxCheckpoint.pack_start(mButtonRestore, Gtk::PACK_EXPAND_WIDGET);
-//	mBoxCheckpoint.set_border_width(6);
-	mBoxCheckpoint.set_homogeneous(true);
+	mVBox.pack_start(mButtonCheckpoint, Gtk::PACK_EXPAND_WIDGET);
+	mVBox.pack_start(mButtonRestore, Gtk::PACK_EXPAND_WIDGET);
 
 	setStock(mButtonCheckpoint, "Checkpoint", Gtk::Stock::APPLY);
 	mButtonCheckpoint.signal_clicked().connect(
@@ -135,12 +126,8 @@ GameWindow::GameWindow() :
 	mButtonRestore.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onRestoreClick));
 
-	mGrid.attach(mBoxQuit, 4, 0, 2, 1);
-
-	mBoxQuit.pack_start(mButtonSaveQuit, Gtk::PACK_EXPAND_WIDGET);
-	mBoxQuit.pack_start(mButtonQuit, Gtk::PACK_EXPAND_WIDGET);
-//	mBoxQuit.set_border_width(6);
-	mBoxQuit.set_homogeneous(true);
+	mVBox.pack_start(mButtonSaveQuit, Gtk::PACK_EXPAND_WIDGET);
+	mVBox.pack_start(mButtonQuit, Gtk::PACK_EXPAND_WIDGET);
 
 //	setStock(m_button_save_quit,"Save and Exit",Gtk::Stock::DIRECTORY);
 	mButtonSaveQuit.signal_clicked().connect(
@@ -150,7 +137,8 @@ GameWindow::GameWindow() :
 	mButtonQuit.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onQuitClick));
 
-	mVbox.pack_start(mGameWidget, Gtk::PACK_EXPAND_PADDING);
+	mHBox.pack_start(mGameWidget, Gtk::PACK_EXPAND_PADDING);
+
 	mGameWidget.set_hexpand(false);
 	mGameWidget.set_vexpand(false);
 	mGameWidget.show();

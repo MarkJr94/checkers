@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <limits>
 
 #include "AI.hpp"
 
@@ -27,8 +28,8 @@ AI::AI(const unsigned degree, const Save& save, const unsigned difficulty) :
 				mChildren(),
 				mMoves(),
 				mSave(save),
-				mP1Avg(0),
-				mP2Avg(0)
+				mAvgScore(0)
+//				mP2Avg(0)
 {
 	srand(time(NULL));
 }
@@ -43,10 +44,9 @@ void AI::initialize(const Save& save)
 {
 	mSave = save;
 	sGame->restoreToSave(save);
-//	_p1Avg = _game->getP1score();
-//	_p2Avg = _game->getP2score();
-	mP1Avg = sGame->p1NumPieces();
-	mP2Avg = sGame->p2NumPieces();
+
+//	mP1Avg = sGame->p1NumPieces();
+//	mP2Avg = sGame->p2NumPieces();
 	for (auto child : mChildren)
 		delete child;
 	mChildren.clear();
@@ -58,8 +58,8 @@ void AI::printScene()
 {
 	using namespace std;
 
-	cout << "This is a degree " << mLevel << " AI with " << "P1 Min: " << mP1Avg
-			<< "\tP2 Min: " << mP2Avg << endl;
+	cout << "This is a degree " << mLevel << " AI with " << "Average: "
+			<< mAvgScore << "." << endl;
 }
 
 void AI::generateMovesBlack()
@@ -174,11 +174,9 @@ void AI::generateJumpsWhite()
 	using Bit::highBit;
 
 	BB jumpers = sGame->getJumpers();
-//	std::cout << "++++++++++++" << hex << jumpers << dec <<std::endl;
 
 	while (jumpers) {
 		BB j = highBit(jumpers);
-//		std::cout << "++++++++++++jumper = :" << hex << j << dec <<std::endl;
 		jumpers ^= j;
 		BB victims = sGame->mBP;
 
@@ -260,30 +258,33 @@ std::pair<bool, unsigned> AI::generateOutcomes()
 	return {jumps, numOutcomes};
 }
 
-void AI::updateScores()
+void AI::updateScores(bool p1Turn)
 {
-	if (mChildren.empty())
+	if (mChildren.empty()) {
+//		mAvgScore = (Bit::bitCount(mSave.BP & ~mSave.K)
+//				+ 2 * Bit::bitCount(mSave.BP & mSave.K))
+//				- (Bit::bitCount(mSave.WP & ~mSave.K)
+//						+ 2 * Bit::bitCount(mSave.WP & mSave.K));
+		mAvgScore = Bit::bitCount(mSave.BP) - Bit::bitCount(mSave.WP);
 		return;
-
+	}
 	for (auto& child : mChildren)
-		child->updateScores();
+		child->updateScores(p1Turn);
 
 	float temp1 = 0, temp2 = 0;
 	for (auto& child : mChildren) {
-		temp1 += child->mP1Avg;
-		temp2 += child->mP2Avg;
+		temp1 += child->mAvgScore;
 	}
 
-	mP1Avg = temp1 / mChildren.size();
-	mP2Avg = temp2 / mChildren.size();
+	mAvgScore = temp1 / mChildren.size();
 }
 
 std::pair<Move, bool> AI::evaluateMoves(bool aggro)
 {
 
-	bool optimizeForP1 = sGame->mTurn;
+	bool p1Turn = sGame->mTurn;
 	std::pair<bool, unsigned> info = generateOutcomes();
-	updateScores();
+	updateScores(p1Turn);
 
 	unsigned nKids = info.second;
 
@@ -292,43 +293,30 @@ std::pair<Move, bool> AI::evaluateMoves(bool aggro)
 		return { {0, 0},0};
 	}
 
+	std::cout << "Number outcomes tested: " << nKids << std::endl;
+
 	unsigned favoredSon = 0;
 	float bestAvg;
-	if (aggro) {
-		bestAvg = 999999999;
-		if (optimizeForP1) {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (mChildren[i]->mP2Avg < bestAvg) {
-					bestAvg = mChildren[i]->mP2Avg;
-					favoredSon = i;
 
-				}
-			}
-		} else {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (mChildren[i]->mP1Avg < bestAvg) {
-					bestAvg = mChildren[i]->mP1Avg;
-					favoredSon = i;
-				}
+	bestAvg = 0.0;
+	if (p1Turn) {
+		bestAvg = std::numeric_limits<float>::min();
+		for (unsigned i = 0; i < nKids; i++) {
+			if (mChildren[i]->mAvgScore > bestAvg) {
+				bestAvg = mChildren[i]->mAvgScore;
+				favoredSon = i;
 			}
 		}
-
 	} else {
-		bestAvg = 0.0;
-		if (optimizeForP1) {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (mChildren[i]->mP1Avg > bestAvg) {
-					bestAvg = mChildren[i]->mP1Avg;
-					favoredSon = i;
-				}
+		bestAvg = std::numeric_limits<float>::max();
+		for (unsigned i = 0; i < nKids; i++) {
+			if (mChildren[i]->mAvgScore < bestAvg) {
+
+				std::cout.flush();
+				bestAvg = mChildren[i]->mAvgScore;
+				favoredSon = i;
 			}
-		} else {
-			for (unsigned i = 0; i < nKids; i++) {
-				if (mChildren[i]->mP2Avg > bestAvg) {
-					bestAvg = mChildren[i]->mP2Avg;
-					favoredSon = i;
-				}
-			}
+			mChildren[i]->printScene();
 		}
 	}
 
@@ -339,7 +327,7 @@ std::pair<Move, bool> AI::evaluateGame(Game& game)
 {
 	mSave = game.getSave();
 
-	return evaluateMoves(false);
+	return evaluateMoves(true);
 }
 
 Move AI::getRandomMove() const
