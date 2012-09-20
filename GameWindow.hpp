@@ -8,43 +8,63 @@
 #ifndef GAMEWINDOW_HPP_
 #define GAMEWINDOW_HPP_
 
-#include <gtkmm/window.h>
-#include <gtkmm/button.h>
-#include <gtkmm/buttonbox.h>
-#include <gtkmm/checkbutton.h>
-#include <gtkmm/box.h>
-#include <gtkmm/grid.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/entry.h>
-#include <gtkmm/settings.h>
-#include <gtkmm/filechooserdialog.h>
-#include <gtkmm/stock.h>
-#include <gtkmm/stockid.h>
-#include <gtkmm/image.h>
+#include "SFMLGame.hpp"
+#include <gtkmm.h>
 
-
-class LoadGameDialog : public Gtk::Dialog {
+class SaveDialog: public Gtk::Dialog {
 public:
-	LoadGameDialog();
-	virtual ~LoadGameDialog();
+	SaveDialog(const std::string& title, bool modal = true);
+	~SaveDialog();
+	std::string entry();
+	void entry(const std::string&);
 
-protected:
-	Gtk::Button* yesButton;
-	Gtk::Button* noButton;
-
-	void onYesButtonClicked();
-	void onNoButtonClicked();
+private:
+	Gtk::Entry m_filename_entry;
+	Gtk::Label m_file_entry_label;
+	typedef Gtk::Dialog super;
 };
 
-class GameWindow : public Gtk::Window {
+class GameWindow: public Gtk::Window {
 public:
 	GameWindow();
 	virtual ~GameWindow();
 
 protected:
-	Gtk::Button* goButton;
+	//Signal handlers:
+	void onQuitClick();
 
-	void onGoButtonClicked();
+	void onSaveQuitClick();
+
+	void onSaveClick();
+
+	void onLoadClick();
+
+	void onCheckpointClick();
+
+	void onRestoreClick();
+
+	// Layout containers
+	Gtk::HBox mHbox; // TopLevel
+	Gtk::Grid mGrid;
+
+	//Child widgets:
+	SFMLGame mGameWidget;
+
+	Gtk::ButtonBox mBoxFile;
+	Gtk::Button mButtonSave;
+	Gtk::Button mButtonLoad;
+
+	Gtk::ButtonBox mBoxCheckpoint;
+	Gtk::Button mButtonCheckpoint;
+	Gtk::Button mButtonRestore;
+
+	Gtk::Box mBoxQuit;
+	Gtk::Button mButtonSaveQuit;
+	Gtk::Button mButtonQuit;
+
+	Save mCheckpoint;
+
+	typedef Gtk::Window super;
 };
 
 #endif /* GAMEWINDOW_HPP_ */

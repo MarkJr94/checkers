@@ -2,22 +2,27 @@ cmake_minimum_required(VERSION 2.6)
 project(CHECKERS)
 
 find_package(PkgConfig)
-pkg_check_modules(GTKMM gtkmm-3.0) # look into FindPkgConfig.cmake,
+
+pkg_check_modules(GTKMM gtkmm-3.0)
 pkg_check_modules(GLIBMM glibmm-2.4)
+pkg_check_modules(GDKMM gdkmm-3.0)
+
 
 
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_FLAGS "-g -Wall -std=c++0x")
 set(CORELIBS liboptparser.so)
 set(SFML_LIBS sfml-graphics sfml-window sfml-system)
-include_directories( ${GTKMM_INCLUDE_DIRS} ${GLIBMM_INCLUDE_DIRS} )
-#link_directories( 
 
-add_executable(draughts checkers.cpp game.cpp bst.cpp main.cpp)
-target_link_libraries(draughts ${CORELIBS})
+add_executable(game_test Game.cpp Game_test.cpp Save.cpp BitBoard.cpp)
+target_link_libraries(game_test ${CORELIBS}) #Hash.cpp TranspositionTable.cpp
 
-add_executable(visual checkers.cpp game.cpp bst.cpp DrawGame.cpp GameWindow.cpp)
-target_link_libraries(visual ${CORELIBS} ${GLIBMM_LIBRARIES} ${GTKMM_LIBRARIES} ${SFML_LIBS} )
+add_executable(ai_test Game.cpp Save.cpp BitBoard.cpp AI.cpp AI_test.cpp)
+target_link_libraries(game_test ${CORELIBS}) #Hash.cpp TranspositionTable.cpp
 
-add_executable(new checkers.cpp DrawGame.cpp Save.cpp )
-target_link_libraries(new ${CORELIBS} ${SFML_LIBS} )
+include_directories(
+    ${GTKMM_INCLUDE_DIRS}  ${GLIBMM_INCLUDE_DIRS} ${GDKMM_INCLUDE_DIRS} )
+
+add_executable(app_test BitBoard.cpp Game.cpp Save.cpp AI.cpp SFMLGame.cpp GameWindow.cpp GameWindow_test.cpp)
+target_link_libraries(app_test 
+    ${GTKMM_LIBRARIES}  ${GDKMM_LIBRARIES} ${GLIBMM_LIBRARIES} ${SFML_LIBS})

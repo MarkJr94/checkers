@@ -8,41 +8,35 @@
 #ifndef SAVE_HPP_
 #define SAVE_HPP_
 
-#include "checkers.hpp"
+#include "BitBoard.hpp"
+
+
 #include <fstream>
 #include <map>
 #include <string>
 #include <vector>
 
-struct CellRecord {
-	bool alive;
-	Piece::Color color;
-	unsigned id;
-	bool isKing;
-};
 
 struct Save {
 
 	bool turn;
-	unsigned mustJump;
+	BitBoard mustJump;
+	BitBoard WP;
+	BitBoard BP;
+	BitBoard K;
 
 	Save();
-	Save(bool);
 	~Save();
+	friend void swap(Save&,Save&);
 
-	/* Assignment operator */
-	Save& operator=(const Save&);
+	/* Equality test */
+	friend bool operator==(const Save&, const Save&);
 
-	/* Subscript operator */
-	std::vector<CellRecord>& operator[](const int row) {
-		return data[row];
-	}
-
-	void write(std::string);
+	/* Read and write to file */
+	void write(std::string) const;
 	void read(std::string);
 
 private:
-	std::vector<std::vector<CellRecord>> data;
 };
 
 #endif /* SAVE_HPP_ */

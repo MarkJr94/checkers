@@ -6,162 +6,257 @@
  */
 
 #include <iostream>
-#include <glibmm/refptr.h>
-#include <gtkmm/dialog.h>
-#include <gtkmm/stock.h>
-#include <gtkmm/stockid.h>
-#include <gtkmm/image.h>
+#include <sstream>
+
+#include <glibmm.h>
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "bst.hpp"
-#include "checkers.hpp"
-#include "game.hpp"
-#include "DrawGame.hpp"
 #include "GameWindow.hpp"
 
-Gtk::Button* set_but(const char *label, const Gtk::StockID& stock) {
-	using namespace Gtk;
-	Button *button = manage(new Button(label));
-	Image *img = manage(new Gtk::Image(stock, Gtk::ICON_SIZE_BUTTON));
-	button->set_image(*img);
-	button->set_label(label);
-
-	return button;
+template <typename T>
+std::string tostr(const T& t)
+{
+	std::stringstream ss;
+	ss << t;
+	return ss.str();
 }
 
-LoadGameDialog::LoadGameDialog() {
-	using namespace Gtk;
+template <typename T>
+std::string& operator<<(std::string& str, const T& t)
+{
+	std::stringstream ss;
+	str = (ss << t).str();
+	return str;
+}
 
-	ButtonBox* actionArea = get_action_area();
-	yesButton = set_but("Yes", Gtk::Stock::DIRECTORY);
-	yesButton->signal_clicked().connect(
-			sigc::mem_fun(*this, &LoadGameDialog::onYesButtonClicked));
-	noButton = set_but("No", Stock::NO);
-	noButton->signal_clicked().connect(
-			sigc::mem_fun(*this, &LoadGameDialog::onNoButtonClicked));
+SaveDialog::SaveDialog(const std::string& title, bool modal) :
+				super(title, modal),
+				m_filename_entry(),
+				m_file_entry_label("Enter file name: ")
+{
+	set_has_resize_grip(false);
+	set_resizable(false);
 
-	actionArea->pack_start(*noButton, false, false);
-	actionArea->pack_start(*yesButton, false, false);
+	Gtk::Box* area = get_content_area();
+	area->add(m_file_entry_label);
+	m_filename_entry.set_activates_default(true);
+	area->add(m_filename_entry);
+//	area->pack_start(_label,true,true);
+//	area->pack_end(_fileEnt,true,true);
+
+	Gtk::Button* ok = (manage(new Gtk::Button(Gtk::Stock::OK)));
+	ok->set_can_default(true);
+	set_default(*ok);
+	add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	add_action_widget(*ok, Gtk::RESPONSE_OK);
 
 	show_all_children();
 }
 
-LoadGameDialog::~LoadGameDialog() {
-	;
+SaveDialog::~SaveDialog()
+{
 }
 
-void LoadGameDialog::onYesButtonClicked() {
-	DrawGame *theGame = new DrawGame();
-	playAIvsAI(theGame, true);
-	delete theGame;
+std::string SaveDialog::entry()
+{
+	return m_filename_entry.get_text();
 }
 
-void LoadGameDialog::onNoButtonClicked() {
+void SaveDialog::entry(const std::string& s)
+{
+	m_filename_entry.set_text(s);
+}
+
+void setStock(Gtk::Button& button, std::string label, const Gtk::StockID stock)
+{
+	Gtk::Image *img = manage(new Gtk::Image(stock, Gtk::ICON_SIZE_DIALOG));
+//	Glib::RefPtr<Gdk::Pixbuf> temp = img->get_pixbuf()->scale_simple(13,13, Gdk::InterpType::INTERP_NEAREST);
+//	img->set(temp);
+	button.set_image(*img);
+	button.set_label(label);
+}
+
+GameWindow::GameWindow() :
+				super(),
+				mHbox(Gtk::ORIENTATION_HORIZONTAL),
+				mGrid(),
+				mGameWidget(sf::VideoMode(800, 800, 32)),
+				mBoxFile(Gtk::ORIENTATION_HORIZONTAL),
+				mButtonSave(),
+				mButtonLoad(),
+				mBoxCheckpoint(),
+				mButtonCheckpoint(),
+				mButtonRestore(),
+				mBoxQuit(),
+				mButtonSaveQuit("Save/Exit"),
+				mButtonQuit("Quit"),
+				mCheckpoint()
+{
+	set_title("Simple Checkers");
+	set_border_width(6);
+	set_default_size(800, 800);
+
+	add(mHbox);
+	mHbox.pack_start(mGrid, Gtk::PACK_EXPAND_PADDING);
+
+	mGrid.set_column_homogeneous(true);
+	mGrid.attach(mBoxFile, 0, 0, 2, 1);
+	mGrid.set_column_spacing(0);
+
+//	mButtonSave.set_size_request(130,130);
+
+	mBoxFile.pack_start(mButtonSave, Gtk::PACK_EXPAND_WIDGET);
+	mBoxFile.pack_start(mButtonLoad, Gtk::PACK_EXPAND_WIDGET);
+//	mBoxFile.set_border_width(6);
+	mBoxFile.set_homogeneous(true);
+
+	setStock(mButtonSave, "Save Game", Gtk::Stock::SAVE);
+	mButtonSave.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onSaveClick));
+
+	setStock(mButtonLoad, "Load Game", Gtk::Stock::DIRECTORY);
+	mButtonLoad.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onLoadClick));
+
+	mGrid.attach(mBoxCheckpoint, 2, 0, 2, 1);
+
+	mBoxCheckpoint.pack_start(mButtonCheckpoint, Gtk::PACK_EXPAND_WIDGET);
+	mBoxCheckpoint.pack_start(mButtonRestore, Gtk::PACK_EXPAND_WIDGET);
+//	mBoxCheckpoint.set_border_width(6);
+	mBoxCheckpoint.set_homogeneous(true);
+
+	setStock(mButtonCheckpoint, "Checkpoint", Gtk::Stock::APPLY);
+	mButtonCheckpoint.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onCheckpointClick));
+
+	setStock(mButtonRestore, "Restore", Gtk::Stock::REVERT_TO_SAVED);
+	mButtonRestore.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onRestoreClick));
+
+	mGrid.attach(mBoxQuit, 4, 0, 2, 1);
+
+	mBoxQuit.pack_start(mButtonSaveQuit, Gtk::PACK_EXPAND_WIDGET);
+	mBoxQuit.pack_start(mButtonQuit, Gtk::PACK_EXPAND_WIDGET);
+//	mBoxQuit.set_border_width(6);
+	mBoxQuit.set_homogeneous(true);
+
+//	setStock(m_button_save_quit,"Save and Exit",Gtk::Stock::DIRECTORY);
+	mButtonSaveQuit.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onQuitClick));
+
+	setStock(mButtonQuit, "Quit", Gtk::Stock::QUIT);
+	mButtonQuit.signal_clicked().connect(
+			sigc::mem_fun(*this, &GameWindow::onQuitClick));
+
+	mHbox.pack_start(mGameWidget, Gtk::PACK_EXPAND_PADDING);
+	mGameWidget.set_hexpand(false);
+	mGameWidget.set_vexpand(false);
+	mGameWidget.show();
+	mGameWidget.set_size_request(800, 800);
+
+	show_all_children();
+}
+
+GameWindow::~GameWindow()
+{
+}
+
+void GameWindow::onQuitClick()
+{
 	hide();
 }
 
-GameWindow::GameWindow() {
-	// TODO Auto-generated constructor stub
-	goButton = set_but("GO!!", Gtk::Stock::APPLY);
-	goButton->signal_clicked().connect(
-			sigc::mem_fun(*this, &GameWindow::onGoButtonClicked));
+void GameWindow::onLoadClick()
+{
+	Gtk::FileChooserDialog dialog("Please choose a file",
+			Gtk::FILE_CHOOSER_ACTION_OPEN);
+	dialog.set_transient_for(*this);
+	dialog.set_current_folder("saves");
 
-	add(*goButton);
-	show_all_children();
-}
+	//Add response buttons the the dialog:
+	dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	dialog.add_button(Gtk::Stock::OPEN, Gtk::RESPONSE_OK);
 
-GameWindow::~GameWindow() {
-	// TODO Auto-generated destructor stub
-}
+	//Add filters, so that only certain file types can be selected:
 
-void GameWindow::onGoButtonClicked() {
-//	LoadGameDialog lg;
-//	lg.run();
-	DrawGame *theGame = new DrawGame();
-	playAIvsAI(theGame, true);
-	delete theGame;
-}
+	Glib::RefPtr<Gtk::FileFilter> filter_any = Gtk::FileFilter::create();
+	filter_any->set_name("Checkers Save File");
+	filter_any->add_pattern("*.cks");
+	dialog.add_filter(filter_any);
 
-void playAI(Game *theGame, bool interact) {
-	using namespace std;
+	//Show the dialog and wait for a user response:
+	int result = dialog.run();
 
-	MoveRecord blank;
-	string instring;
-	GameTree *predictor = NULL;
-	bool turn;
+	//Handle the response:
+	switch (result) {
+	case (Gtk::RESPONSE_OK): {
+		std::cout << "Open clicked." << std::endl;
 
-	theGame->print();
+		//Notice that this is a std::string, not a Glib::ustring.
+		std::string filename = dialog.get_filename();
+		std::cout << "File selected: " << filename << std::endl;
 
-	while (1) {
-		if (interact)
-			cout << theGame->getP1score() << " Player 1\n"
-					<< theGame->getP2score() << " Player 2\n\n";
-
-		if ((turn = theGame->getTurn())) {
-			if (theGame->getP1score() < 1)
-				return;
-
-			if (aiInteract(theGame, interact, blank, predictor, turn))
-				return;
-//			delay(500);
-		} else {
-			if (theGame->getP2score() < 1)
-				return;
-
-			if (aiInteract(theGame, interact, blank, predictor, turn))
-				return;
-//			delay(500);
-		}
+		Save s;
+		s.read(filename);
+		mGameWidget.mGame.restoreToSave(s);
+		break;
 	}
-
-}
-
-bool sfHandleEvents(sf::RenderWindow& App) {
-	sf::Event Event;
-	bool ret = false;
-	while (App.GetEvent(Event)) {
-		// Window closed
-		if (Event.Type == sf::Event::Closed) {
-			App.Close();
-			ret = true;
-		}
-		// Escape key pressed
-		if ((Event.Type == sf::Event::KeyPressed)
-				&& (Event.Key.Code == sf::Key::Escape)) {
-			App.Close();
-			ret = true;
-		}
+	case (Gtk::RESPONSE_CANCEL): {
+		std::cout << "Cancel clicked." << std::endl;
+		break;
 	}
-	return ret;
-}
-
-void sfDrawThings(sf::RenderWindow& App) {
-	using namespace sf;
-	using namespace std;
-
-	Shape rect1 = Shape::Rectangle(0,0,50,50,Color(0xff,0,0));
-	App.Draw(rect1);
-}
-int main(int argc, char *argv[]) {
-//	Glib::RefPtr<Gtk::Application> app =
-//			Gtk::Application::create(argc, argv,
-//					"org.gtkmm.examples.base");
-//	Gtk::Settings::get_default()->property_gtk_button_images() = true;
-//
-//	GameWindow window;
-//	return app->run(window);
-	using namespace std;
-
-	sf::RenderWindow App(sf::VideoMode(800, 600, 32), "SFML Window");
-	bool Running = true;
-	while (Running) {
-		if (sfHandleEvents(App)) break;
-		sfDrawThings(App);
-		App.Display();
+	default: {
+		std::cout << "Unexpected button clicked." << std::endl;
+		break;
 	}
+	}
+}
 
-	return EXIT_SUCCESS;
+void GameWindow::onSaveClick()
+{
+	SaveDialog dialog("Save your game", true);
 
+	dialog.set_transient_for(*this);
+
+	//Show the dialog and wait for a user response:
+	int result = dialog.run();
+
+	//Handle the response:
+	switch (result) {
+	case (Gtk::RESPONSE_OK): {
+		std::cout << "Open clicked." << std::endl;
+
+		//Notice that this is a std::string, not a Glib::ustring.
+		std::string filename = dialog.entry();
+		std::cout << "File selected: " << filename << std::endl;
+		mGameWidget.mGame.getSave().write("saves/" + filename + ".cks");
+		break;
+	}
+	case (Gtk::RESPONSE_CANCEL): {
+		std::cout << "Cancel clicked." << std::endl;
+		break;
+	}
+	default: {
+		std::cout << "Unexpected button clicked." << std::endl;
+		break;
+	}
+	}
+}
+
+void GameWindow::onCheckpointClick()
+{
+	mCheckpoint = mGameWidget.mGame.getSave();
+}
+
+void GameWindow::onRestoreClick()
+{
+	mGameWidget.mGame.restoreToSave(mCheckpoint);
+}
+
+void GameWindow::onSaveQuitClick()
+{
+	onSaveClick();
+	hide();
 }

@@ -6,97 +6,50 @@
  */
 
 #include "Save.hpp"
+#include <algorithm>
 
 Save::Save() :
-		turn(true), mustJump(0), data(8, std::vector<CellRecord>(8)) {
-	using namespace std;
+		turn(true), mustJump(0), WP(Bit::Masks::WP_INIT), BP(Bit::Masks::BP_INIT), K(0) {
 
-	unsigned i = 0, j = 0, count = 0;
-
-	for (unsigned k = 1; k <= 12; k++) {
-		data[j][i] = {true, Piece::BLACK, k, false};
-		j += 2;
-		if (j == BOARD_SIZE)
-		j = 1;
-		if (j == BOARD_SIZE + 1)
-		j = 0;
-		if (++count == 4) {
-			++i;
-			count = 0;
-		}
-	}
-
-	count = 0;
-	i = 7, j = 1;
-
-	for (unsigned k = 1; k <= 12; k++) {
-		data[j][i] = {true, Piece::RED, k, false};
-		j += 2;
-		if (j == BOARD_SIZE)
-		j = 1;
-		if (j == BOARD_SIZE + 1)
-		j = 0;
-		if (++count == 4) {
-			--i;
-			count = 0;
-		}
-	}
 }
 
-Save::Save(bool turn) :
-		turn(turn), mustJump(0), data(8, std::vector<CellRecord>(8)) {
-}
+void swap(Save& first, Save& second) {
+	using std::swap;
 
-Save& Save::operator=(const Save& other) {
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			data[i][j] = other.data[i][j];
-		}
-	}
-	this->turn = other.turn;
-	this->mustJump = other.mustJump;
-	return *this;
+	swap(first.turn, second.turn);
+	swap(first.mustJump, second.mustJump);
+	swap(first.WP, second.WP);
+	swap(first.BP, second.BP);
+	swap(first.K, second.K);
 }
 
 Save::~Save() {
-
 }
 
-void Save::write(std::string fname) {
-	using namespace std;
-
-	fstream savefile;
-	savefile.open(fname.c_str(), fstream::trunc | fstream::out);
-
-	savefile << turn << " " << mustJump << endl;
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			savefile << data[i][j].id << " " << data[i][j].alive << " "
-					<< data[i][j].color << " " << data[i][j].isKing << " ";
-		}
-		savefile << endl;
-	}
-	savefile.close();
+bool operator==(const Save& lhs, const Save& rhs) {
+	return lhs.mustJump == rhs.mustJump && lhs.turn == rhs.turn && lhs.WP == rhs.WP
+			&& lhs.BP == rhs.BP && lhs.K == rhs.K;
 }
+
+void Save::write(std::string fname) const {
+	using std::endl;
+	using std::ofstream;
+
+	ofstream saveFile(fname.c_str());
+
+	saveFile << turn << " " << mustJump << endl;
+	saveFile << WP << endl;
+	saveFile << BP << endl;
+	saveFile << K << endl;
+}
+
 void Save::read(std::string fname) {
-	using namespace std;
+	using std::ifstream;
 
-	fstream savefile;
-	savefile.open(fname.c_str(), fstream::in);
-	bool turn, alive, isKing;
-	unsigned col, id, mj;
+	ifstream saveFile(fname.c_str());
 
-	savefile >> turn >> mj;
-	this->turn = turn;
-	this->mustJump = mj;
-	for (unsigned i = 0; i < BOARD_SIZE; i++) {
-		for (unsigned j = 0; j < BOARD_SIZE; j++) {
-			savefile >> id >> alive >> col >> isKing;
-			data[i][j].color = (Piece::Color) col;
-			data[i][j].alive = alive;
-			data[i][j].id = id;
-			data[i][j].isKing = isKing;
-		}
-	}
-	savefile.close();
+	saveFile >> turn >> mustJump;
+	saveFile >> WP;
+	saveFile >> BP;
+	saveFile >> K;
 }
