@@ -44,8 +44,8 @@ protected:
 	void onRestoreClick();
 
 	// Layout containers
-	Gtk::HBox mHbox; // TopLevel
-	Gtk::Grid mGrid;
+	Gtk::VBox mVbox; // TopLevel
+//	Gtk::Grid mGrid;
 
 	//Child widgets:
 	SFMLGame mGameWidget;

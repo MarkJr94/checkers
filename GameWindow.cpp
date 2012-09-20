@@ -80,8 +80,8 @@ void setStock(Gtk::Button& button, std::string label, const Gtk::StockID stock)
 
 GameWindow::GameWindow() :
 				super(),
-				mHbox(Gtk::ORIENTATION_HORIZONTAL),
-				mGrid(),
+				mVbox(Gtk::ORIENTATION_HORIZONTAL),
+//				mGrid(),
 				mGameWidget(sf::VideoMode(800, 800, 32)),
 				mBoxFile(Gtk::ORIENTATION_HORIZONTAL),
 				mButtonSave(),
@@ -98,8 +98,8 @@ GameWindow::GameWindow() :
 	set_border_width(6);
 	set_default_size(800, 800);
 
-	add(mHbox);
-	mHbox.pack_start(mGrid, Gtk::PACK_EXPAND_PADDING);
+	add(mVbox);
+	mVbox.pack_start(mGrid, Gtk::PACK_EXPAND_PADDING);
 
 	mGrid.set_column_homogeneous(true);
 	mGrid.attach(mBoxFile, 0, 0, 2, 1);
@@ -150,7 +150,7 @@ GameWindow::GameWindow() :
 	mButtonQuit.signal_clicked().connect(
 			sigc::mem_fun(*this, &GameWindow::onQuitClick));
 
-	mHbox.pack_start(mGameWidget, Gtk::PACK_EXPAND_PADDING);
+	mVbox.pack_start(mGameWidget, Gtk::PACK_EXPAND_PADDING);
 	mGameWidget.set_hexpand(false);
 	mGameWidget.set_vexpand(false);
 	mGameWidget.show();
