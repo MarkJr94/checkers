@@ -44,7 +44,7 @@ protected:
 	void onRestoreClick();
 
 	// Layout containers
-	Gtk::VBox mHbox; // TopLevel
+	Gtk::HBox mHbox; // TopLevel
 	Gtk::Grid mGrid;
 
 	//Child widgets:
