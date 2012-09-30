@@ -19,8 +19,8 @@ public:
 	void entry(const std::string&);
 
 private:
-	Gtk::Entry m_filename_entry;
-	Gtk::Label m_file_entry_label;
+	Gtk::Entry mEntryFilename;
+	Gtk::Label mLabelFilename;
 	typedef Gtk::Dialog super;
 };
 

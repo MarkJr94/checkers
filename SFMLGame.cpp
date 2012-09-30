@@ -311,7 +311,7 @@ void SFMLGame::loop()
 
 bool SFMLGame::on_idle()
 {
-	if (_gdkWindow) {
+	if (mGdkWindow) {
 		update();
 		Display();
 	}
@@ -335,9 +335,9 @@ void SFMLGame::on_size_allocate(Gtk::Allocation& allocation)
 
 	this->set_allocation(allocation);
 
-	if (_gdkWindow) {
+	if (mGdkWindow) {
 //        _gdkWindow->move_resize(allocation.get_x(), allocation.get_y(), allocation.get_width(), allocation.get_height() );
-		_gdkWindow->move(allocation.get_x(), allocation.get_y());
+		mGdkWindow->move(allocation.get_x(), allocation.get_y());
 //        _sfRenWin->SetSize(allocation.get_width(), allocation.get_height());
 //        _sfRenWin->SetPosition(allocation.get_x(),allocation.gset_y());
 	}
@@ -357,7 +357,7 @@ void SFMLGame::on_realize()
 {
 	supergtk::on_realize();
 
-	if (!_gdkWindow) {
+	if (!mGdkWindow) {
 		//Create the GdkWindow:
 		GdkWindowAttr attributes;
 		memset(&attributes, 0, sizeof(attributes));
@@ -374,20 +374,20 @@ void SFMLGame::on_realize()
 		attributes.window_type = GDK_WINDOW_CHILD;
 		attributes.wclass = GDK_INPUT_OUTPUT;
 
-		_gdkWindow = Gdk::Window::create(get_window() /* parent */, &attributes,
+		mGdkWindow = Gdk::Window::create(get_window() /* parent */, &attributes,
 				GDK_WA_X | GDK_WA_Y);
 //        unset_flags(Gtk::NO_WINDOW);
 		set_has_window(true);
-		set_window(_gdkWindow);
+		set_window(mGdkWindow);
 
 		//set colors
 
 		//make the widget receive expose events
-		_gdkWindow->set_user_data(gobj());
+		mGdkWindow->set_user_data(gobj());
 
 		///Reference: http://www.nabble.com/Win32-HWND-td20494257.html
 		///This is platform specific, compiling on Linux/MacOS will require a different Window Handle
-		sf::RenderWindow::Create(GDK_WINDOW_XID(_gdkWindow->gobj()));
+		sf::RenderWindow::Create(GDK_WINDOW_XID(mGdkWindow->gobj()));
 
 		set_can_focus(true);
 //		grab_focus();
@@ -396,7 +396,7 @@ void SFMLGame::on_realize()
 
 void SFMLGame::on_unrealize()
 {
-	_gdkWindow.clear();
+	mGdkWindow.clear();
 
 	//Call base class:
 	Gtk::Widget::on_unrealize();
@@ -404,7 +404,7 @@ void SFMLGame::on_unrealize()
 
 bool SFMLGame::on_expose_event(GdkEventExpose* event)
 {
-	if (_gdkWindow) {
+	if (mGdkWindow) {
 		update();
 		Display();
 	}

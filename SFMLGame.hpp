@@ -97,7 +97,7 @@ private:
 
 	virtual bool on_key_press_event(GdkEventKey* event);
 
-	Glib::RefPtr<Gdk::Window> _gdkWindow;
+	Glib::RefPtr<Gdk::Window> mGdkWindow;
 };
 
 #endif /* GAME_HPP_ */

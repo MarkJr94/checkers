@@ -5,19 +5,30 @@
 #include "Game.hpp"
 
 Game::Game(const bool debug, const bool interact) :
-		mWP(Bit::Masks::WP_INIT), mBP(Bit::Masks::BP_INIT), mK(0), mTurn(true), mDebug(
-				debug), mSave(), mInteract(interact), mMustJump(0) {
+				mWP(Bit::Masks::WP_INIT),
+				mBP(Bit::Masks::BP_INIT),
+				mK(0),
+				mTurn(true),
+				mDebug(debug),
+				mSave(),
+				mInteract(interact),
+				mMustJump(0)
+{
 }
 
 Game::Game(const Save& save, const bool debug, const bool interact) :
-		mDebug(debug), mInteract(interact) {
+				mDebug(debug),
+				mInteract(interact)
+{
 	restoreToSave(save);
 }
 
-Game::~Game() {
+Game::~Game()
+{
 }
 
-void Game::restoreToSave(const Save& save) {
+void Game::restoreToSave(const Save& save)
+{
 	using namespace std;
 
 	mSave = save;
@@ -28,7 +39,8 @@ void Game::restoreToSave(const Save& save) {
 	mMustJump = save.mustJump;
 }
 
-inline void Game::updateSave() {
+inline void Game::updateSave()
+{
 	mSave.WP = mWP;
 	mSave.BP = mBP;
 	mSave.K = mK;
@@ -36,12 +48,14 @@ inline void Game::updateSave() {
 	mSave.mustJump = mMustJump;
 }
 
-Save Game::getSave() {
+Save Game::getSave()
+{
 	updateSave();
 	return mSave;
 }
 
-std::vector<Cell> Game::toArr() const {
+std::vector<Cell> Game::toArr() const
+{
 	using Bit::Masks::S;
 
 	std::vector<Cell> b(64);
@@ -79,7 +93,8 @@ std::vector<Cell> Game::toArr() const {
 	return b;
 }
 
-void Game::print() const {
+void Game::print() const
+{
 	using std::cout;
 	using std::endl;
 
@@ -100,7 +115,8 @@ void Game::print() const {
 
 }
 
-BitBoard Game::getJumpers() const {
+BitBoard Game::getJumpers() const
+{
 	using namespace Bit::Masks;
 	using Bit::ror;
 	using Bit::rol;
@@ -135,7 +151,8 @@ BitBoard Game::getJumpers() const {
 	return jumpers;
 }
 
-BitBoard Game::getMovers() const {
+BitBoard Game::getMovers() const
+{
 	using namespace Bit::Masks;
 	using Bit::ror;
 	using Bit::rol;
@@ -161,7 +178,8 @@ BitBoard Game::getMovers() const {
 }
 
 /* Piece movement */
-MoveCode Game::makeMove(const Move& move) {
+MoveCode Game::makeMove(const Move& move)
+{
 	using namespace Bit::Masks;
 	using Bit::rol;
 	using Bit::ror;
@@ -222,7 +240,8 @@ MoveCode Game::makeMove(const Move& move) {
 	return SUCCESS;
 }
 
-BB Game::canJump(const BB src, const BB vict) {
+BB Game::canJump(const BB src, const BB vict)
+{
 	using Bit::rol;
 	using Bit::ror;
 	using namespace Bit::Masks;
@@ -271,7 +290,8 @@ BB Game::canJump(const BB src, const BB vict) {
 	return 0u;
 }
 
-MoveCode Game::jump(const Move& move) {
+MoveCode Game::jump(const Move& move)
+{
 	using namespace Bit::Masks;
 	using Bit::rol;
 	using Bit::ror;
@@ -327,7 +347,8 @@ MoveCode Game::jump(const Move& move) {
 	return SUCCESS;
 }
 
-MoveCode Game::receiveInput() {
+MoveCode Game::receiveInput()
+{
 	using namespace std;
 
 	Move move;
@@ -360,4 +381,13 @@ MoveCode Game::receiveInput() {
 		cerr << errorTable[retval];
 	}
 	return retval;
+}
+
+int Game::grade() const
+{
+	int p1 = Bit::bitCount(mBP & ~mK) + 2 * Bit::bitCount(mBP & mK);
+	int p2 = Bit::bitCount(mWP & ~mK) + 2 * Bit::bitCount(mWP & mK);
+	p2 *= -1;
+
+	return p1 + p2;
 }

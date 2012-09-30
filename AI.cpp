@@ -5,6 +5,7 @@
  *      Author: msinclair94
  */
 #include <cstdlib>
+#include <functional>
 #include <ctime>
 #include <iostream>
 #include <limits>

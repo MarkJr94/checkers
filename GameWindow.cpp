@@ -19,30 +19,28 @@ template <typename T>
 std::string tostr(const T& t)
 {
 	std::stringstream ss;
-	ss << t;
-	return ss.str();
+	return (ss << t).str();
 }
 
 template <typename T>
 std::string& operator<<(std::string& str, const T& t)
 {
 	std::stringstream ss;
-	str = (ss << t).str();
-	return str;
+	return (ss << t).str();
 }
 
 SaveDialog::SaveDialog(const std::string& title, bool modal) :
 				super(title, modal),
-				m_filename_entry(),
-				m_file_entry_label("Enter file name: ")
+				mEntryFilename(),
+				mLabelFilename("Enter file name: ")
 {
 	set_has_resize_grip(false);
 	set_resizable(false);
 
 	Gtk::Box* area = get_content_area();
-	area->add(m_file_entry_label);
-	m_filename_entry.set_activates_default(true);
-	area->add(m_filename_entry);
+	area->add(mLabelFilename);
+	mEntryFilename.set_activates_default(true);
+	area->add(mEntryFilename);
 //	area->pack_start(_label,true,true);
 //	area->pack_end(_fileEnt,true,true);
 
@@ -61,19 +59,17 @@ SaveDialog::~SaveDialog()
 
 std::string SaveDialog::entry()
 {
-	return m_filename_entry.get_text();
+	return mEntryFilename.get_text();
 }
 
 void SaveDialog::entry(const std::string& s)
 {
-	m_filename_entry.set_text(s);
+	mEntryFilename.set_text(s);
 }
 
 void setStock(Gtk::Button& button, std::string label, const Gtk::StockID stock)
 {
 	Gtk::Image *img = manage(new Gtk::Image(stock, Gtk::ICON_SIZE_DIALOG));
-//	Glib::RefPtr<Gdk::Pixbuf> temp = img->get_pixbuf()->scale_simple(13,13, Gdk::InterpType::INTERP_NEAREST);
-//	img->set(temp);
 	button.set_image(*img);
 	button.set_label(label);
 }

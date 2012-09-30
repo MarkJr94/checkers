@@ -50,6 +50,8 @@ public:
 		return Bit::bitCount(mWP & ~mK) + 2 * Bit::bitCount(mWP & mK);
 	}
 
+	int grade() const;
+
 	unsigned p1NumPieces() const
 	{
 		return Bit::bitCount(mBP);
