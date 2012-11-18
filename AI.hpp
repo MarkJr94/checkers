@@ -10,23 +10,35 @@
 
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include "BitBoard.hpp"
 #include "Save.hpp"
 #include "Game.hpp"
 
-class AI {
+class BaseAI {
+public:
+//	virtual void print_scene() = 0;
+
+	virtual Move get_random_move() const = 0;
+
+	virtual Move evaluate_game(Game&) = 0;
+
+	virtual ~BaseAI() {};
+};
+
+class SimpleAI : public BaseAI {
 public:
 	friend class GameMaster;
 
-	AI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 6);
-	~AI();
+	SimpleAI(const unsigned level = 0, const Save& = Save(), const unsigned difficulty = 6);
+	~SimpleAI();
 
-	void printScene();
+	void print_scene();
 
-	Move getRandomMove() const;
+	Move get_random_move() const;
 
-	std::pair<Move,bool> evaluateGame(Game&);
+	Move evaluate_game(Game&);
 
 	void difficulty(unsigned difficulty)
 	{
@@ -39,13 +51,13 @@ public:
 	}
 
 private:
-	AI(const AI&);
-	AI& operator=(const AI&);
+	SimpleAI(const SimpleAI&);
+	SimpleAI& operator=(const SimpleAI&);
 
 	void generateMovesBlack();
 	void generateMovesWhite();
 	void generateMoves() {
-		if (sGame->mTurn)
+		if (sGame.mTurn)
 			generateMovesBlack();
 		else
 			generateMovesWhite();
@@ -55,15 +67,15 @@ private:
 	void generateJumpsBlack();
 	void generateJumpsWhite();
 	void generateJumps() {
-		if (sGame->mTurn)
+		if (sGame.mTurn)
 			generateJumpsBlack();
 		else
 			generateJumpsWhite();
 	}
 
-	std::pair<bool,unsigned> generateOutcomes();
+	unsigned generateOutcomes();
 
-	std::pair<Move,bool> evaluateMoves(bool aggro = false);
+	Move evaluateMoves(bool aggro = false);
 
 	void updateScores(bool turn);
 
@@ -71,13 +83,13 @@ private:
 
 	unsigned mLevel;
 	unsigned mDifficulty;
-	std::vector<AI *> mChildren;
+	std::vector<SimpleAI *> mChildren;
 	std::vector<Move> mMoves;
 	Save mSave;
 	float mAvgScore;
 //	float mP2Avg;
 
-	static Game* sGame;
+	static Game sGame;
 };
 
 #endif /* AI_HPP_ */

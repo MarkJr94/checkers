@@ -10,11 +10,12 @@
 #include <vector>
 #include <utility>
 
-class AI;
+class SimpleAI;
 
 class Game {
 public:
-	friend class AI;
+	friend class SimpleAI;
+	friend class NewAI;
 	friend class SFMLGame;
 
 	/* Constructor */
@@ -29,11 +30,15 @@ public:
 	/* Print game */
 	void print() const;
 
-	/* Piece Movement */
-	MoveCode makeMove(const Move& move);
+	/* Movement */
+	MoveCode move(const Move& move)
+	{
+		if (move.jump)
+			return jump(move);
+		else
+			return makeMove(move);
+	}
 
-	/* Jumping */
-	MoveCode jump(const Move& move);
 	/* restore game to save */
 	void restoreToSave(const Save& record);
 	/* Receive input for CLI */
@@ -92,6 +97,12 @@ private:
 		return ~(mWP | mBP);
 	}
 	inline BB canJump(const BB src, const BB vict);
+
+	/* Piece Movement */
+	MoveCode makeMove(const Move& move);
+
+	/* Jumping */
+	MoveCode jump(const Move& move);
 };
 
 #endif /* GAME_HPP_ */

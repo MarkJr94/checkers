@@ -1,12 +1,13 @@
 /*
- * AI_test.cpp
+ * NewAI_test.cpp
  *
- *  Created on: Sep 7, 2012
- *      Author: msinclair94
+ *  Created on: Nov 18, 2012
+ *      Author: mark
  */
 
+#include "NewAI.hpp"
+
 #include <iostream>
-#include "AI.hpp"
 
 void testmJump() {
 	using std::cout;
@@ -14,7 +15,7 @@ void testmJump() {
 
 	Game g(false, false);
 
-	SimpleAI a;
+	NewAI a(15);
 
 	Move move;
 
@@ -26,6 +27,8 @@ void testmJump() {
 		cout << errorTable[g.move(move)];
 	} while (g.getP1score() > 0 &&  g.getP2score() > 0);
 
+	g.print();
+
 }
 
 int main() {
@@ -33,4 +36,3 @@ int main() {
 
 	return 0;
 }
-

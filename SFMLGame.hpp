@@ -13,6 +13,7 @@
 #include "Save.hpp"
 #include "Game.hpp"
 #include "AI.hpp"
+#include "NewAI.hpp"
 
 #include <fstream>
 #include <map>
@@ -59,7 +60,7 @@ private:
 	typedef sf::RenderWindow supersf;
 	typedef std::vector<Cell> Board;
 	Game mGame;
-	AI mAi;
+	NewAI mAi;
 	Board mBoard;
 	sf::Vector2<int> mDown1;
 	sf::Vector2<int> mDown2;

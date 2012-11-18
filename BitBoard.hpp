@@ -61,6 +61,7 @@ T inline ror(T v, unsigned n) {
 struct Move {
 	unsigned short src;
 	unsigned short dst;
+	bool jump;
 };
 
 enum Cell {

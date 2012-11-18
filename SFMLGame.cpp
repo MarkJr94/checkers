@@ -17,7 +17,7 @@ SFMLGame::SFMLGame(const int wide, const int high) :
 				supersf(sf::VideoMode(wide, high, 32), "Game Window",
 						sf::Style::Titlebar | sf::Style::Close),
 				mGame(false, false),
-				mAi(),
+				mAi(14),
 				mBoard(64),
 				mState(NORMAL),
 				CIRCRAD(40),
@@ -35,7 +35,7 @@ SFMLGame::SFMLGame(const sf::VideoMode& mode) :
 				supersf(mode, "Game Window",
 						sf::Style::Titlebar | sf::Style::Close),
 				mGame(false, false),
-				mAi(),
+				mAi(14),
 				mBoard(64),
 				mState(NORMAL),
 				CIRCRAD(40),
@@ -147,7 +147,7 @@ std::ostream& operator<<(std::ostream& os, const sf::Vector2<float> vec)
 
 std::ostream& operator<<(std::ostream& os, const Move m)
 {
-	os << m.src << " => " << m.dst;
+	os << m.src << " => " << m.dst << "[" << (m.jump ? "jump" : "move") << "]";
 
 	return os;
 }
@@ -177,16 +177,13 @@ void SFMLGame::update()
 				}
 
 			} else if (mState == AI_MOVE) {
-				std::pair<Move, bool> moveinfo = mAi.evaluateGame(mGame);
-				cout << "AI Move: " << moveinfo.first << endl;
+				Move move = mAi.evaluate_game(mGame);
+				cout << "AI Move: " << move << endl;
 
-				if (moveinfo.first.dst == 0 && moveinfo.first.src == 0)
+				if (move.dst == 0 && move.src == 0)
 					break;
 
-				if (moveinfo.second) {
-					cout << errorTable[mGame.jump(moveinfo.first)] << endl;
-				} else
-					cout << errorTable[mGame.makeMove(moveinfo.first)] << endl;
+				cout << errorTable[mGame.move(move)] << endl;
 
 				if (mGame.mTurn)
 					mState = NORMAL;
@@ -258,13 +255,15 @@ MoveCode SFMLGame::evalSelections()
 	}
 
 	mBoard = mGame.toArr();
-	Move m = { src, dst };
+	Move m = { src, dst, false };
+	if (mBoard[x + y * 8] != EMPTY) m.jump = true;
 	std::cout << "Player Move: " << m << std::endl;
-	if (mBoard[x + y * 8] == EMPTY) {
-		return mGame.makeMove(m);
-	} else {
-		return mGame.jump(m);
-	}
+	return mGame.move(m);
+//	if (mBoard[x + y * 8] == EMPTY) {
+//		return mGame.makeMove(m);
+//	} else {
+//		return mGame.jump(m);
+//	}
 }
 
 void SFMLGame::loop()
@@ -282,14 +281,14 @@ void SFMLGame::loop()
 				mState = NORMAL;
 				continue;
 			}
-			std::pair<Move, bool> moveinfo = mAi.evaluateGame(mGame);
-			cout << "AI Move: " << moveinfo.first << endl;
-			if (moveinfo.first.dst == 0 && moveinfo.first.src == 0)
+			Move move = mAi.evaluate_game(mGame);
+			cout << "AI Move: " << move << endl;
+
+			if (move.dst == 0 && move.src == 0)
 				break;
-			if (moveinfo.second) {
-				cout << errorTable[mGame.jump(moveinfo.first)] << endl;
-			} else
-				cout << errorTable[mGame.makeMove(moveinfo.first)] << endl;
+
+			cout << errorTable[mGame.move(move)] << endl;
+
 			if (mGame.mTurn)
 				mState = NORMAL;
 		}

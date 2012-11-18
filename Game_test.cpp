@@ -8,7 +8,8 @@
 #include "Game.hpp"
 #include <iostream>
 
-void tester1() {
+void tester1()
+{
 	Game g(false, false);
 
 	Save s = g.getSave();
@@ -20,7 +21,8 @@ void tester1() {
 	g.print();
 }
 
-void tester2() {
+void tester2()
+{
 	using std::cerr;
 	Game g(false, false);
 
@@ -32,16 +34,16 @@ void tester2() {
 
 	g.print();
 
-	cerr << errorTable[g.makeMove( { 8, 12 })] << std::endl;
+	cerr << errorTable[g.move( { 8, 12, false })] << std::endl;
 	g.print();
 
-	cerr << errorTable[g.makeMove( { 21, 17 })] << std::endl;
+	cerr << errorTable[g.move( { 21, 17, false })] << std::endl;
 	g.print();
 
-	cerr << errorTable[g.jump( { 12, 17 })] << std::endl;
+	cerr << errorTable[g.move( { 12, 17, true })] << std::endl;
 	g.print();
 
-	cerr << errorTable[g.jump( { 26, 21 })] << std::endl;
+	cerr << errorTable[g.move( { 26, 21, true })] << std::endl;
 	g.print();
 
 //	cerr << _errtable[g.receiveInput()] << std::endl;
@@ -51,7 +53,8 @@ void tester2() {
 //	g.print();
 }
 
-int main() {
+int main()
+{
 
 //	tester1();
 
